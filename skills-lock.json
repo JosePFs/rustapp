@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "skills": {
+    "dioxus-knowledge-patch": {
+      "source": "nevaberry/nevaberry-plugins",
+      "sourceType": "github",
+      "computedHash": "bf0b065f87e6571add9fce708e3ef86aa0c8ac01c240256868fda14e519601a0"
+    },
+    "rust-async-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "5fe69efa702aabf6dcdf939d07bf6e5920594de3215c3902414bef26e5c74c0c"
+    },
+    "rust-best-practices": {
+      "source": "apollographql/skills",
+      "sourceType": "github",
+      "computedHash": "ba11ae333ab71e30dd83de34d5f5cfa23ed3ee782618215f7fb69b749d63762d"
+    }
+  }
+}

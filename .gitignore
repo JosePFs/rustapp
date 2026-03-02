@@ -1,0 +1,30 @@
+# Rust
+/target/
+**/*.rs.bk
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# IDE and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dioxus / build
+dist/
+.dioxus/
+
+# Supabase (local CLI)
+.supabase/
+
+# Logs and debug
+*.log
+*.tmp

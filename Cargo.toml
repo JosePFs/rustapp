@@ -1,0 +1,43 @@
+[package]
+name = "rustapp"
+version = "0.1.0"
+edition = "2021"
+description = "MVP Phase 1 — Physiotherapy clinic app (Dioxus + Supabase)"
+
+[features]
+default = ["web"]
+web = ["dioxus/web", "uuid/js"]
+desktop = ["dioxus/desktop"]
+
+[dependencies]
+dioxus = { version = "0.7", default-features = false, features = [
+    "web",
+    "macro",
+    "html",
+    "signals",
+    "hooks",
+    "launch",
+    "router",
+] }
+dioxus-router = "0.7"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# En wasm32 uuid necesita una fuente de aleatoriedad: "js" (usa crypto del navegador)
+uuid = { version = "1", default-features = false, features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+# HTTP: native uses reqwest, WASM uses gloo-net
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+gloo-net = "0.6"
+gloo-utils = "0.2"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

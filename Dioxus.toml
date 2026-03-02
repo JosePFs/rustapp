@@ -1,0 +1,9 @@
+[application]
+name = "rustapp"
+default_platform = "web"
+
+[application.web]
+title = "Clinica Fisioterapia — MVP"
+
+[build]
+release = false
