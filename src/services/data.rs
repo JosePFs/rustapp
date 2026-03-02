@@ -639,6 +639,32 @@ pub async fn list_patient_programs_for_specialist(
     Ok(rows)
 }
 
+/// Get a patient_program by id (for patient or specialist).
+pub async fn get_patient_program_by_id(
+    config: &SupabaseConfig,
+    access_token: &str,
+    id: &str,
+) -> Result<Option<PatientProgram>, String> {
+    let path = format!(
+        "/patient_programs?id=eq.{}&select=id,patient_id,program_id,status,assigned_at,created_at,updated_at&limit=1",
+        id
+    );
+    let body = rest_get(config, Some(access_token), &path).await?;
+    let rows: Vec<PatientProgram> = parse_json(&body)?;
+    Ok(rows.into_iter().next())
+}
+
+/// Unassign (delete) a patient_program assignment by id.
+pub async fn unassign_program_from_patient(
+    config: &SupabaseConfig,
+    access_token: &str,
+    patient_program_id: &str,
+) -> Result<(), String> {
+    let path = format!("/patient_programs?id=eq.{}", patient_program_id);
+    rest_request(config, Some(access_token), "DELETE", &path, None).await?;
+    Ok(())
+}
+
 /// List workout_sessions for a patient_program (by day_index order).
 pub async fn list_workout_sessions(
     config: &SupabaseConfig,

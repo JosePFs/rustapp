@@ -39,20 +39,24 @@ pub fn AgendaBlock(
         let e = if efforts.is_empty() {
             String::new()
         } else {
-            format!("{:.1}", efforts.iter().sum::<i32>() as f64 / efforts.len() as f64)
+            format!(
+                "{:.1}",
+                efforts.iter().sum::<i32>() as f64 / efforts.len() as f64
+            )
         };
         let p = if pains.is_empty() {
             String::new()
         } else {
-            format!("{:.1}", pains.iter().sum::<i32>() as f64 / pains.len() as f64)
+            format!(
+                "{:.1}",
+                pains.iter().sum::<i32>() as f64 / pains.len() as f64
+            )
         };
         (e, p)
     };
 
-    let sessions_by_day: std::collections::HashMap<i32, WorkoutSession> = sessions
-        .iter()
-        .map(|s| (s.day_index, s.clone()))
-        .collect();
+    let sessions_by_day: std::collections::HashMap<i32, WorkoutSession> =
+        sessions.iter().map(|s| (s.day_index, s.clone())).collect();
 
     let day_rows: Vec<Element> = day_schedule
         .iter()
@@ -86,7 +90,7 @@ pub fn AgendaBlock(
                                     }
                                 }
                             },
-                            span { class: "day-num", "Día {day_num}" }
+                            span { class: "day-num", "Día {day_num} - " }
                             span { class: "day-type", "{type_label}" }
                             if completed {
                                 span { class: "day-done", "✓" }
@@ -115,11 +119,19 @@ pub fn AgendaBlock(
     let selected_idx = selected_day_index();
     let detail = selected_idx.and_then(|idx| sessions_by_day.get(&idx).cloned());
     let detail_with_label = detail.as_ref().map(|sess| {
-        let label = if sess.completed_at.is_some() { "Sí" } else { "No" };
+        let label = if sess.completed_at.is_some() {
+            "Sí"
+        } else {
+            "No"
+        };
         (sess.clone(), label)
     });
 
-    let detail_block: Option<dioxus::prelude::Element> = if let Some((ref sess, ref completed_label)) = detail_with_label {
+    let detail_block: Option<dioxus::prelude::Element> = if let Some((
+        ref sess,
+        ref completed_label,
+    )) = detail_with_label
+    {
         let sess = sess.clone();
         let completed_label = (*completed_label).to_string();
         Some(rsx! {

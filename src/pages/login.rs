@@ -1,7 +1,7 @@
 //! Login page — Supabase email/password auth.
 
 use dioxus::prelude::*;
-use dioxus_router::{Link, use_navigator};
+use dioxus_router::{use_navigator, Link};
 
 use crate::services::data::get_profiles_by_ids;
 use crate::services::supabase_client::{sign_in, AuthSession, SupabaseConfig};
@@ -20,7 +20,10 @@ pub fn Login() -> Element {
 
     let config_signal = use_context::<Signal<Option<SupabaseConfig>>>();
     let mut session_signal = use_context::<Signal<Option<AuthSession>>>();
-    let config = config_signal.read().clone().or_else(SupabaseConfig::from_env);
+    let config = config_signal
+        .read()
+        .clone()
+        .or_else(SupabaseConfig::from_env);
 
     rsx! {
         div { class: "login-page",
@@ -31,8 +34,8 @@ pub fn Login() -> Element {
             form {
                 onsubmit: move |ev| {
                     ev.prevent_default();
-                    let email_val = email().clone();
-                    let password_val = password().clone();
+                    let email_val = email.read().clone();
+                    let password_val = password.read().clone();
                     if email_val.is_empty() || password_val.is_empty() {
                         error.set(Some("Email y contraseña requeridos".into()));
                         return;

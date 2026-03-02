@@ -8,7 +8,10 @@ mod services;
 use dioxus::prelude::*;
 use dioxus_router::{Router, Routable};
 
-use pages::{ExerciseLibrary, Login, SpecialistDashboard, PatientDashboard, PatientProgress, ProgramEditor, WorkoutEditor, WorkoutLibrary};
+use pages::{
+    ExerciseLibrary, Login, SpecialistDashboard, PatientDashboard, PatientProgress, ProgramEditor,
+    PatientWorkoutDay, WorkoutEditor, WorkoutLibrary,
+};
 use services::supabase_client::{AuthSession, SupabaseConfig};
 
 #[derive(Routable, Clone, PartialEq)]
@@ -27,6 +30,8 @@ pub enum Route {
     PatientProgress { id: String },
     #[route("/patient")]
     PatientDashboard {},
+    #[route("/patient/program/:patient_program_id/day/:day_index")]
+    PatientWorkoutDay { patient_program_id: String, day_index: String },
     #[route("/programs/:id/edit")]
     ProgramEditor { id: String },
 }

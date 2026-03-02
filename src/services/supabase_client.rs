@@ -71,7 +71,6 @@ pub async fn sign_in(
         password: password.to_string(),
     };
     let body_bytes = serde_json::to_vec(&body).map_err(|e| e.to_string())?;
-
     let response = http_request(
         "POST",
         &url,
@@ -82,7 +81,6 @@ pub async fn sign_in(
         Some(&body_bytes),
     )
     .await?;
-
     if response.status < 200 || response.status >= 300 {
         return Err(format!("Auth failed: status {}", response.status));
     }
@@ -95,6 +93,7 @@ pub async fn sign_in(
 // REST (PostgREST) helpers
 // -----------------------------------------------------------------------------
 
+#[derive(Deserialize)]
 struct HttpResponse {
     status: u16,
     body: Vec<u8>,
@@ -108,6 +107,7 @@ async fn http_request(
     body: Option<&[u8]>,
 ) -> Result<HttpResponse, String> {
     use reqwest::Client;
+
     let client = Client::new();
     let mut req = match method {
         "GET" => client.get(url),
@@ -116,15 +116,18 @@ async fn http_request(
         "DELETE" => client.delete(url),
         _ => return Err("Unsupported method".to_string()),
     };
+
     for (k, v) in headers {
         req = req.header(*k, *v);
     }
     if let Some(b) = body {
         req = req.body(b.to_vec());
     }
+
     let response = req.send().await.map_err(|e| e.to_string())?;
     let status = response.status().as_u16();
     let body = response.bytes().await.map_err(|e| e.to_string())?.to_vec();
+
     Ok(HttpResponse { status, body })
 }
 
@@ -150,7 +153,11 @@ async fn http_request(
     }
     let response = if let Some(b) = body {
         let js_body: JsValue = Uint8Array::from(b).into();
-        req.body(js_body).map_err(|e| e.to_string())?.send().await.map_err(|e| e.to_string())?
+        req.body(js_body)
+            .map_err(|e| e.to_string())?
+            .send()
+            .await
+            .map_err(|e| e.to_string())?
     } else {
         req.send().await.map_err(|e| e.to_string())?
     };
@@ -171,14 +178,7 @@ pub async fn rest_request(
     body: Option<&[u8]>,
 ) -> Result<Vec<u8>, String> {
     let url = format!("{}{}", config.rest_url().trim_end_matches('/'), path);
-    let response = rest_request_inner(
-        method,
-        &url,
-        &config.anon_key,
-        access_token,
-        body,
-    )
-    .await?;
+    let response = rest_request_inner(method, &url, &config.anon_key, access_token, body).await?;
     if response.status >= 200 && response.status < 300 {
         Ok(response.body)
     } else {
@@ -248,7 +248,11 @@ async fn rest_request_inner(
     }
     let response = if let Some(b) = body {
         let js_body: JsValue = Uint8Array::from(b).into();
-        req.body(js_body).map_err(|e| e.to_string())?.send().await.map_err(|e| e.to_string())?
+        req.body(js_body)
+            .map_err(|e| e.to_string())?
+            .send()
+            .await
+            .map_err(|e| e.to_string())?
     } else {
         req.send().await.map_err(|e| e.to_string())?
     };
