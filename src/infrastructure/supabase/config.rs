@@ -1,0 +1,28 @@
+/// Supabase project config (from env or app config).
+#[derive(Clone)]
+pub struct SupabaseConfig {
+    pub url: String,
+    pub anon_key: String,
+}
+
+impl SupabaseConfig {
+    /// Load from env: SUPABASE_URL, SUPABASE_ANON_KEY.
+    /// Values come from .env at build time (build.rs) so they work in WASM and native.
+    pub fn from_env() -> Option<Self> {
+        let url: String = option_env!("SUPABASE_URL")
+            .map(str::to_string)
+            .or_else(|| std::env::var("SUPABASE_URL").ok())?;
+        let anon_key: String = option_env!("SUPABASE_ANON_KEY")
+            .map(str::to_string)
+            .or_else(|| std::env::var("SUPABASE_ANON_KEY").ok())?;
+        Some(Self { url, anon_key })
+    }
+
+    pub fn auth_url(&self) -> String {
+        format!("{}/auth/v1", self.url.trim_end_matches('/'))
+    }
+
+    pub fn rest_url(&self) -> String {
+        format!("{}/rest/v1", self.url.trim_end_matches('/'))
+    }
+}

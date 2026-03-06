@@ -1,18 +1,21 @@
-//! MVP Phase 1 — Physiotherapy clinic app.
-//! Entry point and router setup.
-
-mod components;
-mod pages;
-mod services;
-
 use dioxus::prelude::*;
-use dioxus_router::{Router, Routable};
+use dioxus_router::{Routable, Router};
 
-use pages::{
-    ExerciseLibrary, Login, SpecialistDashboard, PatientDashboard, PatientProgress, ProgramEditor,
-    PatientWorkoutDay, WorkoutEditor, WorkoutLibrary,
+use std::sync::Arc;
+
+use crate::infrastructure::app_context::AppContext;
+use application::ports::Backend;
+use infrastructure::supabase::api::Api;
+use infrastructure::supabase::client::SupabaseClient;
+use infrastructure::supabase::config::SupabaseConfig;
+use infrastructure::ui::views::{
+    ExerciseLibrary, Login, PatientDashboard, PatientProgress, PatientWorkoutDay, ProgramEditor,
+    SpecialistDashboard, WorkoutEditor, WorkoutLibrary,
 };
-use services::supabase_client::{AuthSession, SupabaseConfig};
+
+mod application;
+mod domain;
+mod infrastructure;
 
 #[derive(Routable, Clone, PartialEq)]
 pub enum Route {
@@ -31,23 +34,60 @@ pub enum Route {
     #[route("/patient")]
     PatientDashboard {},
     #[route("/patient/program/:patient_program_id/day/:day_index")]
-    PatientWorkoutDay { patient_program_id: String, day_index: String },
+    PatientWorkoutDay {
+        patient_program_id: String,
+        day_index: String,
+    },
     #[route("/programs/:id/edit")]
     ProgramEditor { id: String },
 }
 
 fn main() {
-    launch(App);
+    init_logging();
+    log::debug!("Launching app");
+    dioxus::launch(App);
 }
 
 #[component]
 fn App() -> Element {
-    let config = use_signal(|| SupabaseConfig::from_env());
-    let session = use_signal(|| Option::<AuthSession>::None);
-    use_context_provider(|| config);
-    use_context_provider(|| session);
+    let config = SupabaseConfig::from_env();
+    if config.is_none() {
+        return rsx! { div { "Configuration error" } };
+    }
+
+    let api = Api::new(SupabaseClient::new(config.unwrap()));
+    let backend: Arc<dyn Backend> = Arc::new(api);
+    use_context_provider(|| AppContext::new(backend, None));
 
     rsx! {
-        Router::<Route> {}
+        document::Link { rel: "icon", href: asset!("/assets/favicon.png") }
+        document::Stylesheet { href: asset!("/assets/tailwind.css") }
+        document::Stylesheet { href: asset!("/assets/styling/main.css") }
+
+        Title { "Eixe - MVP" }
+
+        ErrorBoundary {
+            handle_error: |error: ErrorContext| {
+                let msg = error.error().map(|e| e.to_string()).unwrap_or_else(|| String::new());
+                rsx! {
+                    div { "Oops, we encountered an error: {msg}" }
+                }
+            },
+            Router::<Route> {}
+        }
     }
+}
+
+fn init_logging() {
+    #[cfg(target_arch = "wasm32")]
+    wasm_logger::init(wasm_logger::Config::default());
+    #[cfg(target_arch = "wasm32")]
+    console_error_panic_hook::set_once();
+
+    #[cfg(target_os = "android")]
+    android_logger::init_once(
+        android_logger::Config::default()
+            .with_max_level(log::LevelFilter::Debug)
+            .with_tag("MiApp"),
+    );
 }
