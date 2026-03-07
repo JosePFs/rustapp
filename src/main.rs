@@ -65,6 +65,7 @@ fn App() -> Element {
 
     rsx! {
         document::Link { rel: "icon", href: asset!("/assets/favicon.png") }
+        document::Stylesheet { href: asset!("/assets/dx-components-theme.css") }
         document::Stylesheet { href: asset!("/assets/tailwind.css") }
         document::Stylesheet { href: asset!("/assets/styling/main.css") }
 

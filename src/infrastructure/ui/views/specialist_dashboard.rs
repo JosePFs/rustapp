@@ -1,11 +1,15 @@
 //! Specialist dashboard: list patients, add patient, programs, assign, compliance.
 
 use dioxus::prelude::*;
+use dioxus_free_icons::icons::io_icons::IoInformationCircle;
+use dioxus_free_icons::Icon;
+use dioxus_primitives::ContentSide;
 use dioxus_router::Link;
 
 use crate::domain::error::DomainError;
 use crate::domain::profile::Profile;
 use crate::infrastructure::app_context::AppContext;
+use crate::infrastructure::ui::components::{Tooltip, TooltipContent, TooltipTrigger};
 use crate::Route;
 
 #[component]
@@ -128,8 +132,24 @@ pub fn SpecialistDashboard() -> Element {
                 }
 
                 section { class: "bg-surface rounded-lg p-4 mb-6 shadow-sm border border-border",
-                    h2 { class: "text-xl font-semibold mt-0 mb-2", "Pacientes" }
-                    p { class: "text-sm text-text-muted mb-4", "Haz clic en un paciente para ver su progreso. Asigna programas en la sección inferior." }
+                    div { class: "flex items-center gap-2 mt-0 mb-2",
+                        h2 { class: "text-xl font-semibold m-0", "Pacientes" }
+                        Tooltip {
+                            TooltipTrigger {
+                                style: "vertical-align: bottom;",
+                                Icon {
+                                    width: 24,
+                                    height: 24,
+                                    icon: IoInformationCircle,
+                                }
+                            }
+                            TooltipContent { side: ContentSide::Bottom, style: "width: 300px;",
+                                h4 { style: "margin-top: 0; margin-bottom: 8px;", "Pacientes y progreso" }
+                                p { style: "margin: 0; margin-bottom: 4px;", "Haz clic en un paciente para ver su progreso." }
+                                p { style: "margin: 0;", "Asigna programas en la sección inferior." }
+                            }
+                        }
+                    }
                     if let Some(Ok((links, profiles))) = patients.read().as_ref() {
                         ul { class: "list-none p-0 m-0 mb-4",
                             for link in links.iter() {

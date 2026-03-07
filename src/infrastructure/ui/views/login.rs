@@ -3,6 +3,9 @@ use dioxus_i18n::t;
 use dioxus_router::use_navigator;
 
 use crate::domain::{credentials::Credentials, role::Role};
+use crate::infrastructure::ui::components::{
+    Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Input, Label,
+};
 use crate::infrastructure::ui::hooks::login::use_login;
 use crate::Route;
 
@@ -36,50 +39,69 @@ pub fn Login() -> Element {
             background_image: "url('{asset!(\"/assets/login.webp\")}')",
             div {
                 class: "content opacity-90 pt-8 max-w-[22rem] w-full mx-auto",
-                h1 { class: "text-xl font-semibold text-center mb-4", { t!("login_title") } },
-                match login_action.value() {
-                    Some(Err(err)) => {
-                        rsx! {
-                            p { class: "text-error text-sm mb-4 p-2 px-4 rounded-md bg-red-50 border border-red-200", "{err}" }
+                Card {
+                    CardHeader {
+                        CardTitle {
+                            { t!("login_title") }
                         }
-                    },
-                    _ => { rsx! { } }
-                },
-                form {
-                    class: "flex flex-col gap-4 bg-surface p-6 rounded-lg border border-border shadow-sm",
-                    onsubmit: move |ev| {
-                        ev.prevent_default();
-                        login_action.call(Credentials::from(&email(), &password()));
-                    },
-                    label {
-                        class: "flex flex-col gap-1 text-sm font-medium",
-                        { t!("email_label") },
-                        input {
-                            class: "w-full min-h-11 px-4 text-base border border-border rounded-md bg-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20",
-                            r#type: "email",
-                            placeholder: "email@ejemplo.com",
-                            value: "{email}",
-                            required: true,
-                            oninput: move |ev| email.set(ev.value().clone()),
+                        CardDescription {
+                            { t!("login_description") }
+                        }
+                        match login_action.value() {
+                            Some(Err(err)) => {
+                                rsx! {
+                                    p { class: "text-error text-sm p-2 rounded-md bg-red-50 border border-red-200", "{err}" }
+                                }
+                            },
+                            _ => { rsx! { } }
                         }
                     }
-                    label {
-                        class: "flex flex-col gap-1 text-sm font-medium",
-                        { t!("password_label") },
-                        input {
-                            class: "w-full min-h-11 px-4 text-base border border-border rounded-md bg-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20",
-                            r#type: "password",
-                            placeholder: "••••••••",
-                            value: "{password}",
-                            required: true,
-                            oninput: move |ev| password.set(ev.value().clone()),
+                    CardContent {
+                        form {
+                            id: "login-form",
+                            class: "flex flex-col gap-4 bg-surface p-6 rounded-lg border border-border shadow-sm",
+                            onsubmit: move |ev| {
+                                ev.prevent_default();
+                                login_action.call(Credentials::from(&email(), &password()));
+                            },
+                            Label {
+                                html_for: "email",
+                                class: "flex flex-col text-sm font-medium",
+                                { t!("email_label") },
+                            }
+                            Input {
+                                id: "email",
+                                autocomplete: "email",
+                                r#type: "email",
+                                placeholder: "email@ejemplo.com",
+                                value: "{email}",
+                                required: true,
+                                oninput: move |ev: FormEvent| email.set(ev.value().clone()),
+                            }
+                            Label {
+                                html_for: "password",
+                                class: "flex flex-col text-sm font-medium",
+                                { t!("password_label") },
+                            }
+                            Input {
+                                id: "password",
+                                autocomplete: "current-password",
+                                r#type: "password",
+                                placeholder: "••••••••",
+                                value: "{password}",
+                                required: true,
+                                oninput: move |ev: FormEvent| password.set(ev.value().clone()),
+                            }
                         }
                     }
-                    button {
-                        class: "mt-6 w-full min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed",
-                        r#type: "submit",
-                        disabled: login_action.pending(),
-                        { t!("login_button_label") },
+                    CardFooter {
+                        Button {
+                            class: if login_action.pending() { "opacity-50 !cursor-not-allowed" } else { "" },
+                            r#type: "submit",
+                            form: "login-form",
+                            disabled: login_action.pending(),
+                            { t!("login_button_label") },
+                        }
                     }
                 }
             }
