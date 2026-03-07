@@ -26,14 +26,17 @@ pub fn ProgramEditor(id: String) -> Element {
                 Some(s) => s,
                 None => return Err("No session".to_string()),
             };
-            let schedule = backend.list_program_schedule(sess.access_token(), &pid).await?;
+            let schedule = backend
+                .list_program_schedule(sess.access_token(), &pid)
+                .await?;
             let ids: Vec<String> = schedule
                 .iter()
                 .filter_map(|s| s.workout_id.clone())
                 .collect::<std::collections::HashSet<String>>()
                 .into_iter()
                 .collect();
-            let workouts = backend.get_workouts_by_ids(sess.access_token(), &ids)
+            let workouts = backend
+                .get_workouts_by_ids(sess.access_token(), &ids)
                 .await
                 .unwrap_or_default();
             Ok::<_, String>((schedule, workouts))
@@ -50,7 +53,9 @@ pub fn ProgramEditor(id: String) -> Element {
                 None => return Err("No session".to_string()),
             };
             let specialist_id = sess.user_id().to_string();
-            backend.list_workout_library(sess.access_token(), &specialist_id, None).await
+            backend
+                .list_workout_library(sess.access_token(), &specialist_id, None)
+                .await
         }
     });
 
@@ -101,7 +106,7 @@ pub fn ProgramEditor(id: String) -> Element {
                         span { class: "font-medium", "{label}" }
                         span { class: "text-sm text-text-muted", "{days} día(s)" }
                         button {
-                            class: "min-h-9 px-2 text-sm rounded-md border border-border ml-auto",
+                            class: "min-h-9 px-2 text-sm rounded-md border border-border bg-error text-white ml-auto",
                             onclick: move |_| {
                                 let backend = backend_row.clone();
                                 let sess = session_signal_row.read().clone();
@@ -166,6 +171,7 @@ pub fn ProgramEditor(id: String) -> Element {
                     }
                 }
                 button {
+                    class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60",
                     disabled: schedule_add_loading() || (!is_rest && schedule_workout_id().is_none()),
                     onclick: move |_| {
                         let backend = backend.clone();
@@ -204,16 +210,19 @@ pub fn ProgramEditor(id: String) -> Element {
     };
 
     rsx! {
-        div { class: "pt-2",
-            h1 { class: "text-2xl font-semibold mb-4", "Editor de programa" }
-            nav { class: "flex flex-wrap gap-2 mb-6 pb-4 border-b border-border",
-                Link { to: Route::SpecialistDashboard {}, class: "text-primary no-underline text-sm min-h-11 inline-flex items-center px-2 rounded-md hover:bg-gray-100", "Volver al panel" }
-                Link { to: Route::WorkoutLibrary {}, class: "text-primary no-underline text-sm min-h-11 inline-flex items-center px-2 rounded-md hover:bg-gray-100", "Biblioteca de entrenamientos" }
-            }
-            section { class: "bg-surface rounded-lg p-4 mb-6 border border-border",
-                h2 { class: "text-xl font-semibold mt-0 mb-2", "Programación (días de entrenamiento y descanso)" }
-                p { class: "text-sm text-text-muted mb-4", "Añade bloques de entrenamiento (desde tu biblioteca) o de descanso. Los entrenamientos se gestionan en la Biblioteca de entrenamientos." }
-                {schedule_section}
+        div { class: "view container mx-auto program-editor flex items-center justify-center",
+            div {
+                class: "content pt-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
+                h1 { class: "text-2xl font-semibold mb-4", "Editor de programa" }
+                nav { class: "flex flex-wrap gap-2 mb-6 pb-4 border-b border-border",
+                    Link { to: Route::SpecialistDashboard {}, class: "text-primary no-underline text-sm min-h-11 inline-flex items-center px-2 rounded-md hover:bg-gray-100", "Volver al panel" }
+                    Link { to: Route::WorkoutLibrary {}, class: "text-primary no-underline text-sm min-h-11 inline-flex items-center px-2 rounded-md hover:bg-gray-100", "Biblioteca de entrenamientos" }
+                }
+                section { class: "bg-surface rounded-lg p-4 mb-6 border border-border",
+                    h2 { class: "text-xl font-semibold mt-0 mb-2", "Programación (días de entrenamiento y descanso)" }
+                    p { class: "text-sm text-text-muted mb-4", "Añade bloques de entrenamiento (desde tu biblioteca) o de descanso. Los entrenamientos se gestionan en la Biblioteca de entrenamientos." }
+                    {schedule_section}
+                }
             }
         }
     }

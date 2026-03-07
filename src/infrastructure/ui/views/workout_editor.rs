@@ -25,7 +25,9 @@ pub fn WorkoutEditor(id: String) -> Element {
                 Some(s) => s,
                 None => return Err("No session".to_string()),
             };
-            let rows = backend.get_workouts_by_ids(sess.access_token(), &[wid]).await?;
+            let rows = backend
+                .get_workouts_by_ids(sess.access_token(), &[wid])
+                .await?;
             Ok(rows.into_iter().next())
         }
     });
@@ -40,7 +42,9 @@ pub fn WorkoutEditor(id: String) -> Element {
                 Some(s) => s,
                 None => return Err("No session".to_string()),
             };
-            backend.list_exercises_for_workout(sess.access_token(), &wid).await
+            backend
+                .list_exercises_for_workout(sess.access_token(), &wid)
+                .await
         }
     });
 
@@ -54,7 +58,9 @@ pub fn WorkoutEditor(id: String) -> Element {
                 None => return Err("No session".to_string()),
             };
             let specialist_id = sess.user_id().to_string();
-            backend.list_exercise_library(sess.access_token(), &specialist_id, None).await
+            backend
+                .list_exercise_library(sess.access_token(), &specialist_id, None)
+                .await
         }
     });
 
@@ -126,69 +132,72 @@ pub fn WorkoutEditor(id: String) -> Element {
         .collect();
 
     rsx! {
-        div { class: "pt-2",
-            h1 { class: "text-2xl font-semibold mb-4", "Entrenamiento" }
-            nav { class: "flex flex-wrap gap-2 mb-6 pb-4 border-b border-border",
-                Link { to: Route::WorkoutLibrary {}, class: "text-primary no-underline text-sm min-h-11 inline-flex items-center px-2 rounded-md hover:bg-gray-100", "← Biblioteca de entrenamientos" }
-            }
-            if let Some(ref w) = workout_opt {
-                h2 { "{w.name}" }
-                if let Some(ref d) = w.description {
-                    if !d.is_empty() {
-                        p { "{d}" }
-                    }
+        div { class: "view container mx-auto workout-editor flex items-center justify-center",
+            div {
+                class: "content pt-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
+                h1 { class: "text-2xl font-semibold mb-4", "Entrenamiento" }
+                nav { class: "flex flex-wrap gap-2 mb-6 pb-4 border-b border-border",
+                    Link { to: Route::WorkoutLibrary {}, class: "text-primary no-underline text-sm min-h-11 inline-flex items-center px-2 rounded-md hover:bg-gray-100", "← Biblioteca de entrenamientos" }
                 }
-            } else if workout.read().as_ref().as_ref().map(|r| r.is_ok()).unwrap_or(false) {
-                p { "Entrenamiento no encontrado." }
-            } else {
-                p { "Cargando..." }
-            }
-            if workout_opt.is_some() {
-                section {
-                    h3 { "Ejercicios en este entrenamiento" }
-                    ul { class: "exercise-list",
-                        {exercise_rows.into_iter()}
-                    }
-                    if exs.is_empty() {
-                        p { class: "text-sm text-text-muted", "Aún no hay ejercicios. Añade desde la biblioteca abajo." }
-                    }
-                }
-                section { class: "mt-6",
-                    h3 { class: "text-lg font-semibold mb-2", "Añadir desde biblioteca de ejercicios" }
-                    if available_to_add.is_empty() {
-                        p { class: "text-sm text-text-muted", "Todos los ejercicios ya están en este entrenamiento o no hay ejercicios en la biblioteca." }
-                    } else {
-                        select {
-                            onchange: move |ev| {
-                                let v = ev.value();
-                                add_exercise_id.set(if v.is_empty() { None } else { Some(v) });
-                            },
-                            option { value: "", "Seleccionar ejercicio" }
-                            for exercise in available_to_add.iter() {
-                                option { value: "{exercise.id}", "{exercise.name}" }
-                            }
+                if let Some(ref w) = workout_opt {
+                    h2 { "{w.name}" }
+                    if let Some(ref d) = w.description {
+                        if !d.is_empty() {
+                            p { "{d}" }
                         }
-                        button {
-                            disabled: add_loading() || add_exercise_id().is_none(),
-                            onclick: move |_| {
-                                let eid = match add_exercise_id() {
-                                    Some(eid) => eid,
-                                    None => return,
-                                };
-                                let backend = backend.clone();
-                                let sess = session_signal.read().clone();
-                                let Some(s) = sess else { return };
-                                let wid = id.clone();
-                                add_loading.set(true);
-                                let mut ex_refresh = exercises;
-                                spawn(async move {
-                                    let order = 0;
-                                    let _ = backend.add_exercise_to_workout(s.access_token(), &wid, &eid, order).await;
-                                    ex_refresh.restart();
-                                    add_loading.set(false);
-                                });
-                            },
-                            "Añadir al entrenamiento"
+                    }
+                } else if workout.read().as_ref().as_ref().map(|r| r.is_ok()).unwrap_or(false) {
+                    p { "Entrenamiento no encontrado." }
+                } else {
+                    p { "Cargando..." }
+                }
+                if workout_opt.is_some() {
+                    section {
+                        h3 { "Ejercicios en este entrenamiento" }
+                        ul { class: "exercise-list",
+                            {exercise_rows.into_iter()}
+                        }
+                        if exs.is_empty() {
+                            p { class: "text-sm text-text-muted", "Aún no hay ejercicios. Añade desde la biblioteca abajo." }
+                        }
+                    }
+                    section { class: "mt-6",
+                        h3 { class: "text-lg font-semibold mb-2", "Añadir desde biblioteca de ejercicios" }
+                        if available_to_add.is_empty() {
+                            p { class: "text-sm text-text-muted", "Todos los ejercicios ya están en este entrenamiento o no hay ejercicios en la biblioteca." }
+                        } else {
+                            select {
+                                onchange: move |ev| {
+                                    let v = ev.value();
+                                    add_exercise_id.set(if v.is_empty() { None } else { Some(v) });
+                                },
+                                option { value: "", "Seleccionar ejercicio" }
+                                for exercise in available_to_add.iter() {
+                                    option { value: "{exercise.id}", "{exercise.name}" }
+                                }
+                            }
+                            button {
+                                disabled: add_loading() || add_exercise_id().is_none(),
+                                onclick: move |_| {
+                                    let eid = match add_exercise_id() {
+                                        Some(eid) => eid,
+                                        None => return,
+                                    };
+                                    let backend = backend.clone();
+                                    let sess = session_signal.read().clone();
+                                    let Some(s) = sess else { return };
+                                    let wid = id.clone();
+                                    add_loading.set(true);
+                                    let mut ex_refresh = exercises;
+                                    spawn(async move {
+                                        let order = 0;
+                                        let _ = backend.add_exercise_to_workout(s.access_token(), &wid, &eid, order).await;
+                                        ex_refresh.restart();
+                                        add_loading.set(false);
+                                    });
+                                },
+                                "Añadir al entrenamiento"
+                            }
                         }
                     }
                 }

@@ -45,13 +45,16 @@ pub fn PatientDashboard() -> Element {
                     Some(p) => p,
                     None => continue,
                 };
-                let workouts = backend.list_workouts_for_program(token, &ass.program_id)
+                let workouts = backend
+                    .list_workouts_for_program(token, &ass.program_id)
                     .await
                     .unwrap_or_default();
-                let schedule = backend.list_program_schedule(token, &ass.program_id)
+                let schedule = backend
+                    .list_program_schedule(token, &ass.program_id)
                     .await
                     .unwrap_or_default();
-                let sessions = backend.list_workout_sessions(token, &ass.id)
+                let sessions = backend
+                    .list_workout_sessions(token, &ass.id)
                     .await
                     .unwrap_or_default();
                 out.push(PatientProgramData {
@@ -99,31 +102,35 @@ pub fn PatientDashboard() -> Element {
     }
 
     rsx! {
-        div { class: "pt-2",
-            h1 { class: "text-2xl font-semibold mb-4", "Mis programas de entrenamiento" }
-            nav { class: "flex flex-wrap gap-2 mb-6 pb-4 border-b border-border",
-                Link { to: Route::Login {}, class: "text-primary no-underline text-sm min-h-11 inline-flex items-center px-2 rounded-md hover:bg-gray-100 hover:text-primary-hover", "Cerrar sesión" }
-            }
-            if programs.is_empty() && data.read().as_ref().as_ref().map(|r| r.is_ok()).unwrap_or(false) {
-                p { class: "text-text-muted italic", "No tienes programas activos asignados." }
-            } else if data.read().as_ref().as_ref().map(|r| r.is_err()).unwrap_or(false) {
-                p { class: "text-error", "Error al cargar los programas." }
-            } else if programs.is_empty() {
-                p { "Cargando..." }
-            } else {
-                for prog in programs.iter() {
-                    section { key: "{prog.patient_program_id}", class: "bg-surface border border-border rounded-md p-4 mb-4",
-                        h2 { class: "text-xl font-semibold mt-0 mb-2", "{prog.program_name}" }
-                        if let Some(ref desc) = prog.program_description {
-                            p { "{desc}" }
-                        }
-                        AgendaBlock {
-                            sessions: prog.sessions.clone(),
-                            schedule: prog.schedule.clone(),
-                            workouts: prog.workouts.clone(),
-                            title: "Agenda".to_string(),
-                            patient_program_id: Some(prog.patient_program_id.clone()),
-                            write_selected_for_feedback: Some(selected_for_feedback),
+        div {
+            class: "view container mx-auto patient-dashboard flex items-center justify-center",
+            div {
+                class: "content pt-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
+                h1 { class: "text-2xl font-semibold mb-4", "Mis programas de entrenamiento" }
+                nav { class: "flex flex-wrap gap-2 mb-6 pb-4 border-b border-border",
+                    Link { to: Route::Login {}, class: "text-primary no-underline text-sm min-h-11 inline-flex items-center px-2 rounded-md hover:bg-gray-100 hover:text-primary-hover", "Cerrar sesión" }
+                }
+                if programs.is_empty() && data.read().as_ref().as_ref().map(|r| r.is_ok()).unwrap_or(false) {
+                    p { class: "text-text-muted italic", "No tienes programas activos asignados." }
+                } else if data.read().as_ref().as_ref().map(|r| r.is_err()).unwrap_or(false) {
+                    p { class: "text-error", "Error al cargar los programas." }
+                } else if programs.is_empty() {
+                    p { "Cargando..." }
+                } else {
+                    for prog in programs.iter() {
+                        section { key: "{prog.patient_program_id}", class: "bg-surface border border-border rounded-md p-4 mb-4",
+                            h2 { class: "text-xl font-semibold mt-0 mb-2", "{prog.program_name}" }
+                            if let Some(ref desc) = prog.program_description {
+                                p { "{desc}" }
+                            }
+                            AgendaBlock {
+                                sessions: prog.sessions.clone(),
+                                schedule: prog.schedule.clone(),
+                                workouts: prog.workouts.clone(),
+                                title: "Agenda".to_string(),
+                                patient_program_id: Some(prog.patient_program_id.clone()),
+                                write_selected_for_feedback: Some(selected_for_feedback),
+                            }
                         }
                     }
                 }

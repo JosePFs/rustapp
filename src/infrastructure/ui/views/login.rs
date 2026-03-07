@@ -34,7 +34,7 @@ pub fn Login() -> Element {
 
     rsx! {
         div {
-            class: "view login min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat",
+            class: "view login w-full h-full min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat",
             background_image: "url('{asset!(\"/assets/login.webp\")}')",
             div {
                 class: "content opacity-90 pt-8 max-w-[22rem] w-full mx-auto",

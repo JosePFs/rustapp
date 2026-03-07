@@ -184,88 +184,92 @@ pub fn ExerciseLibrary() -> Element {
         .collect();
 
     rsx! {
-        div { class: "pt-2",
-            h1 { class: "text-2xl font-semibold mb-4", "Biblioteca de ejercicios" }
-            nav { class: "flex flex-wrap gap-2 mb-6 pb-4 border-b border-border",
-                Link { to: Route::SpecialistDashboard {}, class: "text-primary no-underline text-sm min-h-11 inline-flex items-center px-2 rounded-md hover:bg-gray-100 hover:text-primary-hover", "← Panel del especialista" }
-            }
-            p { class: "text-sm text-text-muted mb-4", "Crea y edita ejercicios aquí. Luego añádelos a entrenamientos desde el editor del programa." }
-            input {
-                class: "w-full min-h-11 px-4 border border-border rounded-md mb-4 focus:outline-none focus:border-primary",
-                placeholder: "Filtrar por nombre...",
-                value: "{filter()}",
-                oninput: move |ev| { filter.set(ev.value().clone()); exercises.restart(); },
-            }
-            section { class: "bg-surface rounded-lg p-4 mb-6 border border-border",
-                h2 { class: "text-xl font-semibold mt-0 mb-4", "Nuevo ejercicio" }
-                div { class: "flex flex-col gap-4 max-w-md",
-                    input {
-                        class: "w-full min-h-11 px-4 border border-border rounded-md focus:outline-none focus:border-primary",
-                        placeholder: "Nombre",
-                        value: "{new_name()}",
-                        oninput: move |ev| new_name.set(ev.value().clone()),
-                    }
-                    input {
-                        class: "w-full min-h-11 px-4 border border-border rounded-md focus:outline-none focus:border-primary",
-                        placeholder: "Descripción (opcional)",
-                        value: "{new_desc()}",
-                        oninput: move |ev| new_desc.set(ev.value().clone()),
-                    }
-                    input {
-                        class: "w-full min-h-11 px-4 border border-border rounded-md focus:outline-none focus:border-primary",
-                        placeholder: "URL vídeo YouTube (opcional)",
-                        value: "{new_video_url()}",
-                        oninput: move |ev| new_video_url.set(ev.value().clone()),
-                    }
-                    button {
-                        class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60",
-                        disabled: create_loading() || new_name().trim().is_empty(),
-                        onclick: move |_| {
-                            let name = new_name().trim().to_string();
-                            if name.is_empty() { return; }
-                            let backend = backend_for_create.clone();
-                            let session = session_for_create.clone();
-                            let token = session.as_ref().map(|s| s.access_token().to_string()).unwrap_or_default();
-                            let specialist_id = session.as_ref().map(|s| s.user_id().to_string()).unwrap_or_default();
-                            let desc = new_desc().clone();
-                            let video = new_video_url().clone();
-                            create_loading.set(true);
-                            create_error.set(None);
-                            let mut refresh = exercises.clone();
-                            spawn(async move {
-                                match backend.create_exercise(
-                                    &token,
-                                    &specialist_id,
-                                    &name,
-                                    if desc.is_empty() { None } else { Some(desc.as_str()) },
-                                    0,
-                                    if video.is_empty() { None } else { Some(video.as_str()) },
-                                ).await {
-                                    Ok(_) => {
-                                        new_name.set(String::new());
-                                        new_desc.set(String::new());
-                                        new_video_url.set(String::new());
-                                        refresh.restart();
+        div {
+            class: "view container mx-auto exercise-library flex items-center justify-center",
+            div {
+                class: "content pt-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
+                h1 { class: "text-2xl font-semibold mb-4", "Biblioteca de ejercicios" }
+                nav { class: "flex flex-wrap gap-2 mb-6 pb-4 border-b border-border",
+                    Link { to: Route::SpecialistDashboard {}, class: "text-primary no-underline text-sm min-h-11 inline-flex items-center px-2 rounded-md hover:bg-gray-100 hover:text-primary-hover", "← Panel del especialista" }
+                }
+                p { class: "text-sm text-text-muted mb-4", "Crea y edita ejercicios aquí. Luego añádelos a entrenamientos desde el editor del programa." }
+                input {
+                    class: "w-full min-h-11 px-4 border border-border rounded-md mb-4 focus:outline-none focus:border-primary",
+                    placeholder: "Filtrar por nombre...",
+                    value: "{filter()}",
+                    oninput: move |ev| { filter.set(ev.value().clone()); exercises.restart(); },
+                }
+                section { class: "bg-surface rounded-lg p-4 mb-6 border border-border",
+                    h2 { class: "text-xl font-semibold mt-0 mb-4", "Nuevo ejercicio" }
+                    div { class: "flex flex-col gap-4 max-w-md",
+                        input {
+                            class: "w-full min-h-11 px-4 border border-border rounded-md focus:outline-none focus:border-primary",
+                            placeholder: "Nombre",
+                            value: "{new_name()}",
+                            oninput: move |ev| new_name.set(ev.value().clone()),
+                        }
+                        input {
+                            class: "w-full min-h-11 px-4 border border-border rounded-md focus:outline-none focus:border-primary",
+                            placeholder: "Descripción (opcional)",
+                            value: "{new_desc()}",
+                            oninput: move |ev| new_desc.set(ev.value().clone()),
+                        }
+                        input {
+                            class: "w-full min-h-11 px-4 border border-border rounded-md focus:outline-none focus:border-primary",
+                            placeholder: "URL vídeo YouTube (opcional)",
+                            value: "{new_video_url()}",
+                            oninput: move |ev| new_video_url.set(ev.value().clone()),
+                        }
+                        button {
+                            class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60",
+                            disabled: create_loading() || new_name().trim().is_empty(),
+                            onclick: move |_| {
+                                let name = new_name().trim().to_string();
+                                if name.is_empty() { return; }
+                                let backend = backend_for_create.clone();
+                                let session = session_for_create.clone();
+                                let token = session.as_ref().map(|s| s.access_token().to_string()).unwrap_or_default();
+                                let specialist_id = session.as_ref().map(|s| s.user_id().to_string()).unwrap_or_default();
+                                let desc = new_desc().clone();
+                                let video = new_video_url().clone();
+                                create_loading.set(true);
+                                create_error.set(None);
+                                let mut refresh = exercises.clone();
+                                spawn(async move {
+                                    match backend.create_exercise(
+                                        &token,
+                                        &specialist_id,
+                                        &name,
+                                        if desc.is_empty() { None } else { Some(desc.as_str()) },
+                                        0,
+                                        if video.is_empty() { None } else { Some(video.as_str()) },
+                                    ).await {
+                                        Ok(_) => {
+                                            new_name.set(String::new());
+                                            new_desc.set(String::new());
+                                            new_video_url.set(String::new());
+                                            refresh.restart();
+                                        }
+                                        Err(e) => create_error.set(Some(e)),
                                     }
-                                    Err(e) => create_error.set(Some(e)),
-                                }
-                                create_loading.set(false);
-                            });
-                        },
-                        "Crear ejercicio"
-                    }
-                    if let Some(ref e) = *create_error.read() {
-                        p { class: "text-error text-sm mt-2", "{e}" }
+                                    create_loading.set(false);
+                                });
+                            },
+                            "Crear ejercicio"
+                        }
+                        if let Some(ref e) = *create_error.read() {
+                            p { class: "text-error text-sm mt-2", "{e}" }
+                        }
                     }
                 }
-            }
-            section { class: "bg-surface rounded-lg p-4 border border-border",
-                h2 { class: "text-xl font-semibold mt-0 mb-4", "Ejercicios ({list_len})" }
-                ul { class: "list-none p-0 m-0",
-                    {rows.into_iter()}
-                }
-                if list_len == 0 && empty_ok {
-                    p { class: "text-text-muted italic py-4", "Aún no hay ejercicios. Crea uno arriba." }
+                section { class: "bg-surface rounded-lg p-4 border border-border",
+                    h2 { class: "text-xl font-semibold mt-0 mb-4", "Ejercicios ({list_len})" }
+                    ul { class: "list-none p-0 m-0",
+                        {rows.into_iter()}
+                    }
+                    if list_len == 0 && empty_ok {
+                        p { class: "text-text-muted italic py-4", "Aún no hay ejercicios. Crea uno arriba." }
+                    }
                 }
             }
         }
