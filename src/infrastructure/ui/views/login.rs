@@ -1,10 +1,8 @@
 use dioxus::prelude::*;
+use dioxus_i18n::t;
 use dioxus_router::use_navigator;
 
-use dioxus_i18n::t;
-
-use crate::domain::credentials::Credentials;
-use crate::domain::role::Role;
+use crate::domain::{credentials::Credentials, role::Role};
 use crate::infrastructure::ui::hooks::login::use_login;
 use crate::Route;
 

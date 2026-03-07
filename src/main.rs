@@ -1,20 +1,19 @@
-use dioxus::prelude::*;
-use dioxus_router::{Routable, Router};
-
-use dioxus_i18n::prelude::*;
-use unic_langid::langid;
-
 use std::sync::Arc;
 
-use crate::infrastructure::app_context::AppContext;
-use application::ports::Backend;
-use infrastructure::supabase::api::Api;
-use infrastructure::supabase::client::SupabaseClient;
-use infrastructure::supabase::config::SupabaseConfig;
-use infrastructure::ui::views::{
-    ExerciseLibrary, Login, PatientDashboard, PatientProgress, PatientWorkoutDay, ProgramEditor,
-    SpecialistDashboard, WorkoutEditor, WorkoutLibrary,
+use dioxus::prelude::*;
+use dioxus_i18n::prelude::*;
+use dioxus_router::{Routable, Router};
+use unic_langid::langid;
+
+use crate::infrastructure::{
+    app_context::AppContext,
+    supabase::{api::Api, client::SupabaseClient, config::SupabaseConfig},
+    ui::views::{
+        ExerciseLibrary, Login, PatientDashboard, PatientProgress, PatientWorkoutDay,
+        ProgramEditor, SpecialistDashboard, WorkoutEditor, WorkoutLibrary,
+    },
 };
+use application::ports::Backend;
 
 mod application;
 mod domain;

@@ -1,9 +1,6 @@
-use dioxus::prelude::*;
-use dioxus::CapturedError;
+use dioxus::{prelude::*, CapturedError};
 
-use crate::domain::credentials::Credentials;
-use crate::domain::profile::Profile;
-use crate::domain::session::Session;
+use crate::domain::{credentials::Credentials, profile::Profile, session::Session};
 use crate::infrastructure::ui::hooks::app_context::use_app_context;
 
 pub fn use_login() -> (
