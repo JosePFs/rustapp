@@ -1,4 +1,6 @@
 use async_trait::async_trait;
+
+use dioxus_i18n::t;
 use serde::Deserialize;
 
 use super::client::SupabaseClient;
@@ -41,7 +43,7 @@ impl AuthService for Api {
             .client
             .sign_in(credentials)
             .await
-            .map_err(|_| DomainError::Login)?;
+            .map_err(|_| DomainError::Login(t!("wrong_credentials")))?;
         Ok(Session::new(auth.access_token, auth.user.id))
     }
 }

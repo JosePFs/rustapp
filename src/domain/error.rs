@@ -5,15 +5,15 @@ use std::{
 
 #[derive(Debug)]
 pub enum DomainError {
-    Login,
+    Login(String),
     Api(String),
 }
 
 impl Display for DomainError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            DomainError::Login => write!(f, "Invalid login credentials"),
-            DomainError::Api(msg) => write!(f, "API error: {}", msg),
+            DomainError::Login(msg) => write!(f, "{msg}"),
+            DomainError::Api(msg) => write!(f, "{msg}"),
         }
     }
 }

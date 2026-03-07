@@ -1,6 +1,9 @@
 use dioxus::prelude::*;
 use dioxus_router::{Routable, Router};
 
+use dioxus_i18n::prelude::*;
+use unic_langid::langid;
+
 use std::sync::Arc;
 
 use crate::infrastructure::app_context::AppContext;
@@ -50,6 +53,8 @@ fn main() {
 
 #[component]
 fn App() -> Element {
+    init_i18n();
+
     let config = SupabaseConfig::from_env();
     if config.is_none() {
         return rsx! { div { "Configuration error" } };
@@ -90,4 +95,13 @@ fn init_logging() {
             .with_max_level(log::LevelFilter::Debug)
             .with_tag("MiApp"),
     );
+}
+
+fn init_i18n() {
+    use_init_i18n(|| {
+        I18nConfig::new(langid!("es-ES"))
+            .with_locale((langid!("es-ES"), include_str!("../i18n/es-ES.ftl")))
+            .with_locale((langid!("gl-ES"), include_str!("../i18n/gl-ES.ftl")))
+            .with_locale((langid!("en-EN"), include_str!("../i18n/en-EN.ftl")))
+    });
 }
