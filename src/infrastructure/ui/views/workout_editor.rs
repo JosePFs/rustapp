@@ -70,7 +70,7 @@ pub fn WorkoutEditor(id: String) -> Element {
     let session = session_signal.read().clone();
     if session.is_none() {
         return rsx! {
-            div { "Debes iniciar sesión. " Link { to: Route::Login {}, "Ir a login" } }
+            div { "Debes iniciar sesión. " Link { to: Route::LoginView {}, "Ir a login" } }
         };
     }
 

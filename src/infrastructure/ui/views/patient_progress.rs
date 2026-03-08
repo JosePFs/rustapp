@@ -92,7 +92,7 @@ pub fn PatientProgress(id: String) -> Element {
             div {
                 class: "p-6 text-center",
                 p { "Debes iniciar sesión." }
-                Link { to: Route::Login {}, class: "text-primary underline", "Ir a login" }
+                Link { to: Route::LoginView {}, class: "text-primary underline", "Ir a login" }
             }
         };
     }

@@ -9,7 +9,7 @@ use crate::infrastructure::{
     app_context::AppContext,
     supabase::{api::Api, client::SupabaseClient, config::SupabaseConfig},
     ui::views::{
-        ExerciseLibrary, Login, PatientDashboard, PatientProgress, PatientWorkoutDay,
+        ExerciseLibrary, LoginView, PatientDashboard, PatientProgress, PatientWorkoutDay,
         ProgramEditor, SpecialistDashboard, WorkoutEditor, WorkoutLibrary,
     },
 };
@@ -22,7 +22,7 @@ mod infrastructure;
 #[derive(Routable, Clone, PartialEq)]
 pub enum Route {
     #[route("/")]
-    Login {},
+    LoginView {},
     #[route("/specialist")]
     SpecialistDashboard {},
     #[route("/specialist/exercises")]

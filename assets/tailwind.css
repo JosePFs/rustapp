@@ -12,6 +12,7 @@
     --color-green-50: oklch(98.2% 0.018 155.826);
     --color-gray-50: oklch(98.5% 0.002 247.839);
     --color-gray-100: oklch(96.7% 0.003 264.542);
+    --color-gray-200: oklch(92.8% 0.006 264.531);
     --color-white: #fff;
     --spacing: 0.25rem;
     --container-md: 28rem;
@@ -327,6 +328,9 @@
   .flex-1 {
     flex: 1;
   }
+  .flex-grow {
+    flex-grow: 1;
+  }
   .grow {
     flex-grow: 1;
   }
@@ -342,6 +346,9 @@
   .cursor-pointer {
     cursor: pointer;
   }
+  .resize {
+    resize: both;
+  }
   .list-none {
     list-style-type: none;
   }
@@ -350,9 +357,6 @@
   }
   .flex-wrap {
     flex-wrap: wrap;
-  }
-  .items-baseline {
-    align-items: baseline;
   }
   .items-center {
     align-items: center;
@@ -394,6 +398,9 @@
   }
   .border-border {
     border-color: var(--color-border);
+  }
+  .border-gray-200 {
+    border-color: var(--color-gray-200);
   }
   .border-primary {
     border-color: var(--color-primary);

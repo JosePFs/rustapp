@@ -33,14 +33,21 @@ pub fn use_login() -> (
                 return None;
             };
 
+            let session = session();
             let profiles = backend
-                .get_profiles_by_ids(&[session().user_id().to_string()], session().access_token())
+                .get_profiles_by_ids(&[session.user_id().to_string()], session.access_token())
                 .await
                 .ok();
 
-            app_session.set(Some(session()));
-
             profiles
+        }
+    });
+
+    use_effect(move || {
+        if profile_loader.read().is_some() {
+            if let Some(Ok(session)) = login_action.value() {
+                app_session.set(Some(session()));
+            }
         }
     });
 

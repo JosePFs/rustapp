@@ -97,7 +97,7 @@ pub fn PatientDashboard() -> Element {
     let session = session_signal.read().clone();
     if session.is_none() {
         return rsx! {
-            div { "Debes iniciar sesión. " Link { to: Route::Login {}, "Ir a login" } }
+            div { "Debes iniciar sesión. " Link { to: Route::LoginView {}, "Ir a login" } }
         };
     }
 
@@ -108,7 +108,7 @@ pub fn PatientDashboard() -> Element {
                 class: "content pt-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
                 h1 { class: "text-2xl font-semibold mb-4", "Mis programas de entrenamiento" }
                 nav { class: "flex flex-wrap gap-2 mb-6 pb-4 border-b border-border",
-                    Link { to: Route::Login {}, class: "text-primary no-underline text-sm min-h-11 inline-flex items-center px-2 rounded-md hover:bg-gray-100 hover:text-primary-hover", "Cerrar sesión" }
+                    Link { to: Route::LoginView {}, class: "text-primary no-underline text-sm min-h-11 inline-flex items-center px-2 rounded-md hover:bg-gray-100 hover:text-primary-hover", "Cerrar sesión" }
                 }
                 if programs.is_empty() && data.read().as_ref().as_ref().map(|r| r.is_ok()).unwrap_or(false) {
                     p { class: "text-text-muted italic", "No tienes programas activos asignados." }

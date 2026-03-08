@@ -9,7 +9,7 @@ mod workout_editor;
 mod workout_library;
 
 pub use exercise_library::ExerciseLibrary;
-pub use login::Login;
+pub use login::LoginView;
 pub use patient_dashboard::PatientDashboard;
 pub use patient_progress::PatientProgress;
 pub use patient_workout_day::PatientWorkoutDay;
