@@ -1,0 +1,33 @@
+# .cursorrules - Eixe physiotherapy clinic application
+
+## Context & Architecture
+
+- Server-client Dioxus MVP app for a physiotherapy clinic application that allows to asign workouts to patients with mobile as first target.
+- DDD + Hexagonal Architecture.
+- UI in infrastruture layer.
+- Database in infrastructure, for now, supabase.
+- Ports in application layer.
+- Domain layer shares logic between server and client.
+
+## Critical Rules
+
+1. **Hexagonal Integrity**: NEVER allow infrastructure to leak into the Domain.
+2. **DDD principles**: Business rules and logic reside in domain entities and value objects.
+3. **Naming**: English, descriptive, following DDD ubiquitous language.
+4. **Testing**: Development focusing on easy testing.
+
+## Tools & Standards
+
+- Rust and Dioxus framework. whenever possible, use Dioxus components (https://dioxuslabs.com/components) as base, not raw rsx.
+- Clean Code & SOLID.
+- Context: Always check `docs/**/*` before coding.
+
+## Code examples
+
+- Follow the approach of `src/infrastructure/ui/views/login.rs` view component for each new view: custom hooks contain the logic, which resides in the container view component, and its child components are responsible for presentation.
+- `src/infrastructure/app_context.rs` act as a dependency container using the hook `src/infrastructure/ui/hooks/app_context.rs`.
+
+## AI Interaction
+
+- Be concise. Focus on the "Why" and the "Code".
+- If I ask for a feature, suggest the folder structure first if it involves multiple packages.
