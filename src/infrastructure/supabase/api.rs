@@ -10,15 +10,16 @@ use crate::application::services::data_provider::DataProvider;
 use crate::application::services::AuthService;
 use crate::domain::credentials::Credentials;
 use crate::domain::entities::{
-    Exercise, PatientProgram, Program, ProgramScheduleItem, SpecialistPatient, Workout,
-    WorkoutSession,
+    Exercise, PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback,
+    SpecialistPatient, Workout, WorkoutExercise, WorkoutSession,
 };
 use crate::domain::error::DomainError;
 use crate::domain::profile::Profile;
 use crate::domain::session::Session;
 use crate::infrastructure::api::dtos::{
     ExerciseDto, PatientProgramDto, ProfileDto, ProgramDto, ProgramScheduleItemDto,
-    SpecialistPatientDto, WorkoutDto, WorkoutExerciseRow, WorkoutSessionDto,
+    SessionExerciseFeedbackDto, SpecialistPatientDto, WorkoutDto, WorkoutExerciseRow,
+    WorkoutSessionDto,
 };
 
 fn parse_json<T: for<'de> Deserialize<'de>>(body: &[u8]) -> Result<T, String> {
@@ -207,16 +208,23 @@ impl DataProvider for Api {
         &self,
         access_token: &str,
         workout_id: &str,
-    ) -> Result<Vec<Exercise>, String> {
+    ) -> Result<Vec<WorkoutExercise>, String> {
         let path = format!(
-            "/workout_exercises?workout_id=eq.{}&select=order_index,exercise_id,exercises(id,specialist_id,name,description,order_index,video_url,deleted_at,created_at)&order=order_index.asc",
+            "/workout_exercises?workout_id=eq.{}&select=order_index,exercise_id,sets,reps,exercises(id,specialist_id,name,description,order_index,video_url,deleted_at,created_at)&order=order_index.asc",
             workout_id
         );
         let body = self.client.rest_get(Some(access_token), &path).await?;
         let rows: Vec<WorkoutExerciseRow> = parse_json(&body)?;
         Ok(rows
             .into_iter()
-            .filter_map(|r| r.exercises.map(Into::into))
+            .filter_map(|r| {
+                r.exercises.map(|e| WorkoutExercise {
+                    exercise: e.into(),
+                    order_index: r.order_index,
+                    sets: r.sets,
+                    reps: r.reps,
+                })
+            })
             .collect())
     }
 
@@ -282,11 +290,54 @@ impl DataProvider for Api {
         patient_program_id: &str,
     ) -> Result<Vec<WorkoutSession>, String> {
         let path = format!(
-            "/workout_sessions?patient_program_id=eq.{}&select=id,patient_program_id,day_index,session_date,completed_at,effort,pain,comment,created_at,updated_at&order=day_index.asc",
+            "/workout_sessions?patient_program_id=eq.{}&select=id,patient_program_id,day_index,session_date,completed_at,created_at,updated_at&order=day_index.asc",
             patient_program_id
         );
         let body = self.client.rest_get(Some(access_token), &path).await?;
         let rows: Vec<WorkoutSessionDto> = parse_json(&body)?;
+        Ok(rows.into_iter().map(Into::into).collect())
+    }
+
+    async fn list_session_exercise_feedback(
+        &self,
+        access_token: &str,
+        workout_session_id: &str,
+    ) -> Result<Vec<SessionExerciseFeedback>, String> {
+        let path = format!(
+            "/session_exercise_feedback?workout_session_id=eq.{}&select=workout_session_id,exercise_id,effort,pain,comment",
+            workout_session_id
+        );
+        let body = self.client.rest_get(Some(access_token), &path).await?;
+        let rows: Vec<SessionExerciseFeedbackDto> = parse_json(&body)?;
+        Ok(rows.into_iter().map(Into::into).collect())
+    }
+
+    async fn list_session_exercise_feedback_for_program(
+        &self,
+        access_token: &str,
+        patient_program_id: &str,
+    ) -> Result<Vec<SessionExerciseFeedback>, String> {
+        let sessions_path = format!(
+            "/workout_sessions?patient_program_id=eq.{}&select=id",
+            patient_program_id
+        );
+        let body = self.client.rest_get(Some(access_token), &sessions_path).await?;
+        #[derive(Deserialize)]
+        struct IdRow {
+            id: String,
+        }
+        let session_rows: Vec<IdRow> = parse_json(&body)?;
+        let ids: Vec<&str> = session_rows.iter().map(|r| r.id.as_str()).collect();
+        if ids.is_empty() {
+            return Ok(vec![]);
+        }
+        let in_filter = ids.join(",");
+        let path = format!(
+            "/session_exercise_feedback?workout_session_id=in.({})&select=workout_session_id,exercise_id,effort,pain,comment",
+            in_filter
+        );
+        let body = self.client.rest_get(Some(access_token), &path).await?;
+        let rows: Vec<SessionExerciseFeedbackDto> = parse_json(&body)?;
         Ok(rows.into_iter().map(Into::into).collect())
     }
 
@@ -478,14 +529,44 @@ impl DataMutator for Api {
         workout_id: &str,
         exercise_id: &str,
         order_index: i32,
+        sets: i32,
+        reps: i32,
     ) -> Result<(), String> {
         let payload = serde_json::json!({
             "workout_id": workout_id,
             "exercise_id": exercise_id,
-            "order_index": order_index
+            "order_index": order_index,
+            "sets": sets,
+            "reps": reps
         });
         self.client
             .rest_post(Some(access_token), "/workout_exercises", &payload)
+            .await?;
+        Ok(())
+    }
+
+    async fn update_workout_exercise(
+        &self,
+        access_token: &str,
+        workout_id: &str,
+        exercise_id: &str,
+        sets: i32,
+        reps: i32,
+        order_index: Option<i32>,
+    ) -> Result<(), String> {
+        let mut payload = serde_json::json!({
+            "sets": sets,
+            "reps": reps
+        });
+        if let Some(o) = order_index {
+            payload["order_index"] = serde_json::Number::from(o).into();
+        }
+        let path = format!(
+            "/workout_exercises?workout_id=eq.{}&exercise_id=eq.{}",
+            workout_id, exercise_id
+        );
+        self.client
+            .rest_patch(Some(access_token), &path, &payload)
             .await?;
         Ok(())
     }
@@ -599,7 +680,7 @@ impl DataMutator for Api {
         session_date: &str,
     ) -> Result<WorkoutSession, String> {
         let path = format!(
-            "/workout_sessions?patient_program_id=eq.{}&day_index=eq.{}&select=id,patient_program_id,day_index,session_date,completed_at,effort,pain,comment,created_at,updated_at",
+            "/workout_sessions?patient_program_id=eq.{}&day_index=eq.{}&select=id,patient_program_id,day_index,session_date,completed_at,created_at,updated_at",
             patient_program_id, day_index
         );
         let body = self.client.rest_get(Some(access_token), &path).await?;
@@ -627,15 +708,9 @@ impl DataMutator for Api {
         &self,
         access_token: &str,
         session_id: &str,
-        effort: Option<i32>,
-        pain: Option<i32>,
-        comment: Option<&str>,
     ) -> Result<(), String> {
         let payload = serde_json::json!({
-            "completed_at": chrono::Utc::now().to_rfc3339(),
-            "effort": effort,
-            "pain": pain,
-            "comment": comment
+            "completed_at": chrono::Utc::now().to_rfc3339()
         });
         let path = format!("/workout_sessions?id=eq.{}", session_id);
         self.client
@@ -644,26 +719,46 @@ impl DataMutator for Api {
         Ok(())
     }
 
-    async fn update_session_feedback(
+    async fn update_session(
         &self,
         access_token: &str,
         session_id: &str,
-        effort: Option<i32>,
-        pain: Option<i32>,
-        comment: Option<&str>,
         session_date: Option<&str>,
     ) -> Result<(), String> {
-        let mut payload = serde_json::json!({
-            "effort": effort,
-            "pain": pain,
-            "comment": comment
-        });
+        let mut payload = serde_json::json!({});
         if let Some(d) = session_date {
             payload["session_date"] = serde_json::Value::String(d.to_string());
         }
         let path = format!("/workout_sessions?id=eq.{}", session_id);
         self.client
             .rest_patch(Some(access_token), &path, &payload)
+            .await?;
+        Ok(())
+    }
+
+    async fn upsert_session_exercise_feedback(
+        &self,
+        access_token: &str,
+        workout_session_id: &str,
+        exercise_id: &str,
+        effort: Option<i32>,
+        pain: Option<i32>,
+        comment: Option<&str>,
+    ) -> Result<(), String> {
+        let payload = serde_json::json!({
+            "workout_session_id": workout_session_id,
+            "exercise_id": exercise_id,
+            "effort": effort,
+            "pain": pain,
+            "comment": comment
+        });
+        let path = format!(
+            "/session_exercise_feedback?workout_session_id=eq.{}&exercise_id=eq.{}",
+            workout_session_id, exercise_id
+        );
+        self.client.rest_delete(Some(access_token), &path).await.ok();
+        self.client
+            .rest_post(Some(access_token), "/session_exercise_feedback", &payload)
             .await?;
         Ok(())
     }

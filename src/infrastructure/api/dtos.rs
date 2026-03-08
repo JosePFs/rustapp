@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::domain::entities::{
-    Exercise, PatientProgram, Program, ProgramScheduleItem, SpecialistPatient, Workout,
-    WorkoutSession,
+    Exercise, PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback,
+    SpecialistPatient, Workout, WorkoutSession,
 };
 use crate::domain::{email::Email, fullname::FullName, id::Id, profile::Profile, role::Role};
 
@@ -100,19 +100,29 @@ pub struct WorkoutSessionDto {
     pub day_index: i32,
     pub session_date: String,
     pub completed_at: Option<String>,
-    pub effort: Option<i32>,
-    pub pain: Option<i32>,
-    pub comment: Option<String>,
     #[serde(default)]
     pub created_at: Option<String>,
     #[serde(default)]
     pub updated_at: Option<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SessionExerciseFeedbackDto {
+    pub workout_session_id: String,
+    pub exercise_id: String,
+    pub effort: Option<i32>,
+    pub pain: Option<i32>,
+    pub comment: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkoutExerciseRow {
     pub order_index: i32,
     pub exercise_id: String,
+    #[serde(default)]
+    pub sets: i32,
+    #[serde(default)]
+    pub reps: i32,
     #[serde(default)]
     pub exercises: Option<ExerciseDto>,
 }
@@ -216,11 +226,20 @@ impl From<WorkoutSessionDto> for WorkoutSession {
             day_index: dto.day_index,
             session_date: dto.session_date,
             completed_at: dto.completed_at,
+            created_at: dto.created_at,
+            updated_at: dto.updated_at,
+        }
+    }
+}
+
+impl From<SessionExerciseFeedbackDto> for SessionExerciseFeedback {
+    fn from(dto: SessionExerciseFeedbackDto) -> Self {
+        SessionExerciseFeedback {
+            workout_session_id: dto.workout_session_id,
+            exercise_id: dto.exercise_id,
             effort: dto.effort,
             pain: dto.pain,
             comment: dto.comment,
-            created_at: dto.created_at,
-            updated_at: dto.updated_at,
         }
     }
 }

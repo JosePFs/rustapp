@@ -72,6 +72,8 @@ pub trait DataMutator: Send + Sync {
         workout_id: &str,
         exercise_id: &str,
         order_index: i32,
+        sets: i32,
+        reps: i32,
     ) -> Result<(), String>;
 
     async fn remove_exercise_from_workout(
@@ -79,6 +81,16 @@ pub trait DataMutator: Send + Sync {
         access_token: &str,
         workout_id: &str,
         exercise_id: &str,
+    ) -> Result<(), String>;
+
+    async fn update_workout_exercise(
+        &self,
+        access_token: &str,
+        workout_id: &str,
+        exercise_id: &str,
+        sets: i32,
+        reps: i32,
+        order_index: Option<i32>,
     ) -> Result<(), String>;
 
     async fn update_exercise(
@@ -124,19 +136,23 @@ pub trait DataMutator: Send + Sync {
         &self,
         access_token: &str,
         session_id: &str,
-        effort: Option<i32>,
-        pain: Option<i32>,
-        comment: Option<&str>,
     ) -> Result<(), String>;
 
-    async fn update_session_feedback(
+    async fn update_session(
         &self,
         access_token: &str,
         session_id: &str,
+        session_date: Option<&str>,
+    ) -> Result<(), String>;
+
+    async fn upsert_session_exercise_feedback(
+        &self,
+        access_token: &str,
+        workout_session_id: &str,
+        exercise_id: &str,
         effort: Option<i32>,
         pain: Option<i32>,
         comment: Option<&str>,
-        session_date: Option<&str>,
     ) -> Result<(), String>;
 
     async fn uncomplete_session(&self, access_token: &str, session_id: &str) -> Result<(), String>;

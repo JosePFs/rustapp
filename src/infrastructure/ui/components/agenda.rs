@@ -1,12 +1,15 @@
 use dioxus::prelude::*;
 
-use crate::domain::entities::{ProgramScheduleItem, Workout, WorkoutSession};
+use crate::domain::entities::{
+    ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession,
+};
 use crate::infrastructure::supabase::api::build_agenda_schedule;
 
 /// When provided, clicking a slot writes (patient_program_id, day_index) so the parent can show the feedback form.
 #[component]
 pub fn AgendaBlock(
     sessions: Vec<WorkoutSession>,
+    program_feedback: Vec<SessionExerciseFeedback>,
     schedule: Vec<ProgramScheduleItem>,
     workouts: Vec<Workout>,
     title: String,
@@ -32,8 +35,8 @@ pub fn AgendaBlock(
         0.0
     };
     let (avg_effort_str, avg_pain_str) = {
-        let efforts: Vec<i32> = sessions.iter().filter_map(|s| s.effort).collect();
-        let pains: Vec<i32> = sessions.iter().filter_map(|s| s.pain).collect();
+        let efforts: Vec<i32> = program_feedback.iter().filter_map(|f| f.effort).collect();
+        let pains: Vec<i32> = program_feedback.iter().filter_map(|f| f.pain).collect();
         let e = if efforts.is_empty() {
             String::new()
         } else {
@@ -52,6 +55,14 @@ pub fn AgendaBlock(
         };
         (e, p)
     };
+
+    let feedback_by_session: std::collections::HashMap<String, Vec<&SessionExerciseFeedback>> =
+        program_feedback
+            .iter()
+            .fold(std::collections::HashMap::new(), |mut m, f| {
+                m.entry(f.workout_session_id.clone()).or_default().push(f);
+                m
+            });
 
     let sessions_by_day: std::collections::HashMap<i32, WorkoutSession> =
         sessions.iter().map(|s| (s.day_index, s.clone())).collect();
@@ -115,6 +126,12 @@ pub fn AgendaBlock(
 
     let selected_idx = selected_day_index();
     let detail = selected_idx.and_then(|idx| sessions_by_day.get(&idx).cloned());
+    let day_label_for_detail = selected_idx.and_then(|idx| {
+        day_schedule
+            .iter()
+            .find(|(i, _, _)| *i == idx)
+            .map(|(_, _, l)| l.clone())
+    });
     let detail_with_label = detail.as_ref().map(|sess| {
         let label = if sess.completed_at.is_some() {
             "Sí"
@@ -131,20 +148,30 @@ pub fn AgendaBlock(
     {
         let sess = sess.clone();
         let completed_label = (*completed_label).to_string();
+        let session_feedbacks = feedback_by_session.get(&sess.id).cloned().unwrap_or_default();
+        let (eff_avg, pain_avg) = if session_feedbacks.is_empty() {
+            (String::new(), String::new())
+        } else {
+            let e: f64 = session_feedbacks.iter().filter_map(|f| f.effort).sum::<i32>() as f64
+                / session_feedbacks.len() as f64;
+            let p: f64 = session_feedbacks.iter().filter_map(|f| f.pain).sum::<i32>() as f64
+                / session_feedbacks.len() as f64;
+            (format!("{:.1}", e), format!("{:.1}", p))
+        };
+        let workout_name_display = day_label_for_detail.clone().unwrap_or_default();
         Some(rsx! {
             div { class: "p-4 bg-gray-50 rounded-md mb-4 text-sm",
                 h3 { class: "text-base font-semibold mt-0 mb-2", "Día {sess.day_index + 1} — Completada: {completed_label}" }
+                if !workout_name_display.is_empty() {
+                    p { class: "font-medium", "Entrenamiento: {workout_name_display}" }
+                }
                 p { class: "text-text-muted", "Fecha registrada: {sess.session_date}" }
-                if sess.effort.is_some() || sess.pain.is_some() || sess.comment.as_deref().unwrap_or("").len() > 0 {
-                    p { "Esfuerzo: {sess.effort.map(|e| e.to_string()).unwrap_or_default()}" }
-                    p { "Dolor: {sess.pain.map(|p| p.to_string()).unwrap_or_default()}" }
-                    if let Some(ref c) = sess.comment {
-                        if !c.is_empty() {
-                            p { "Comentario: {c}" }
-                        }
-                    }
+                if !eff_avg.is_empty() || !pain_avg.is_empty() {
+                    p { "Esfuerzo medio: {eff_avg}" }
+                    p { "Dolor medio: {pain_avg}" }
+                    p { class: "text-text-muted", "Feedback por ejercicio en el detalle del día." }
                 } else {
-                    p { class: "text-text-muted", "Sin feedback registrado." }
+                    p { class: "text-text-muted", "Sin feedback por ejercicio registrado." }
                 }
                 button {
                     class: "bg-transparent text-primary underline min-h-0 py-1 mt-2",

@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 
 use crate::domain::entities::{
-    Exercise, PatientProgram, Program, ProgramScheduleItem, SpecialistPatient, Workout,
-    WorkoutSession,
+    Exercise, PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback,
+    SpecialistPatient, Workout, WorkoutExercise, WorkoutSession,
 };
 use crate::domain::profile::Profile;
 
@@ -62,7 +62,7 @@ pub trait DataProvider: Send + Sync {
         &self,
         access_token: &str,
         workout_id: &str,
-    ) -> Result<Vec<Exercise>, String>;
+    ) -> Result<Vec<WorkoutExercise>, String>;
 
     async fn list_exercise_library(
         &self,
@@ -87,6 +87,19 @@ pub trait DataProvider: Send + Sync {
         access_token: &str,
         patient_program_id: &str,
     ) -> Result<Vec<WorkoutSession>, String>;
+
+    async fn list_session_exercise_feedback(
+        &self,
+        access_token: &str,
+        workout_session_id: &str,
+    ) -> Result<Vec<SessionExerciseFeedback>, String>;
+
+    /// All feedback for sessions belonging to this patient program (for agenda averages).
+    async fn list_session_exercise_feedback_for_program(
+        &self,
+        access_token: &str,
+        patient_program_id: &str,
+    ) -> Result<Vec<SessionExerciseFeedback>, String>;
 
     async fn list_active_patient_programs(
         &self,

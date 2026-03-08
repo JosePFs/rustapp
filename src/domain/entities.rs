@@ -57,6 +57,25 @@ pub struct Exercise {
     pub created_at: Option<String>,
 }
 
+/// Ejercicio dentro de un entrenamiento (con series y repeticiones).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WorkoutExercise {
+    pub exercise: Exercise,
+    pub order_index: i32,
+    pub sets: i32,
+    pub reps: i32,
+}
+
+/// Feedback de esfuerzo/dolor/comentario por ejercicio dentro de una sesión.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SessionExerciseFeedback {
+    pub workout_session_id: String,
+    pub exercise_id: String,
+    pub effort: Option<i32>,
+    pub pain: Option<i32>,
+    pub comment: Option<String>,
+}
+
 /// Asignación de programa a paciente.
 #[derive(Debug, Clone)]
 pub struct PatientProgram {
@@ -69,7 +88,7 @@ pub struct PatientProgram {
     pub updated_at: Option<String>,
 }
 
-/// Sesión de entrenamiento de un día (feedback esfuerzo/dolor).
+/// Sesión de entrenamiento de un día (feedback por ejercicio). El "nombre" de la sesión es el del entrenamiento (solo el especialista lo edita).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WorkoutSession {
     pub id: String,
@@ -77,9 +96,6 @@ pub struct WorkoutSession {
     pub day_index: i32,
     pub session_date: String,
     pub completed_at: Option<String>,
-    pub effort: Option<i32>,
-    pub pain: Option<i32>,
-    pub comment: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
 }

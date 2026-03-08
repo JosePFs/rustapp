@@ -48,38 +48,42 @@ pub fn Login(
                     CardContent {
                         form {
                             id: "login-form",
-                            class: "flex flex-col gap-4 bg-surface p-6 rounded-lg border border-border shadow-sm",
+                            class: "flex flex-col gap-4",
                             onsubmit: move |ev: FormEvent| {
                                 ev.prevent_default();
                                 onsubmit.call((email(), password()));
                             },
-                            Label {
-                                html_for: "email",
-                                class: "flex flex-col text-sm font-medium",
-                                { t!("email_label") },
+                            div {
+                                class: "grid gap-2",
+                                Label {
+                                    html_for: "email",
+                                    { t!("email_label") },
+                                }
+                                Input {
+                                    id: "email",
+                                    autocomplete: "email",
+                                    r#type: "email",
+                                    placeholder: "email@ejemplo.com",
+                                    value: "{email}",
+                                    required: true,
+                                    oninput: move |ev: FormEvent| email.set(ev.value().clone()),
+                                }
                             }
-                            Input {
-                                id: "email",
-                                autocomplete: "email",
-                                r#type: "email",
-                                placeholder: "email@ejemplo.com",
-                                value: "{email}",
-                                required: true,
-                                oninput: move |ev: FormEvent| email.set(ev.value().clone()),
-                            }
-                            Label {
-                                html_for: "password",
-                                class: "flex flex-col text-sm font-medium",
-                                { t!("password_label") },
-                            }
-                            Input {
-                                id: "password",
-                                autocomplete: "current-password",
-                                r#type: "password",
-                                placeholder: "••••••••",
-                                value: "{password}",
-                                required: true,
-                                oninput: move |ev: FormEvent| password.set(ev.value().clone()),
+                            div {
+                                class: "grid gap-2",
+                                Label {
+                                    html_for: "password",
+                                    { t!("password_label") },
+                                }
+                                Input {
+                                    id: "password",
+                                    autocomplete: "current-password",
+                                    r#type: "password",
+                                    placeholder: "••••••••",
+                                    value: "{password}",
+                                    required: true,
+                                    oninput: move |ev: FormEvent| password.set(ev.value().clone()),
+                                }
                             }
                         }
                     }

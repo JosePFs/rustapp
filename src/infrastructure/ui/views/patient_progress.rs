@@ -2,11 +2,31 @@
 
 const EMPTY: &str = "";
 
+fn session_avg_feedback(
+    session_id: &str,
+    feedback: &[SessionExerciseFeedback],
+) -> (String, String) {
+    let sess_fb: Vec<_> = feedback
+        .iter()
+        .filter(|f| f.workout_session_id == session_id)
+        .collect();
+    if sess_fb.is_empty() {
+        (EMPTY.to_string(), EMPTY.to_string())
+    } else {
+        let e: f64 =
+            sess_fb.iter().filter_map(|f| f.effort).sum::<i32>() as f64 / sess_fb.len() as f64;
+        let p: f64 =
+            sess_fb.iter().filter_map(|f| f.pain).sum::<i32>() as f64 / sess_fb.len() as f64;
+        (format!("{:.1}", e), format!("{:.1}", p))
+    }
+}
+
 use dioxus::prelude::*;
 use dioxus_router::Link;
 
 use crate::domain::entities::{
-    PatientProgram, Program, ProgramScheduleItem, Workout, WorkoutSession,
+    PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback, Workout,
+    WorkoutSession,
 };
 use crate::infrastructure::app_context::AppContext;
 use crate::infrastructure::ui::components::AgendaBlock;
@@ -17,6 +37,7 @@ struct ProgramWithSessions {
     program: Program,
     assignment: PatientProgram,
     sessions: Vec<WorkoutSession>,
+    program_feedback: Vec<SessionExerciseFeedback>,
     schedule: Vec<ProgramScheduleItem>,
     workouts: Vec<Workout>,
 }
@@ -65,6 +86,10 @@ pub fn PatientProgress(id: String) -> Element {
                     .list_workout_sessions(token, &ass.id)
                     .await
                     .unwrap_or_default();
+                let program_feedback = backend
+                    .list_session_exercise_feedback_for_program(token, &ass.id)
+                    .await
+                    .unwrap_or_default();
                 let workouts = backend
                     .list_workouts_for_program(token, &ass.program_id)
                     .await
@@ -77,6 +102,7 @@ pub fn PatientProgress(id: String) -> Element {
                     program,
                     assignment: ass.clone(),
                     sessions,
+                    program_feedback,
                     schedule,
                     workouts,
                 });
@@ -121,6 +147,7 @@ pub fn PatientProgress(id: String) -> Element {
                                 p { class: "text-xs text-text-muted mb-2", "Estado: {pws.assignment.status}" }
                                 AgendaBlock {
                                     sessions: pws.sessions.clone(),
+                                    program_feedback: pws.program_feedback.clone(),
                                     schedule: pws.schedule.clone(),
                                     workouts: pws.workouts.clone(),
                                     title: "Agenda".to_string(),
@@ -137,9 +164,8 @@ pub fn PatientProgress(id: String) -> Element {
                                                     th { class: "text-left p-2 font-semibold text-text-muted border-b border-border", "Día" }
                                                     th { class: "text-left p-2 font-semibold text-text-muted border-b border-border", "Fecha" }
                                                     th { class: "text-left p-2 font-semibold text-text-muted border-b border-border", "Completada" }
-                                                    th { class: "text-left p-2 font-semibold text-text-muted border-b border-border", "Esfuerzo" }
-                                                    th { class: "text-left p-2 font-semibold text-text-muted border-b border-border", "Dolor" }
-                                                    th { class: "text-left p-2 font-semibold text-text-muted border-b border-border", "Comentario" }
+                                                    th { class: "text-left p-2 font-semibold text-text-muted border-b border-border", "Esf. medio" }
+                                                    th { class: "text-left p-2 font-semibold text-text-muted border-b border-border", "Dolor medio" }
                                                 }
                                             }
                                             tbody {
@@ -148,9 +174,8 @@ pub fn PatientProgress(id: String) -> Element {
                                                         td { class: "p-2", "Día {s.day_index + 1}" }
                                                         td { class: "p-2", "{s.session_date}" }
                                                         td { class: "p-2", if s.completed_at.is_some() { "Sí" } else { "No" } }
-                                                        td { class: "p-2", "{s.effort.as_ref().map(|e| e.to_string()).unwrap_or_default()}" }
-                                                        td { class: "p-2", "{s.pain.as_ref().map(|p| p.to_string()).unwrap_or_default()}" }
-                                                        td { class: "p-2", "{s.comment.as_deref().unwrap_or(EMPTY)}" }
+                                                        td { class: "p-2", "{session_avg_feedback(&s.id, &pws.program_feedback).0}" }
+                                                        td { class: "p-2", "{session_avg_feedback(&s.id, &pws.program_feedback).1}" }
                                                     }
                                                 }
                                             }

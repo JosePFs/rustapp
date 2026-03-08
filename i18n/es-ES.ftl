@@ -6,4 +6,4 @@ login_button_label = Entrar
 login_description = Ingrese su correo electrónico y contraseña para iniciar sesión en su cuenta
 
 # Errors
-wrong_credentials = Credenciales incorrectas
+wrong_credentials = Correo electrónico o contraseña incorrectos

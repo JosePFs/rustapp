@@ -7,7 +7,9 @@ use dioxus_router::{use_navigator, Link};
 
 use crate::Route;
 
-use crate::domain::entities::{ProgramScheduleItem, Workout, WorkoutSession};
+use crate::domain::entities::{
+    ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession,
+};
 use crate::infrastructure::app_context::AppContext;
 use crate::infrastructure::ui::components::AgendaBlock;
 
@@ -20,6 +22,7 @@ struct PatientProgramData {
     schedule: Vec<ProgramScheduleItem>,
     workouts: Vec<Workout>,
     sessions: Vec<WorkoutSession>,
+    program_feedback: Vec<SessionExerciseFeedback>,
 }
 
 #[component]
@@ -57,6 +60,10 @@ pub fn PatientDashboard() -> Element {
                     .list_workout_sessions(token, &ass.id)
                     .await
                     .unwrap_or_default();
+                let program_feedback = backend
+                    .list_session_exercise_feedback_for_program(token, &ass.id)
+                    .await
+                    .unwrap_or_default();
                 out.push(PatientProgramData {
                     patient_program_id: ass.id.clone(),
                     program_id: ass.program_id.clone(),
@@ -65,6 +72,7 @@ pub fn PatientDashboard() -> Element {
                     schedule,
                     workouts,
                     sessions,
+                    program_feedback,
                 });
             }
             Ok::<_, String>(out)
@@ -125,6 +133,7 @@ pub fn PatientDashboard() -> Element {
                             }
                             AgendaBlock {
                                 sessions: prog.sessions.clone(),
+                                program_feedback: prog.program_feedback.clone(),
                                 schedule: prog.schedule.clone(),
                                 workouts: prog.workouts.clone(),
                                 title: "Agenda".to_string(),
