@@ -21,7 +21,7 @@ pub fn LoginView() -> Element {
                 .map(|p| p.role() == &Role::Specialist)
                 .unwrap_or(false);
             if is_specialist {
-                nav.push(Route::SpecialistDashboard {});
+                nav.push(Route::SpecialistPatients {});
             } else {
                 nav.push(Route::PatientDashboard {});
             }

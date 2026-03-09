@@ -214,9 +214,24 @@ pub fn ProgramEditor(id: String) -> Element {
             div {
                 class: "content pt-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
                 h1 { class: "text-2xl font-semibold mb-4", "Editor de programa" }
-                nav { class: "flex flex-wrap gap-2 mb-6 pb-4 border-b border-border",
-                    Link { to: Route::SpecialistDashboard {}, class: "text-primary no-underline text-sm min-h-11 inline-flex items-center px-2 rounded-md hover:bg-gray-100", "Volver al panel" }
-                    Link { to: Route::WorkoutLibrary {}, class: "text-primary no-underline text-sm min-h-11 inline-flex items-center px-2 rounded-md hover:bg-gray-100", "Biblioteca de entrenamientos" }
+                {
+                    let mut nav_open = use_signal(|| false);
+                    rsx! {
+                        nav { class: "relative mb-6 pb-4 border-b border-border",
+                            button {
+                                class: "min-h-11 px-3 rounded-md border border-border bg-surface hover:bg-gray-100 text-sm font-medium inline-flex items-center gap-1",
+                                onclick: move |_| nav_open.set(!nav_open()),
+                                span { "Menú" }
+                                span { class: "text-xs", if nav_open() { "▲" } else { "▼" } }
+                            }
+                            if nav_open() {
+                                div { class: "absolute z-10 mt-2 w-56 bg-surface border border-border rounded-md shadow-md flex flex-col py-1",
+                                    Link { to: Route::SpecialistPatients {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100", "Pacientes" }
+                                    Link { to: Route::WorkoutLibrary {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100", "Biblioteca de entrenamientos" }
+                                }
+                            }
+                        }
+                    }
                 }
                 section { class: "bg-surface rounded-lg p-4 mb-6 border border-border",
                     h2 { class: "text-xl font-semibold mt-0 mb-2", "Programación (días de entrenamiento y descanso)" }

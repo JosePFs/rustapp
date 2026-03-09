@@ -10,7 +10,7 @@ use crate::infrastructure::{
     supabase::{api::Api, client::SupabaseClient, config::SupabaseConfig},
     ui::views::{
         ExerciseLibrary, LoginView, PatientDashboard, PatientProgress, PatientWorkoutDay,
-        ProgramEditor, SpecialistDashboard, WorkoutEditor, WorkoutLibrary,
+        ProgramEditor, SpecialistPatients, SpecialistPrograms, WorkoutEditor, WorkoutLibrary,
     },
 };
 use application::ports::Backend;
@@ -24,7 +24,9 @@ pub enum Route {
     #[route("/")]
     LoginView {},
     #[route("/specialist")]
-    SpecialistDashboard {},
+    SpecialistPatients {},
+    #[route("/specialist/programs")]
+    SpecialistPrograms {},
     #[route("/specialist/exercises")]
     ExerciseLibrary {},
     #[route("/specialist/workouts")]
