@@ -2,6 +2,7 @@
 //! muestra los ejercicios del entrenamiento y permite guardar/editar el feedback.
 
 use dioxus::prelude::*;
+use dioxus_primitives::slider::SliderValue;
 use dioxus_router::Link;
 
 use crate::domain::entities::{
@@ -9,6 +10,9 @@ use crate::domain::entities::{
 };
 use crate::infrastructure::app_context::AppContext;
 use crate::infrastructure::supabase::api::build_agenda_schedule;
+use crate::infrastructure::ui::components::{
+    Backview, Slider, SliderRange, SliderThumb, SliderTrack, Textarea, TextareaVariant,
+};
 use crate::Route;
 
 #[derive(Clone)]
@@ -229,13 +233,17 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                 }
                 None
             });
+            let effort = exercise_feedback().get(&ex_id).map(|t| t.0 as f64).unwrap_or(1.0);
+            let pain = exercise_feedback().get(&ex_id).map(|t| t.1 as f64).unwrap_or(0.0);
+            let comment = exercise_feedback().get(&ex_id).map(|t| t.2.clone()).unwrap_or_default();
+            log::info!("DEBUG ex_id: {ex_id}, effort: {effort}, pain: {pain}, comment: {comment}");
             rsx! {
                 div { class: "mb-4 p-3 rounded-md border border-border",
                     key: "{ex_id}",
-                    p { class: "font-medium", "{ex_name}" }
+                    p { class: "font-medium mb-2", "{ex_name}" }
                     if let Some(desc) = ex_desc.clone() {
                         if !desc.is_empty() {
-                            p { class: "text-sm text-text-muted mb-1", "{desc}" }
+                            p { class: "text-sm text-text-muted mb-2", "{desc}" }
                         }
                     }
                     p { class: "text-sm text-text-muted mb-2", "Series: {sets} × Repeticiones: {reps}" }
@@ -247,45 +255,63 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                             allowfullscreen: "true",
                         }
                     }
-                    div { class: "grid grid-cols-[auto_1fr] gap-2 text-sm",
-                        label { "Esfuerzo (1-10)" }
-                        input {
-                            r#type: "number",
-                            min: "1",
-                            max: "10",
-                            value: "{exercise_feedback().get(&ex_id).map(|t| t.0).unwrap_or(5)}",
-                            oninput: move |ev| {
-                                let v = ev.value().parse().unwrap_or(5);
-                                let mut m = exercise_feedback();
-                                let entry = m.entry(ex_id_effort.clone()).or_insert((5, 0, String::new()));
-                                entry.0 = v;
-                                exercise_feedback.set(m);
-                            },
+                    div {
+                        div { class: "flex items-start justify-start gap-4",
+                            label { class: "text-sm font-semibold mt-0 mb-0 w-1/4", "Esfuerzo" }
+                            Slider {
+                                min: 1.0,
+                                max: 10.0,
+                                step: 1.0,
+                                horizontal: true,
+                                default_value: SliderValue::Single(effort),
+                                value: Some(SliderValue::Single(effort)),
+                                on_value_change: move |value: SliderValue| {
+                                    let SliderValue::Single(v) = value;
+                                    let mut m = exercise_feedback();
+                                    let entry = m.entry(ex_id_effort.clone()).or_insert((v as i32, pain as i32, String::new()));
+                                    entry.0 = v as i32;
+                                    exercise_feedback.set(m);
+                                },
+                                SliderTrack {
+                                    SliderRange { }
+                                    SliderThumb {}
+                                }
+                            }
+                            span { class: "text-sm font-semibold mb-4", "{effort}" }
                         }
-                        label { "Dolor (0-10)" }
-                        input {
-                            r#type: "number",
-                            min: "0",
-                            max: "10",
-                            value: "{exercise_feedback().get(&ex_id).map(|t| t.1).unwrap_or(0)}",
-                            oninput: move |ev| {
-                                let v = ev.value().parse().unwrap_or(0);
-                                let mut m = exercise_feedback();
-                                let entry = m.entry(ex_id_pain.clone()).or_insert((5, 0, String::new()));
-                                entry.1 = v;
-                                exercise_feedback.set(m);
-                            },
+                        div { class: "flex items-start justify-start gap-4",
+                            label { class: "text-sm font-semibold mt-0 mb-0 w-1/4", "Dolor" }
+                            Slider {
+                                min: 0.0,
+                                max: 10.0,
+                                step: 1.0,
+                                horizontal: true,
+                                default_value: SliderValue::Single(pain),
+                                value: Some(SliderValue::Single(pain)),
+                                on_value_change: move |value: SliderValue| {
+                                    let SliderValue::Single(v) = value;
+                                    let mut m = exercise_feedback();
+                                    let entry = m.entry(ex_id_pain.clone()).or_insert((effort as i32, v as i32, String::new()));
+                                    entry.1 = v as i32;
+                                    exercise_feedback.set(m);
+                                },
+                                SliderTrack {
+                                    SliderRange { }
+                                    SliderThumb {}
+                                }
+                            }
+                            span { class: "text-sm font-semibold mb-4", "{pain}" }
                         }
-                        label { "Comentario" }
-                        input {
-                            class: "col-span-1",
+                        label { class: "text-sm font-semibold mt-0 mb-0", for: "comment-{ex_id}", "Comentario" }
+                        Textarea {
+                            id: "comment-{ex_id}",
+                            variant: TextareaVariant::Outline,
                             placeholder: "Opcional",
-                            value: "{exercise_feedback().get(&ex_id).map(|t| t.2.as_str()).unwrap_or(\"\")}",
-                            oninput: move |ev| {
-                                let v = ev.value().clone();
+                            value: "{comment}",
+                            oninput: move |e: FormEvent| {
                                 let mut m = exercise_feedback();
-                                let entry = m.entry(ex_id_comment.clone()).or_insert((5, 0, String::new()));
-                                entry.2 = v;
+                                let entry = m.entry(ex_id_comment.clone()).or_insert((effort as i32, pain as i32, e.value().clone()));
+                                entry.2 = e.value().clone();
                                 exercise_feedback.set(m);
                             },
                         }
@@ -308,18 +334,12 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
             class: "view container mx-auto patient-workout-day flex items-center justify-center",
             div {
                 class: "content pt-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
-                div { class: "relative mb-6",
-                    Link {
-                        to: Route::PatientDashboard {},
-                        class: "absolute left-0 top-0 text-primary no-underline inline-flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 hover:text-primary-hover",
-                        span { class: "text-lg", "←" }
-                    }
-                    h1 { class: "text-2xl font-semibold text-center",
-                        if !program_name.is_empty() {
-                            "{program_name}"
-                        } else {
-                            "Mi programa"
-                        }
+                Backview {
+                    to: Route::PatientDashboard {},
+                    if !program_name.is_empty() {
+                        "{program_name}"
+                    } else {
+                        "Mi programa"
                     }
                 }
                 if let Some(err) = data.read().as_ref().and_then(|r| r.as_ref().err()).cloned() {

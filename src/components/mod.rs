@@ -5,4 +5,6 @@ pub mod input;
 pub mod label;
 pub mod sheet;
 pub mod slider;
+pub mod textarea;
 pub mod tooltip;
+pub mod skeleton;
