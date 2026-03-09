@@ -1,0 +1,19 @@
+---
+alwaysApply: true
+---
+
+UI is implemented with Dioxus.
+
+Patterns:
+
+- Views are container components.
+- Business logic lives in custom hooks.
+- Child components are presentation-only.
+
+Example reference:
+src/infrastructure/ui/views/login.rs
+
+Dependency injection:
+
+src/infrastructure/app_context.rs
+acts as a dependency container.

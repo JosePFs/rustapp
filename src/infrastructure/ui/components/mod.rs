@@ -1,15 +1,14 @@
 mod agenda;
-mod button;
-mod card;
-mod input;
-mod label;
+#[path = "../../../components/mod.rs"]
+mod components;
 mod login;
-mod tooltip;
 
 pub use agenda::AgendaBlock;
-pub use button::Button;
-pub use card::*;
-pub use input::Input;
-pub use label::Label;
+pub use components::button::*;
+pub use components::card::*;
+pub use components::input::*;
+pub use components::label::*;
+pub use components::sheet::*;
+pub use components::slider::*;
+pub use components::tooltip::*;
 pub use login::*;
-pub use tooltip::*;

@@ -25,8 +25,7 @@ use dioxus::prelude::*;
 use dioxus_router::Link;
 
 use crate::domain::entities::{
-    PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback, Workout,
-    WorkoutSession,
+    PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession,
 };
 use crate::infrastructure::app_context::AppContext;
 use crate::infrastructure::ui::components::AgendaBlock;
@@ -129,13 +128,14 @@ pub fn PatientProgress(id: String) -> Element {
             div {
                 class: "content pt-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
                 {
+                    // Navbar desplegable: actúa como título de la página.
                     let mut nav_open = use_signal(|| false);
                     rsx! {
-                        nav { class: "relative mb-6 pb-4 border-b border-border",
+                        nav { class: "relative mb-6",
                             button {
-                                class: "min-h-11 px-3 rounded-md border border-border bg-surface hover:bg-gray-100 text-sm font-medium inline-flex items-center gap-1",
+                                class: "min-h-11 px-0 bg-transparent text-2xl font-semibold inline-flex items-center gap-2 text-text",
                                 onclick: move |_| nav_open.set(!nav_open()),
-                                span { "Menú" }
+                                span { "Progreso del paciente" }
                                 span { class: "text-xs", if nav_open() { "▲" } else { "▼" } }
                             }
                             if nav_open() {
@@ -157,7 +157,7 @@ pub fn PatientProgress(id: String) -> Element {
                                 class: "bg-surface rounded-lg p-4 mb-6 shadow-sm border border-border",
                                 h2 { class: "text-xl font-semibold mt-0 mb-2", "{pws.program.name}" }
                                 if let Some(ref desc) = pws.program.description {
-                                    p { class: "text-sm text-text-muted mb-1", "{desc}" }
+                                    p { class: "text-sm text-text-muted mb-2", "{desc}" }
                                 }
                                 p { class: "text-xs text-text-muted mb-2", "Estado: {pws.assignment.status}" }
                                 AgendaBlock {
@@ -165,7 +165,7 @@ pub fn PatientProgress(id: String) -> Element {
                                     program_feedback: pws.program_feedback.clone(),
                                     schedule: pws.schedule.clone(),
                                     workouts: pws.workouts.clone(),
-                                    title: "Agenda".to_string(),
+                                    title: "Progreso".to_string(),
                                     patient_program_id: None,
                                     write_selected_for_feedback: None,
                                 }

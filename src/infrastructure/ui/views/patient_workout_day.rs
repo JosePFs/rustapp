@@ -5,7 +5,7 @@ use dioxus::prelude::*;
 use dioxus_router::Link;
 
 use crate::domain::entities::{
-    ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession, WorkoutExercise,
+    ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutExercise, WorkoutSession,
 };
 use crate::infrastructure::app_context::AppContext;
 use crate::infrastructure::supabase::api::build_agenda_schedule;
@@ -16,6 +16,7 @@ struct WorkoutDayDetail {
     patient_program_id: String,
     program_name: String,
     workout_name: String,
+    workout_description: Option<String>,
     day_index: i32,
     session: Option<WorkoutSession>,
     exercises: Vec<WorkoutExercise>,
@@ -82,11 +83,11 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                 None => return Err("Este día es de descanso (sin entrenamiento)".to_string()),
             };
 
-            let workout_name = workouts
+            let (workout_name, workout_description) = workouts
                 .iter()
                 .find(|w| w.id == workout_id)
-                .map(|w| w.name.clone())
-                .unwrap_or(label);
+                .map(|w| (w.name.clone(), w.description.clone()))
+                .unwrap_or((label, None));
 
             let exercises = backend
                 .list_exercises_for_workout(sess.access_token(), &workout_id)
@@ -106,6 +107,7 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                 patient_program_id: pp.id,
                 program_name: program.name,
                 workout_name,
+                workout_description,
                 day_index: day_idx,
                 session: session_for_day,
                 exercises,
@@ -160,14 +162,15 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
 
     let detail = data.read().as_ref().and_then(|r| r.as_ref().ok().cloned());
 
-    let (program_name, workout_name, day_idx, session_opt) = match &detail {
+    let (program_name, workout_name, workout_description, day_idx, session_opt) = match &detail {
         Some(d) => (
             d.program_name.clone(),
             d.workout_name.clone(),
+            d.workout_description.clone(),
             d.day_index,
             d.session.clone(),
         ),
-        None => (String::new(), String::new(), day_index_val, None),
+        None => (String::new(), String::new(), None, day_index_val, None),
     };
 
     let feedback_completed = session_opt
@@ -175,30 +178,75 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
         .map(|s| s.completed_at.is_some())
         .unwrap_or(false);
     let feedback_sid = session_opt.as_ref().map(|s| s.id.clone());
-    let exercises_for_detail = detail.as_ref().map(|d| d.exercises.clone()).unwrap_or_default();
-    let exercise_row_data: Vec<(String, String, i32, i32)> = exercises_for_detail
-        .iter()
-        .map(|we| {
-            (
-                we.exercise.id.clone(),
-                we.exercise.name.clone(),
-                we.sets,
-                we.reps,
-            )
-        })
-        .collect();
+    let exercises_for_detail = detail
+        .as_ref()
+        .map(|d| d.exercises.clone())
+        .unwrap_or_default();
+    let exercise_row_data: Vec<(String, String, Option<String>, Option<String>, i32, i32)> =
+        exercises_for_detail
+            .iter()
+            .map(|we| {
+                (
+                    we.exercise.id.clone(),
+                    we.exercise.name.clone(),
+                    we.exercise.description.clone(),
+                    we.exercise.video_url.clone(),
+                    we.sets,
+                    we.reps,
+                )
+            })
+            .collect();
 
     let exercise_rows: Vec<dioxus::prelude::Element> = exercise_row_data
         .into_iter()
-        .map(|(ex_id, ex_name, sets, reps)| {
+        .map(|(ex_id, ex_name, ex_desc, ex_video_url, sets, reps)| {
             let ex_id_effort = ex_id.clone();
             let ex_id_pain = ex_id.clone();
             let ex_id_comment = ex_id.clone();
+            let embed_url = ex_video_url.as_ref().and_then(|u| {
+                // Extrae el ID de YouTube y construye la URL embebida.
+                if let Some(pos) = u.find("v=") {
+                    let id = u[pos + 2..]
+                        .split('&')
+                        .next()
+                        .unwrap_or("")
+                        .trim()
+                        .to_string();
+                    if !id.is_empty() {
+                        return Some(format!("https://www.youtube.com/embed/{}", id));
+                    }
+                }
+                if let Some(pos) = u.rfind('/') {
+                    let id = u[pos + 1..]
+                        .split(&['?', '&'][..])
+                        .next()
+                        .unwrap_or("")
+                        .trim()
+                        .to_string();
+                    if !id.is_empty() {
+                        return Some(format!("https://www.youtube.com/embed/{}", id));
+                    }
+                }
+                None
+            });
             rsx! {
                 div { class: "mb-4 p-3 rounded-md border border-border",
                     key: "{ex_id}",
                     p { class: "font-medium", "{ex_name}" }
+                    if let Some(desc) = ex_desc.clone() {
+                        if !desc.is_empty() {
+                            p { class: "text-sm text-text-muted mb-1", "{desc}" }
+                        }
+                    }
                     p { class: "text-sm text-text-muted mb-2", "Series: {sets} × Repeticiones: {reps}" }
+                    if let Some(embed) = embed_url.clone() {
+                        iframe {
+                            class: "w-full mb-3 aspect-video rounded-md border border-border bg-black",
+                            src: "{embed}",
+                            allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
+                            allowfullscreen: "true",
+                        }
+                    }
                     div { class: "grid grid-cols-[auto_1fr] gap-2 text-sm",
                         label { "Esfuerzo (1-10)" }
                         input {
@@ -260,37 +308,45 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
             class: "view container mx-auto patient-workout-day flex items-center justify-center",
             div {
                 class: "content pt-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
-                h1 { class: "text-2xl font-semibold mb-4", "Mi programa de entrenamiento" }
-                nav { class: "flex flex-wrap gap-2 mb-6 pb-4 border-b border-border",
-                    Link { to: Route::PatientDashboard {}, class: "text-primary no-underline text-sm min-h-11 inline-flex items-center px-2 rounded-md hover:bg-gray-100", "← Volver a mi programa" }
+                div { class: "relative mb-6",
+                    Link {
+                        to: Route::PatientDashboard {},
+                        class: "absolute left-0 top-0 text-primary no-underline inline-flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 hover:text-primary-hover",
+                        span { class: "text-lg", "←" }
+                    }
+                    h1 { class: "text-2xl font-semibold text-center",
+                        if !program_name.is_empty() {
+                            "{program_name}"
+                        } else {
+                            "Mi programa"
+                        }
+                    }
                 }
                 if let Some(err) = data.read().as_ref().and_then(|r| r.as_ref().err()).cloned() {
                     p { class: "text-error", "{err}" }
                 } else if detail.is_none() {
                     p { "Cargando..." }
                 } else {
-                    h2 { class: "text-xl font-semibold mb-2", "Entrenamiento: {workout_name}" }
-                    if !program_name.is_empty() {
-                        p { class: "text-sm text-text-muted mb-4", "Programa: {program_name}" }
-                    }
-
-                    section { class: "bg-surface rounded-lg p-4 mb-6 border border-border",
-                        h3 { class: "text-lg font-semibold mt-0 mb-4", "Sesión" }
-                        label { class: "block mb-2", "Fecha (cuando lo realizaste)"
-                            input {
-                                r#type: "date",
-                                value: "{session_date()}",
-                                oninput: move |ev| session_date.set(ev.value().clone()),
-                            }
+                    h2 { class: "text-xl font-semibold mb-1", "{workout_name}" }
+                    if let Some(desc) = workout_description.clone() {
+                        if !desc.is_empty() {
+                            p { class: "text-sm text-text-muted mb-3", "{desc}" }
                         }
                     }
-
-                    section { class: "bg-surface rounded-lg p-4 mb-6 border border-border",
-                        h3 { class: "text-lg font-semibold mt-0 mb-2", "Ejercicios y feedback por ejercicio" }
+                    section {
                         if exercise_rows.is_empty() {
                             p { class: "text-sm text-text-muted", "Este entrenamiento no tiene ejercicios configurados." }
                         } else {
                             {exercise_rows.into_iter()}
+                        }
+                        section { class: "bg-surface rounded-lg p-4 mb-6 border border-border flex flex-wrap items-center gap-2",
+                            p { class: "text-medium font-semibold mt-0 mb-0", "Completado el" }
+                            input {
+                                class: "min-h-11 px-3 border border-border rounded-md bg-surface focus:outline-none focus:border-primary",
+                                r#type: "date",
+                                value: "{session_date()}",
+                                oninput: move |ev| session_date.set(ev.value().clone()),
+                            }
                         }
                         button {
                             class: "mt-4 min-h-11 px-4 rounded-md bg-primary text-white font-medium",

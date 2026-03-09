@@ -1,0 +1,19 @@
+---
+alwaysApply: true
+---
+
+Language:
+
+- English naming
+- Follow DDD ubiquitous language
+
+Principles:
+
+- Clean Code
+- SOLID
+- Prefer composition over inheritance
+
+Testing:
+
+Code must be easy to test.
+Prefer dependency injection through ports.

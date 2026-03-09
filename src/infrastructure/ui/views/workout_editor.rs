@@ -273,15 +273,15 @@ pub fn WorkoutEditor(id: String) -> Element {
         div { class: "view container mx-auto workout-editor flex items-center justify-center",
             div {
                 class: "content pt-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
-                h1 { class: "text-2xl font-semibold mb-4", "Entrenamiento" }
                 {
+                    // Navbar desplegable: actúa como título de la página.
                     let mut nav_open = use_signal(|| false);
                     rsx! {
-                        nav { class: "relative mb-6 pb-4 border-b border-border",
+                        nav { class: "relative mb-6",
                             button {
-                                class: "min-h-11 px-3 rounded-md border border-border bg-surface hover:bg-gray-100 text-sm font-medium inline-flex items-center gap-1",
+                                class: "min-h-11 px-0 bg-transparent text-2xl font-semibold inline-flex items-center gap-2 text-text",
                                 onclick: move |_| nav_open.set(!nav_open()),
-                                span { "Menú" }
+                                span { "Entrenamiento" }
                                 span { class: "text-xs", if nav_open() { "▲" } else { "▼" } }
                             }
                             if nav_open() {

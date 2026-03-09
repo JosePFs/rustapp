@@ -1,0 +1,12 @@
+---
+alwaysApply: true
+---
+
+UI is implemented using Dioxus.
+
+Rules:
+
+- Components must not contain business logic.
+- Components call application services.
+- State should be minimal and UI focused.
+- Avoid raw RSX when a Dioxus component already exists from: https://dioxuslabs.com/components
