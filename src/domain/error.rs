@@ -7,6 +7,7 @@ use std::{
 pub enum DomainError {
     Login(String),
     Api(String),
+    SessionNotFound,
 }
 
 impl Display for DomainError {
@@ -14,6 +15,7 @@ impl Display for DomainError {
         match self {
             DomainError::Login(msg) => write!(f, "{msg}"),
             DomainError::Api(msg) => write!(f, "{msg}"),
+            DomainError::SessionNotFound => write!(f, "Session not found"),
         }
     }
 }

@@ -4048,6 +4048,7 @@ dependencies = [
  "dioxus-i18n",
  "dioxus-primitives",
  "dioxus-router",
+ "futures",
  "gloo-net",
  "gloo-utils",
  "js-sys",
@@ -4055,6 +4056,7 @@ dependencies = [
  "reqwest 0.13.2",
  "serde",
  "serde_json",
+ "stream",
  "unic-langid",
  "uuid",
  "wasm-bindgen",
@@ -4520,6 +4522,12 @@ name = "stable_deref_trait"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
+
+[[package]]
+name = "stream"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e8ebef4f26afbe9fb6c7bb91b36974510c742402d25228f6a405e19970b9ae9"
 
 [[package]]
 name = "string_cache"

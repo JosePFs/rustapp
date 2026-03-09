@@ -156,8 +156,6 @@ impl From<ProgramDto> for Program {
             specialist_id: dto.specialist_id,
             name: dto.name,
             description: dto.description,
-            created_at: dto.created_at,
-            updated_at: dto.updated_at,
         }
     }
 }
@@ -211,9 +209,6 @@ impl From<PatientProgramDto> for PatientProgram {
             patient_id: dto.patient_id,
             program_id: dto.program_id,
             status: dto.status,
-            assigned_at: dto.assigned_at,
-            created_at: dto.created_at,
-            updated_at: dto.updated_at,
         }
     }
 }

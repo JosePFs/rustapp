@@ -17,8 +17,6 @@ pub struct Program {
     pub specialist_id: String,
     pub name: String,
     pub description: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
 }
 
 /// Entrenamiento reutilizable en programas.
@@ -83,9 +81,6 @@ pub struct PatientProgram {
     pub patient_id: String,
     pub program_id: String,
     pub status: String,
-    pub assigned_at: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
 }
 
 /// Sesión de entrenamiento de un día (feedback por ejercicio). El "nombre" de la sesión es el del entrenamiento (solo el especialista lo edita).

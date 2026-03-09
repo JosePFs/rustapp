@@ -1,89 +1,30 @@
-//! Patient dashboard: list active program(s) and agenda.
-//! Al hacer clic en un día de entrenamiento se navega a una página específica
-//! donde se muestran los ejercicios y se edita el feedback.
-
 use dioxus::prelude::*;
-use dioxus_router::{use_navigator, Link};
+
+use dioxus_i18n::t;
+use dioxus_router::use_navigator;
 
 use crate::Route;
 
-use crate::domain::entities::{
-    ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession,
-};
 use crate::infrastructure::app_context::AppContext;
 use crate::infrastructure::ui::components::AgendaBlock;
-
-#[derive(Clone, PartialEq)]
-struct PatientProgramData {
-    patient_program_id: String,
-    program_id: String,
-    program_name: String,
-    program_description: Option<String>,
-    schedule: Vec<ProgramScheduleItem>,
-    workouts: Vec<Workout>,
-    sessions: Vec<WorkoutSession>,
-    program_feedback: Vec<SessionExerciseFeedback>,
-}
+use crate::infrastructure::ui::hooks::patient_programs::use_patient_programs;
 
 #[component]
 pub fn PatientDashboard() -> Element {
+    let navigator = use_navigator();
     let app_context = use_context::<AppContext>();
     let backend = app_context.backend();
     let session_signal = app_context.session();
+    let patient_programs_data =
+        use_patient_programs(session_signal.read().clone(), backend.clone());
+    let mut selected_for_feedback = use_signal(|| Option::<(String, i32)>::None);
 
-    let data = use_resource(move || {
-        let backend = backend.clone();
-        let session = session_signal.read().clone();
-        let backend = backend.clone();
-        async move {
-            let sess = match session {
-                Some(s) => s,
-                None => return Err("No session".to_string()),
-            };
-            let token = sess.access_token();
-            let assignments = backend.list_active_patient_programs(token).await?;
-            let mut out = Vec::new();
-            for ass in assignments {
-                let prog = match backend.get_program(token, &ass.program_id).await? {
-                    Some(p) => p,
-                    None => continue,
-                };
-                let workouts = backend
-                    .list_workouts_for_program(token, &ass.program_id)
-                    .await
-                    .unwrap_or_default();
-                let schedule = backend
-                    .list_program_schedule(token, &ass.program_id)
-                    .await
-                    .unwrap_or_default();
-                let sessions = backend
-                    .list_workout_sessions(token, &ass.id)
-                    .await
-                    .unwrap_or_default();
-                let program_feedback = backend
-                    .list_session_exercise_feedback_for_program(token, &ass.id)
-                    .await
-                    .unwrap_or_default();
-                out.push(PatientProgramData {
-                    patient_program_id: ass.id.clone(),
-                    program_id: ass.program_id.clone(),
-                    program_name: prog.name,
-                    program_description: prog.description,
-                    schedule,
-                    workouts,
-                    sessions,
-                    program_feedback,
-                });
-            }
-            Ok::<_, String>(out)
+    use_effect(move || {
+        if session_signal.read().is_none() {
+            navigator.push(Route::LoginView {});
         }
     });
 
-    let mut selected_for_feedback = use_signal(|| Option::<(String, i32)>::None);
-    let navigator = use_navigator();
-
-    // Cuando el paciente selecciona un día de entrenamiento en la agenda,
-    // navegamos a la página de detalle de ese día (entrenamiento + feedback).
     use_effect(move || {
         let (pid, day_index) = match selected_for_feedback() {
             Some(v) => v,
@@ -96,35 +37,24 @@ pub fn PatientDashboard() -> Element {
         selected_for_feedback.set(None);
     });
 
-    let programs = data
+    let programs_data = patient_programs_data
         .read()
         .as_ref()
         .and_then(|r| r.as_ref().ok().cloned())
         .unwrap_or_default();
 
-    let session = session_signal.read().clone();
-    if session.is_none() {
-        return rsx! {
-            div { "Debes iniciar sesión. " Link { to: Route::LoginView {}, "Ir a login" } }
-        };
-    }
-
     rsx! {
-        div {
-            class: "view container mx-auto patient-dashboard flex items-center justify-center",
-            div {
-                class: "content pt-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
+        div { class: "view container mx-auto patient-dashboard flex items-center justify-center",
+            div { class: "content pt-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
                 div { class: "flex items-center justify-between mb-6",
                     h1 { class: "text-2xl font-semibold", "Mis programas" }
                 }
-                if programs.is_empty() && data.read().as_ref().as_ref().map(|r| r.is_ok()).unwrap_or(false) {
-                    p { class: "text-text-muted italic", "No tienes programas activos asignados." }
-                } else if data.read().as_ref().as_ref().map(|r| r.is_err()).unwrap_or(false) {
-                    p { class: "text-error", "Error al cargar los programas." }
-                } else if programs.is_empty() {
-                    p { "Cargando..." }
+                if patient_programs_data.pending() {
+                    p { class: "text-text-muted italic", { t!("loading_programs") } }
+                } else if programs_data.is_empty() {
+                    p { class: "text-text-muted italic", { t!("no_programs_assigned") } }
                 } else {
-                    for prog in programs.iter() {
+                    for prog in programs_data.iter() {
                         section { key: "{prog.patient_program_id}", class: "bg-surface border border-border rounded-md p-4 mb-4",
                             h2 { class: "text-xl font-semibold mt-0 mb-2", "{prog.program_name}" }
                             if let Some(ref desc) = prog.program_description {
