@@ -83,6 +83,12 @@ pub struct PatientProgram {
     pub status: String,
 }
 
+impl PatientProgram {
+    pub fn is_active(&self) -> bool {
+        self.status == "active"
+    }
+}
+
 /// Sesión de entrenamiento de un día (feedback por ejercicio). El "nombre" de la sesión es el del entrenamiento (solo el especialista lo edita).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WorkoutSession {

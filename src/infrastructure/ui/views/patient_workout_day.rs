@@ -5,120 +5,26 @@ use dioxus::prelude::*;
 use dioxus_primitives::slider::SliderValue;
 use dioxus_router::Link;
 
-use crate::domain::entities::{
-    ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutExercise, WorkoutSession,
-};
 use crate::infrastructure::app_context::AppContext;
-use crate::infrastructure::supabase::api::build_agenda_schedule;
 use crate::infrastructure::ui::components::{
     Backview, Slider, SliderRange, SliderThumb, SliderTrack, Textarea, TextareaVariant,
 };
+use crate::infrastructure::ui::hooks::workout_day_detail::use_workout_day_detail;
 use crate::Route;
-
-#[derive(Clone)]
-struct WorkoutDayDetail {
-    patient_program_id: String,
-    program_name: String,
-    workout_name: String,
-    workout_description: Option<String>,
-    day_index: i32,
-    session: Option<WorkoutSession>,
-    exercises: Vec<WorkoutExercise>,
-    feedback: Vec<SessionExerciseFeedback>,
-}
 
 #[component]
 pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Element {
     let app_context = use_context::<AppContext>();
     let backend = app_context.backend();
     let session_signal = app_context.session();
+
     let day_index_val = day_index.parse::<i32>().unwrap_or(0);
-
-    let backend_for_resource = backend.clone();
-    let data = use_resource(move || {
-        let backend = backend_for_resource.clone();
-        let session = session_signal.read().clone();
-        let pid = patient_program_id.clone();
-        let day_idx = day_index_val;
-        async move {
-            let sess = match session {
-                Some(s) => s,
-                None => return Err("No session".to_string()),
-            };
-
-            let pp_opt = backend
-                .get_patient_program_by_id(sess.access_token(), &pid)
-                .await?;
-            let pp = match pp_opt {
-                Some(p) if p.status == "active" => p,
-                _ => return Err("No se encuentra la asignación activa".to_string()),
-            };
-
-            let program = match backend
-                .get_program(sess.access_token(), &pp.program_id)
-                .await?
-            {
-                Some(p) => p,
-                None => return Err("Programa no encontrado".to_string()),
-            };
-
-            let schedule: Vec<ProgramScheduleItem> = backend
-                .list_program_schedule(sess.access_token(), &pp.program_id)
-                .await
-                .unwrap_or_default();
-            let workouts: Vec<Workout> = backend
-                .list_workouts_for_program(sess.access_token(), &pp.program_id)
-                .await
-                .unwrap_or_default();
-            let sessions: Vec<WorkoutSession> = backend
-                .list_workout_sessions(sess.access_token(), &pp.id)
-                .await
-                .unwrap_or_default();
-
-            let day_schedule = build_agenda_schedule(&schedule, &workouts);
-            let (_, workout_id_opt, label) = day_schedule
-                .iter()
-                .find(|(i, _, _)| *i == day_idx)
-                .cloned()
-                .ok_or_else(|| "Día no encontrado en la programación".to_string())?;
-
-            let workout_id = match workout_id_opt {
-                Some(id) => id,
-                None => return Err("Este día es de descanso (sin entrenamiento)".to_string()),
-            };
-
-            let (workout_name, workout_description) = workouts
-                .iter()
-                .find(|w| w.id == workout_id)
-                .map(|w| (w.name.clone(), w.description.clone()))
-                .unwrap_or((label, None));
-
-            let exercises = backend
-                .list_exercises_for_workout(sess.access_token(), &workout_id)
-                .await?;
-
-            let session_for_day = sessions.into_iter().find(|s| s.day_index == day_idx);
-            let feedback = if let Some(ref s) = session_for_day {
-                backend
-                    .list_session_exercise_feedback(sess.access_token(), &s.id)
-                    .await
-                    .unwrap_or_default()
-            } else {
-                vec![]
-            };
-
-            Ok::<_, String>(WorkoutDayDetail {
-                patient_program_id: pp.id,
-                program_name: program.name,
-                workout_name,
-                workout_description,
-                day_index: day_idx,
-                session: session_for_day,
-                exercises,
-                feedback,
-            })
-        }
-    });
+    let workout_day_detail = use_workout_day_detail(
+        session_signal.read().clone(),
+        backend.clone(),
+        patient_program_id.clone(),
+        day_index_val,
+    );
 
     let mut session_date = use_signal(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
     let mut exercise_feedback =
@@ -126,36 +32,37 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
     let mut submit_loading = use_signal(|| false);
     let mut submit_error = use_signal(|| Option::<String>::None);
 
-    {
-        let data = data.clone();
-        use_effect(move || {
-            let detail = data.read().as_ref().and_then(|r| r.as_ref().ok().cloned());
-            if let Some(d) = detail {
-                if let Some(ref sess) = d.session {
-                    session_date.set(sess.session_date.clone());
-                } else {
-                    session_date.set(chrono::Utc::now().format("%Y-%m-%d").to_string());
-                }
-                let mut map = std::collections::HashMap::new();
-                for we in &d.exercises {
-                    let (effort, pain, comment) = d
-                        .feedback
-                        .iter()
-                        .find(|f| f.exercise_id == we.exercise.id)
-                        .map(|f| {
-                            (
-                                f.effort.unwrap_or(5),
-                                f.pain.unwrap_or(0),
-                                f.comment.clone().unwrap_or_default(),
-                            )
-                        })
-                        .unwrap_or((5, 0, String::new()));
-                    map.insert(we.exercise.id.clone(), (effort, pain, comment));
-                }
-                exercise_feedback.set(map);
+    use_effect(move || {
+        let detail = workout_day_detail
+            .read()
+            .as_ref()
+            .and_then(|r| r.as_ref().ok().cloned());
+
+        if let Some(d) = detail {
+            if let Some(ref sess) = d.session {
+                session_date.set(sess.session_date.clone());
+            } else {
+                session_date.set(chrono::Utc::now().format("%Y-%m-%d").to_string());
             }
-        });
-    }
+            let mut map = std::collections::HashMap::new();
+            for we in &d.exercises {
+                let (effort, pain, comment) = d
+                    .feedback
+                    .iter()
+                    .find(|f| f.exercise_id == we.exercise.id)
+                    .map(|f| {
+                        (
+                            f.effort.unwrap_or(5),
+                            f.pain.unwrap_or(0),
+                            f.comment.clone().unwrap_or_default(),
+                        )
+                    })
+                    .unwrap_or((5, 0, String::new()));
+                map.insert(we.exercise.id.clone(), (effort, pain, comment));
+            }
+            exercise_feedback.set(map);
+        }
+    });
 
     let session = session_signal.read().clone();
     if session.is_none() {
@@ -164,7 +71,10 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
         };
     }
 
-    let detail = data.read().as_ref().and_then(|r| r.as_ref().ok().cloned());
+    let detail = workout_day_detail
+        .read()
+        .as_ref()
+        .and_then(|r| r.as_ref().ok().cloned());
 
     let (program_name, workout_name, workout_description, day_idx, session_opt) = match &detail {
         Some(d) => (
@@ -327,7 +237,7 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
     let backend_submit = backend.clone();
     let backend_uncomplete = backend.clone();
     let session_signal_clone = session_signal.clone();
-    let data_clone = data.clone();
+    let data_clone = workout_day_detail.clone();
 
     rsx! {
         div {
@@ -342,7 +252,7 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                         "Mi programa"
                     }
                 }
-                if let Some(err) = data.read().as_ref().and_then(|r| r.as_ref().err()).cloned() {
+                if let Some(err) = workout_day_detail.read().as_ref().and_then(|r| r.as_ref().err()).cloned() {
                     p { class: "text-error", "{err}" }
                 } else if detail.is_none() {
                     p { "Cargando..." }
@@ -447,7 +357,7 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                                     let Some(sess) = sess else { return };
                                     let token = sess.access_token().to_string();
                                     let session_id = session_id.clone();
-                                    let mut data = data.clone();
+                                    let mut data = workout_day_detail.clone();
                                     submit_loading.set(true);
                                     submit_error.set(None);
                                     spawn(async move {
