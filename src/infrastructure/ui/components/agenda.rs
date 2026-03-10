@@ -6,6 +6,7 @@ use crate::domain::entities::{
     ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession,
 };
 use crate::infrastructure::supabase::api::build_agenda_schedule;
+use crate::infrastructure::ui::components::{Progress, ProgressIndicator};
 
 #[component]
 pub fn AgendaBlock(
@@ -30,7 +31,7 @@ pub fn AgendaBlock(
         .iter()
         .filter(|s| s.completed_at.is_some() && training_day_indexes.contains(&s.day_index))
         .count();
-    let pct = if total_training_days > 0 {
+    let percentage_completed = if total_training_days > 0 {
         completed_count as f64 / total_training_days as f64 * 100.0
     } else {
         0.0
@@ -204,11 +205,14 @@ pub fn AgendaBlock(
         section {
             h3 { class: "font-semibold mb-2", "{title}" }
             div { class: "text-sm text-text-muted mb-4",
-                { t!("completed") } " { pct:.0 }%"
-                span { class: "mx-1", " | " }
-                { t!("average_effort") } " {avg_effort_str}"
-                span { class: "mx-1", " | " }
-                { t!("average_pain") } " {avg_pain_str}"
+                div { class: "w-full flex items-center justify-between flex-row mb-2",
+                    Progress { aria_label:  t!("progress") , value: percentage_completed, ProgressIndicator {} }
+                    span { class: "text-sm text-text-muted",  "{ percentage_completed:.0 }%" }
+                }
+                div { class: "w-full flex items-center justify-between flex-row",
+                    span { class: "w-1/2 text-sm text-text-muted", { t!("average_effort") } " {avg_effort_str}" }
+                    span { class: "w-1/2 text-sm text-text-muted", { t!("average_pain") } " {avg_pain_str}" }
+                }
             }
             ul { class: "list-none p-0 m-0",
                 {day_rows.into_iter()}

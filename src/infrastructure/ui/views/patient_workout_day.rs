@@ -165,10 +165,10 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                         }
                     }
                     CardContent {
-                        p { class: "text-sm text-text-muted mb-2", "Series: {sets} × Repeticiones: {reps}" }
+                        p { class: "text-sm font-semibold text-text-muted mb-2", "Series: {sets} × Repeticiones: {reps}" }
                         if let Some(embed) = embed_url.clone() {
                             iframe {
-                                class: "w-full mb-3 aspect-video rounded-md border border-border bg-black",
+                                class: "w-full mb-6 aspect-video rounded-md border border-border bg-black",
                                 src: "{embed}",
                                 allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
                                 allowfullscreen: "true",
@@ -176,7 +176,7 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                         }
                         div {
                             div { class: "flex items-start justify-start gap-4",
-                                label { class: "text-sm font-semibold mt-0 mb-0 w-1/4", "Esfuerzo" }
+                                label { class: "text-sm mt-0 mb-0 w-1/4", "Esfuerzo" }
                                 Slider {
                                     min: 1.0,
                                     max: 10.0,
@@ -199,7 +199,7 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                                 span { class: "text-sm font-semibold mb-4", "{effort}" }
                             }
                             div { class: "flex items-start justify-start gap-4",
-                                label { class: "text-sm font-semibold mt-0 mb-0 w-1/4", "Dolor" }
+                                label { class: "text-sm mt-0 mb-0 w-1/4", "Dolor" }
                                 Slider {
                                     min: 0.0,
                                     max: 10.0,
@@ -221,7 +221,7 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                                 }
                                 span { class: "text-sm font-semibold mb-4", "{pain}" }
                             }
-                            label { class: "text-sm font-semibold mt-0 mb-0", for: "comment-{ex_id}", "Comentario" }
+                            label { class: "text-sm mt-0 mb-0", for: "comment-{ex_id}", "Comentario" }
                             Textarea {
                                 id: "comment-{ex_id}",
                                 variant: TextareaVariant::Outline,
