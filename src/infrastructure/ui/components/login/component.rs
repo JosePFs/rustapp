@@ -9,7 +9,6 @@ use crate::infrastructure::ui::components::{
 pub enum LoginResult {
     None,
     Pending,
-    Success,
     Error(String),
 }
 

@@ -1,11 +1,12 @@
 use dioxus::prelude::*;
 
+use dioxus_i18n::t;
+
 use crate::domain::entities::{
     ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession,
 };
 use crate::infrastructure::supabase::api::build_agenda_schedule;
 
-/// When provided, clicking a slot writes (patient_program_id, day_index) so the parent can show the feedback form.
 #[component]
 pub fn AgendaBlock(
     sessions: Vec<WorkoutSession>,
@@ -141,18 +142,22 @@ pub fn AgendaBlock(
         (sess.clone(), label)
     });
 
-    let detail_block: Option<dioxus::prelude::Element> = if let Some((
-        ref sess,
-        ref completed_label,
-    )) = detail_with_label
+    let detail_block: Option<Element> = if let Some((ref sess, ref completed_label)) =
+        detail_with_label
     {
         let sess = sess.clone();
         let completed_label = (*completed_label).to_string();
-        let session_feedbacks = feedback_by_session.get(&sess.id).cloned().unwrap_or_default();
+        let session_feedbacks = feedback_by_session
+            .get(&sess.id)
+            .cloned()
+            .unwrap_or_default();
         let (eff_avg, pain_avg) = if session_feedbacks.is_empty() {
             (String::new(), String::new())
         } else {
-            let e: f64 = session_feedbacks.iter().filter_map(|f| f.effort).sum::<i32>() as f64
+            let e: f64 = session_feedbacks
+                .iter()
+                .filter_map(|f| f.effort)
+                .sum::<i32>() as f64
                 / session_feedbacks.len() as f64;
             let p: f64 = session_feedbacks.iter().filter_map(|f| f.pain).sum::<i32>() as f64
                 / session_feedbacks.len() as f64;
@@ -196,14 +201,14 @@ pub fn AgendaBlock(
     };
 
     rsx! {
-        section { class: "mb-6",
-            h2 { class: "text-xl font-semibold mb-2", "{title}" }
+        section {
+            h3 { class: "font-semibold mb-2", "{title}" }
             div { class: "text-sm text-text-muted mb-4",
-                "Días completados: {pct:.0}%"
+                { t!("completed") } " { pct:.0 }%"
                 span { class: "mx-1", " | " }
-                "Esfuerzo medio: {avg_effort_str}"
+                { t!("average_effort") } " {avg_effort_str}"
                 span { class: "mx-1", " | " }
-                "Dolor medio: {avg_pain_str}"
+                { t!("average_pain") } " {avg_pain_str}"
             }
             ul { class: "list-none p-0 m-0",
                 {day_rows.into_iter()}

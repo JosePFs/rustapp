@@ -8,3 +8,4 @@ pub mod slider;
 pub mod textarea;
 pub mod tooltip;
 pub mod skeleton;
+pub mod progress;

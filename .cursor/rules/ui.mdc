@@ -10,8 +10,14 @@ Patterns:
 - Business logic lives in custom hooks.
 - Child components are presentation-only.
 
-Example reference:
-src/infrastructure/ui/views/login.rs
+Examples reference:
+
+- use_action
+  src/infrastructure/ui/views/login.rs
+  src/infrastructure/ui/hooks/login.rs
+- use_resource
+  src/infrastructure/ui/views/patient_dashboard.rs
+  src/infrastructure/ui/hooks/patient_programs.rs
 
 Dependency injection:
 

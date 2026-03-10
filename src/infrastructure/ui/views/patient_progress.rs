@@ -124,9 +124,9 @@ pub fn PatientProgress(id: String) -> Element {
 
     rsx! {
         div {
-            class: "view container mx-auto patient-progress flex items-center justify-center",
+            class: "view container mx-auto patient-progress",
             div {
-                class: "content pt-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
+                class: "content min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
                 {
                     // Navbar desplegable: actúa como título de la página.
                     let mut nav_open = use_signal(|| false);

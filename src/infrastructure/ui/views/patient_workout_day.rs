@@ -2,12 +2,14 @@
 //! muestra los ejercicios del entrenamiento y permite guardar/editar el feedback.
 
 use dioxus::prelude::*;
+
 use dioxus_primitives::slider::SliderValue;
 use dioxus_router::Link;
+use dioxus_i18n::t;
 
 use crate::infrastructure::app_context::AppContext;
 use crate::infrastructure::ui::components::{
-    Backview, Slider, SliderRange, SliderThumb, SliderTrack, Textarea, TextareaVariant,
+    Backview, Button, ButtonVariant, Card, CardContent, CardDescription, CardHeader, CardTitle, SkeletonCard, Slider, SliderRange, SliderThumb, SliderTrack, Textarea, TextareaVariant
 };
 use crate::infrastructure::ui::hooks::workout_day_detail::use_workout_day_detail;
 use crate::Route;
@@ -118,7 +120,6 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
             let ex_id_pain = ex_id.clone();
             let ex_id_comment = ex_id.clone();
             let embed_url = ex_video_url.as_ref().and_then(|u| {
-                // Extrae el ID de YouTube y construye la URL embebida.
                 if let Some(pos) = u.find("v=") {
                     let id = u[pos + 2..]
                         .split('&')
@@ -143,89 +144,99 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                 }
                 None
             });
+            
             let effort = exercise_feedback().get(&ex_id).map(|t| t.0 as f64).unwrap_or(1.0);
             let pain = exercise_feedback().get(&ex_id).map(|t| t.1 as f64).unwrap_or(0.0);
             let comment = exercise_feedback().get(&ex_id).map(|t| t.2.clone()).unwrap_or_default();
-            log::info!("DEBUG ex_id: {ex_id}, effort: {effort}, pain: {pain}, comment: {comment}");
             rsx! {
-                div { class: "mb-4 p-3 rounded-md border border-border",
+                article { class: "mb-4",
+                    Card {
                     key: "{ex_id}",
-                    p { class: "font-medium mb-2", "{ex_name}" }
-                    if let Some(desc) = ex_desc.clone() {
-                        if !desc.is_empty() {
-                            p { class: "text-sm text-text-muted mb-2", "{desc}" }
+                    CardHeader {
+                        CardTitle {
+                            "{ex_name}"
                         }
-                    }
-                    p { class: "text-sm text-text-muted mb-2", "Series: {sets} × Repeticiones: {reps}" }
-                    if let Some(embed) = embed_url.clone() {
-                        iframe {
-                            class: "w-full mb-3 aspect-video rounded-md border border-border bg-black",
-                            src: "{embed}",
-                            allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
-                            allowfullscreen: "true",
-                        }
-                    }
-                    div {
-                        div { class: "flex items-start justify-start gap-4",
-                            label { class: "text-sm font-semibold mt-0 mb-0 w-1/4", "Esfuerzo" }
-                            Slider {
-                                min: 1.0,
-                                max: 10.0,
-                                step: 1.0,
-                                horizontal: true,
-                                default_value: SliderValue::Single(effort),
-                                value: Some(SliderValue::Single(effort)),
-                                on_value_change: move |value: SliderValue| {
-                                    let SliderValue::Single(v) = value;
-                                    let mut m = exercise_feedback();
-                                    let entry = m.entry(ex_id_effort.clone()).or_insert((v as i32, pain as i32, String::new()));
-                                    entry.0 = v as i32;
-                                    exercise_feedback.set(m);
-                                },
-                                SliderTrack {
-                                    SliderRange { }
-                                    SliderThumb {}
+                        if let Some(desc) = ex_desc.clone() {
+                            if !desc.is_empty() {
+                                CardDescription {
+                                    "{desc}"
                                 }
                             }
-                            span { class: "text-sm font-semibold mb-4", "{effort}" }
-                        }
-                        div { class: "flex items-start justify-start gap-4",
-                            label { class: "text-sm font-semibold mt-0 mb-0 w-1/4", "Dolor" }
-                            Slider {
-                                min: 0.0,
-                                max: 10.0,
-                                step: 1.0,
-                                horizontal: true,
-                                default_value: SliderValue::Single(pain),
-                                value: Some(SliderValue::Single(pain)),
-                                on_value_change: move |value: SliderValue| {
-                                    let SliderValue::Single(v) = value;
-                                    let mut m = exercise_feedback();
-                                    let entry = m.entry(ex_id_pain.clone()).or_insert((effort as i32, v as i32, String::new()));
-                                    entry.1 = v as i32;
-                                    exercise_feedback.set(m);
-                                },
-                                SliderTrack {
-                                    SliderRange { }
-                                    SliderThumb {}
-                                }
-                            }
-                            span { class: "text-sm font-semibold mb-4", "{pain}" }
-                        }
-                        label { class: "text-sm font-semibold mt-0 mb-0", for: "comment-{ex_id}", "Comentario" }
-                        Textarea {
-                            id: "comment-{ex_id}",
-                            variant: TextareaVariant::Outline,
-                            placeholder: "Opcional",
-                            value: "{comment}",
-                            oninput: move |e: FormEvent| {
-                                let mut m = exercise_feedback();
-                                let entry = m.entry(ex_id_comment.clone()).or_insert((effort as i32, pain as i32, e.value().clone()));
-                                entry.2 = e.value().clone();
-                                exercise_feedback.set(m);
-                            },
                         }
                     }
+                    CardContent {
+                        p { class: "text-sm text-text-muted mb-2", "Series: {sets} × Repeticiones: {reps}" }
+                        if let Some(embed) = embed_url.clone() {
+                            iframe {
+                                class: "w-full mb-3 aspect-video rounded-md border border-border bg-black",
+                                src: "{embed}",
+                                allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
+                                allowfullscreen: "true",
+                            }
+                        }
+                        div {
+                            div { class: "flex items-start justify-start gap-4",
+                                label { class: "text-sm font-semibold mt-0 mb-0 w-1/4", "Esfuerzo" }
+                                Slider {
+                                    min: 1.0,
+                                    max: 10.0,
+                                    step: 1.0,
+                                    horizontal: true,
+                                    default_value: SliderValue::Single(effort),
+                                    value: Some(SliderValue::Single(effort)),
+                                    on_value_change: move |value: SliderValue| {
+                                        let SliderValue::Single(v) = value;
+                                        let mut m = exercise_feedback();
+                                        let entry = m.entry(ex_id_effort.clone()).or_insert((v as i32, pain as i32, String::new()));
+                                        entry.0 = v as i32;
+                                        exercise_feedback.set(m);
+                                    },
+                                    SliderTrack {
+                                        SliderRange { }
+                                        SliderThumb {}
+                                    }
+                                }
+                                span { class: "text-sm font-semibold mb-4", "{effort}" }
+                            }
+                            div { class: "flex items-start justify-start gap-4",
+                                label { class: "text-sm font-semibold mt-0 mb-0 w-1/4", "Dolor" }
+                                Slider {
+                                    min: 0.0,
+                                    max: 10.0,
+                                    step: 1.0,
+                                    horizontal: true,
+                                    default_value: SliderValue::Single(pain),
+                                    value: Some(SliderValue::Single(pain)),
+                                    on_value_change: move |value: SliderValue| {
+                                        let SliderValue::Single(v) = value;
+                                        let mut m = exercise_feedback();
+                                        let entry = m.entry(ex_id_pain.clone()).or_insert((effort as i32, v as i32, String::new()));
+                                        entry.1 = v as i32;
+                                        exercise_feedback.set(m);
+                                    },
+                                    SliderTrack {
+                                        SliderRange { }
+                                        SliderThumb {}
+                                    }
+                                }
+                                span { class: "text-sm font-semibold mb-4", "{pain}" }
+                            }
+                            label { class: "text-sm font-semibold mt-0 mb-0", for: "comment-{ex_id}", "Comentario" }
+                            Textarea {
+                                id: "comment-{ex_id}",
+                                variant: TextareaVariant::Outline,
+                                placeholder: "Opcional",
+                                value: "{comment}",
+                                oninput: move |e: FormEvent| {
+                                    let mut m = exercise_feedback();
+                                    let entry = m.entry(ex_id_comment.clone()).or_insert((effort as i32, pain as i32, e.value().clone()));
+                                    entry.2 = e.value().clone();
+                                    exercise_feedback.set(m);
+                                },
+                            }
+                        }
+                    }
+                }
                 }
             }
             .into()
@@ -241,21 +252,21 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
 
     rsx! {
         div {
-            class: "view container mx-auto patient-workout-day flex items-center justify-center",
+            class: "view container mx-auto patient-workout-day",
             div {
-                class: "content pt-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
+                class: "content min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
                 Backview {
                     to: Route::PatientDashboard {},
                     if !program_name.is_empty() {
                         "{program_name}"
                     } else {
-                        "Mi programa"
+                        { t!("patient_dashboard_title") }
                     }
                 }
                 if let Some(err) = workout_day_detail.read().as_ref().and_then(|r| r.as_ref().err()).cloned() {
                     p { class: "text-error", "{err}" }
                 } else if detail.is_none() {
-                    p { "Cargando..." }
+                    SkeletonCard { }
                 } else {
                     h2 { class: "text-xl font-semibold mb-1", "{workout_name}" }
                     if let Some(desc) = workout_description.clone() {
@@ -269,107 +280,115 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                         } else {
                             {exercise_rows.into_iter()}
                         }
-                        section { class: "bg-surface rounded-lg p-4 mb-6 border border-border flex flex-wrap items-center gap-2",
-                            p { class: "text-medium font-semibold mt-0 mb-0", "Completado el" }
-                            input {
-                                class: "min-h-11 px-3 border border-border rounded-md bg-surface focus:outline-none focus:border-primary",
-                                r#type: "date",
-                                value: "{session_date()}",
-                                oninput: move |ev| session_date.set(ev.value().clone()),
+                        section { class: "mb-4",
+                            Card {
+                                CardContent {
+                                    div { class: "flex flex-row items-center justify-start gap-2",
+                                        p { class: "text-medium font-semibold mt-0 mb-0", "Completado el" }
+                                        input {
+                                            class: "min-h-11 px-3 border border-border rounded-md bg-surface focus:outline-none focus:border-primary",
+                                            r#type: "date",
+                                            value: "{session_date()}",
+                                            oninput: move |ev| session_date.set(ev.value().clone()),
+                                        }
+                                    }
+                                }
                             }
                         }
-                        button {
-                            class: "mt-4 min-h-11 px-4 rounded-md bg-primary text-white font-medium",
-                            disabled: submit_loading(),
-                            onclick: move |_| {
-                                let date_str = session_date().clone();
-                                let backend = backend_submit.clone();
-                                let sess = session_signal_clone.read().clone();
-                                let Some(sess) = sess else { return };
-                                let token = sess.access_token().to_string();
-                                let pid = detail.as_ref().map(|d| d.patient_program_id.clone()).unwrap_or_default();
-                                let di = day_idx;
-                                let sid_opt = feedback_sid_submit.clone();
-                                let completed = feedback_completed;
-                                let fb_map = exercise_feedback();
-                                let exercises_list = exercises_for_detail.clone();
-                                submit_loading.set(true);
-                                submit_error.set(None);
-                                let mut data = data_clone.clone();
-                                spawn(async move {
-                                    let sid = match sid_opt.as_ref() {
-                                        Some(s) => s.clone(),
-                                        None => {
-                                            match backend.get_or_create_session(&token, &pid, di, &date_str).await {
-                                                Ok(s) => s.id,
-                                                Err(err) => {
-                                                    submit_error.set(Some(err));
-                                                    submit_loading.set(false);
-                                                    return;
+                        section { class: "mb-6",
+                            button {
+                                class: "mt-4 min-h-11 px-4 rounded-md bg-primary text-white font-medium",
+                                disabled: submit_loading(),
+                                onclick: move |_| {
+                                    let date_str = session_date().clone();
+                                    let backend = backend_submit.clone();
+                                    let sess = session_signal_clone.read().clone();
+                                    let Some(sess) = sess else { return };
+                                    let token = sess.access_token().to_string();
+                                    let pid = detail.as_ref().map(|d| d.patient_program_id.clone()).unwrap_or_default();
+                                    let di = day_idx;
+                                    let sid_opt = feedback_sid_submit.clone();
+                                    let completed = feedback_completed;
+                                    let fb_map = exercise_feedback();
+                                    let exercises_list = exercises_for_detail.clone();
+                                    submit_loading.set(true);
+                                    submit_error.set(None);
+                                    let mut data = data_clone.clone();
+                                    spawn(async move {
+                                        let sid = match sid_opt.as_ref() {
+                                            Some(s) => s.clone(),
+                                            None => {
+                                                match backend.get_or_create_session(&token, &pid, di, &date_str).await {
+                                                    Ok(s) => s.id,
+                                                    Err(err) => {
+                                                        submit_error.set(Some(err));
+                                                        submit_loading.set(false);
+                                                        return;
+                                                    }
                                                 }
                                             }
-                                        }
-                                    };
-                                    if let Err(e) = backend.update_session(
-                                        &token,
-                                        &sid,
-                                        Some(&date_str),
-                                    ).await {
-                                        submit_error.set(Some(e));
-                                        submit_loading.set(false);
-                                        return;
-                                    }
-                                    if !completed {
-                                        if let Err(e) = backend.complete_session(&token, &sid).await {
+                                        };
+                                        if let Err(e) = backend.update_session(
+                                            &token,
+                                            &sid,
+                                            Some(&date_str),
+                                        ).await {
                                             submit_error.set(Some(e));
                                             submit_loading.set(false);
                                             return;
                                         }
-                                    }
-                                    for we in &exercises_list {
-                                        let (eff, pa, com) = fb_map.get(&we.exercise.id).cloned().unwrap_or((5, 0, String::new()));
-                                        if let Err(e) = backend.upsert_session_exercise_feedback(
-                                            &token,
-                                            &sid,
-                                            &we.exercise.id,
-                                            Some(eff),
-                                            Some(pa),
-                                            if com.is_empty() { None } else { Some(com.as_str()) },
-                                        ).await {
-                                            submit_error.set(Some(e));
-                                            break;
+                                        if !completed {
+                                            if let Err(e) = backend.complete_session(&token, &sid).await {
+                                                submit_error.set(Some(e));
+                                                submit_loading.set(false);
+                                                return;
+                                            }
                                         }
-                                    }
-                                    data.restart();
-                                    submit_loading.set(false);
-                                });
-                            },
-                            if feedback_completed { "Guardar cambios" } else { "Marcar completada y enviar feedback" }
-                        }
-                        if feedback_completed {
-                            button {
-                                class: "mt-2 ml-2 bg-transparent text-primary underline min-h-0 py-1",
-                                disabled: submit_loading(),
-                                onclick: move |_| {
-                                    let Some(ref session_id) = feedback_sid_uncomplete else { return };
-                                    let backend = backend_uncomplete.clone();
-                                    let sess = session_signal_clone.read().clone();
-                                    let Some(sess) = sess else { return };
-                                    let token = sess.access_token().to_string();
-                                    let session_id = session_id.clone();
-                                    let mut data = workout_day_detail.clone();
-                                    submit_loading.set(true);
-                                    submit_error.set(None);
-                                    spawn(async move {
-                                        let res = backend.uncomplete_session(&token, &session_id).await;
-                                        match res {
-                                            Ok(_) => data.restart(),
-                                            Err(e) => submit_error.set(Some(e)),
+                                        for we in &exercises_list {
+                                            let (eff, pa, com) = fb_map.get(&we.exercise.id).cloned().unwrap_or((5, 0, String::new()));
+                                            if let Err(e) = backend.upsert_session_exercise_feedback(
+                                                &token,
+                                                &sid,
+                                                &we.exercise.id,
+                                                Some(eff),
+                                                Some(pa),
+                                                if com.is_empty() { None } else { Some(com.as_str()) },
+                                            ).await {
+                                                submit_error.set(Some(e));
+                                                break;
+                                            }
                                         }
+                                        data.restart();
                                         submit_loading.set(false);
                                     });
                                 },
-                                "Marcar como no completado"
+                                if feedback_completed { "Guardar cambios" } else { "Marcar completada y enviar feedback" }
+                            }
+                            if feedback_completed {
+                                Button { class: "mt-6 mb-4",
+                                    variant: ButtonVariant::Outline,
+                                    disabled: submit_loading(),
+                                    onclick: move |_| {
+                                        let Some(ref session_id) = feedback_sid_uncomplete else { return };
+                                        let backend = backend_uncomplete.clone();
+                                        let sess = session_signal_clone.read().clone();
+                                        let Some(sess) = sess else { return };
+                                        let token = sess.access_token().to_string();
+                                        let session_id = session_id.clone();
+                                        let mut data = workout_day_detail.clone();
+                                        submit_loading.set(true);
+                                        submit_error.set(None);
+                                        spawn(async move {
+                                            let res = backend.uncomplete_session(&token, &session_id).await;
+                                            match res {
+                                                Ok(_) => data.restart(),
+                                                Err(e) => submit_error.set(Some(e)),
+                                            }
+                                            submit_loading.set(false);
+                                        });
+                                    },
+                                    { t!("mark_as_uncompleted") }
+                                }
                             }
                         }
                         if let Some(ref e) = *submit_error.read() {
