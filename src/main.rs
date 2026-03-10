@@ -6,7 +6,9 @@ use dioxus_router::{Routable, Router};
 use unic_langid::langid;
 
 use crate::{
-    application::use_cases::login::LoginUseCase,
+    application::use_cases::{
+        get_patient_programs::GetPatientProgramsUseCase, login::LoginUseCase,
+    },
     infrastructure::{
         app_context::AppContext,
         supabase::{api::Api, client::SupabaseClient, config::SupabaseConfig},
@@ -66,7 +68,11 @@ fn App() -> Element {
     let api = Api::new(SupabaseClient::new(config.unwrap()));
     let backend = Arc::new(api);
     let login_use_case = Arc::new(LoginUseCase::<Api>::new(backend.clone()));
-    use_context_provider(|| AppContext::new(backend, None, login_use_case));
+    let get_patient_programs_use_case =
+        Arc::new(GetPatientProgramsUseCase::<Api>::new(backend.clone()));
+    use_context_provider(|| {
+        AppContext::new(backend, None, login_use_case, get_patient_programs_use_case)
+    });
 
     rsx! {
         document::Link { rel: "icon", href: asset!("/assets/favicon.png") }

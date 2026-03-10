@@ -6,7 +6,7 @@ use crate::infrastructure::ui::hooks::app_context::use_app_context;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum UseLoginState {
-    None,
+    Idle,
     Pending,
     Success(UserProfileType),
     Error(String),
@@ -47,7 +47,7 @@ pub fn use_login() -> UseLogin {
     let app_context = use_app_context();
     let login_use_case = app_context.login_use_case();
     let mut app_session = app_context.session();
-    let mut state = use_signal(|| UseLoginState::None);
+    let mut state = use_signal(|| UseLoginState::Idle);
 
     let login_use_case_for_action = login_use_case.clone();
     let action = use_action(move |credentials: Credentials| {

@@ -5,25 +5,15 @@ use dioxus_router::use_navigator;
 
 use crate::Route;
 
-use crate::infrastructure::app_context::AppContext;
 use crate::infrastructure::ui::components::AgendaBlock;
 use crate::infrastructure::ui::hooks::patient_programs::use_patient_programs;
+use crate::infrastructure::ui::hooks::AsyncState;
 
 #[component]
 pub fn PatientDashboard() -> Element {
     let navigator = use_navigator();
-    let app_context = use_context::<AppContext>();
-    let backend = app_context.backend();
-    let session_signal = app_context.session();
-    let patient_programs_data =
-        use_patient_programs(session_signal.read().clone(), backend.clone());
+    let patient_programs = use_patient_programs();
     let mut selected_for_feedback = use_signal(|| Option::<(String, i32)>::None);
-
-    use_effect(move || {
-        if session_signal.read().is_none() {
-            navigator.push(Route::LoginView {});
-        }
-    });
 
     use_effect(move || {
         let (pid, day_index) = match selected_for_feedback() {
@@ -37,24 +27,21 @@ pub fn PatientDashboard() -> Element {
         selected_for_feedback.set(None);
     });
 
-    let programs_data = patient_programs_data
-        .read()
-        .as_ref()
-        .and_then(|r| r.as_ref().ok().cloned())
-        .unwrap_or_default();
-
-    rsx! {
-        div { class: "view container mx-auto patient-dashboard flex items-center justify-center",
-            div { class: "content pt-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
-                div { class: "flex items-center justify-between mb-6",
-                    h1 { class: "text-2xl font-semibold", "Mis programas" }
-                }
-                if patient_programs_data.pending() {
-                    p { class: "text-text-muted italic", { t!("loading_programs") } }
-                } else if programs_data.is_empty() {
+    let programs_content = match &*patient_programs.state.read() {
+        AsyncState::Loading => rsx! {
+            p { class: "text-text-muted italic", { t!("loading_programs") } }
+        },
+        AsyncState::Error(_) => rsx! {
+            p { class: "text-text-muted italic", { t!("error_programs") } }
+        },
+        AsyncState::Ready(data) => {
+            if data.patient_programs.is_empty() {
+                rsx! {
                     p { class: "text-text-muted italic", { t!("no_programs_assigned") } }
-                } else {
-                    for prog in programs_data.iter() {
+                }
+            } else {
+                rsx! {
+                    for prog in data.patient_programs.iter() {
                         section { key: "{prog.patient_program_id}", class: "bg-surface border border-border rounded-md p-4 mb-4",
                             h2 { class: "text-xl font-semibold mt-0 mb-2", "{prog.program_name}" }
                             if let Some(ref desc) = prog.program_description {
@@ -72,6 +59,17 @@ pub fn PatientDashboard() -> Element {
                         }
                     }
                 }
+            }
+        }
+    };
+
+    rsx! {
+        div { class: "view container mx-auto patient-dashboard flex items-center justify-center",
+            div { class: "content pt-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
+                div { class: "flex items-center justify-between mb-6",
+                    h1 { class: "text-2xl font-semibold", "Mis programas" }
+                }
+                { programs_content }
             }
         }
     }
