@@ -5,7 +5,7 @@ use futures::try_join;
 
 use dioxus::prelude::*;
 
-use crate::application::ports::Backend;
+use crate::application::Backend;
 use crate::domain::entities::{
     ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession,
 };

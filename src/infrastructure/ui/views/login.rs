@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 use dioxus_router::use_navigator;
 
-use crate::domain::{credentials::Credentials, role::Role};
+use crate::domain::credentials::Credentials;
 use crate::infrastructure::ui::components::{Login, LoginResult};
 use crate::infrastructure::ui::hooks::login::use_login;
 use crate::Route;
@@ -9,42 +9,31 @@ use crate::Route;
 #[component]
 pub fn LoginView() -> Element {
     let nav = use_navigator();
-    let (mut login_action, profile_loader) = use_login();
+    let mut use_login = use_login();
 
     use_effect(move || {
-        let profiles = profile_loader.read();
-
-        if let Some(Some(profiles)) = profiles.as_ref() {
-            let is_specialist = profiles
-                .into_iter()
-                .next()
-                .map(|p| p.role() == &Role::Specialist)
-                .unwrap_or(false);
-            if is_specialist {
-                nav.push(Route::SpecialistPatients {});
-            } else {
-                nav.push(Route::PatientDashboard {});
-            }
+        let use_login_state = use_login.state.read();
+        if use_login_state.is_login_as_patient() {
+            nav.push(Route::PatientDashboard {});
+        } else if use_login_state.is_login_as_specialist() {
+            nav.push(Route::SpecialistPatients {});
         }
     });
 
-    let login_result = if login_action.pending() {
+    let use_login_state = use_login.state.read();
+    let login_result = if use_login_state.is_pending() {
         LoginResult::Pending
+    } else if use_login_state.is_error() {
+        LoginResult::Error(use_login_state.error())
     } else {
-        login_action
-            .value()
-            .map(|result| match result {
-                Ok(_) => LoginResult::Success,
-                Err(err) => LoginResult::Error(err.to_string()),
-            })
-            .unwrap_or(LoginResult::None)
+        LoginResult::None
     };
 
     rsx! {
         Login {
             background_image: asset!("/assets/login.webp"),
             onsubmit: move |(email, password): (String, String)| {
-                login_action.call(Credentials::from(&email, &password));
+                use_login.action.call(Credentials::from(&email, &password));
             },
             login_result,
         }

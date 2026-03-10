@@ -5,15 +5,17 @@ use dioxus_i18n::prelude::*;
 use dioxus_router::{Routable, Router};
 use unic_langid::langid;
 
-use crate::infrastructure::{
-    app_context::AppContext,
-    supabase::{api::Api, client::SupabaseClient, config::SupabaseConfig},
-    ui::views::{
-        ExerciseLibrary, LoginView, PatientDashboard, PatientProgress, PatientWorkoutDay,
-        ProgramEditor, SpecialistPatients, SpecialistPrograms, WorkoutEditor, WorkoutLibrary,
+use crate::{
+    application::use_cases::login::LoginUseCase,
+    infrastructure::{
+        app_context::AppContext,
+        supabase::{api::Api, client::SupabaseClient, config::SupabaseConfig},
+        ui::views::{
+            ExerciseLibrary, LoginView, PatientDashboard, PatientProgress, PatientWorkoutDay,
+            ProgramEditor, SpecialistPatients, SpecialistPrograms, WorkoutEditor, WorkoutLibrary,
+        },
     },
 };
-use application::ports::Backend;
 
 mod application;
 mod domain;
@@ -62,8 +64,9 @@ fn App() -> Element {
     }
 
     let api = Api::new(SupabaseClient::new(config.unwrap()));
-    let backend: Arc<dyn Backend> = Arc::new(api);
-    use_context_provider(|| AppContext::new(backend, None));
+    let backend = Arc::new(api);
+    let login_use_case = Arc::new(LoginUseCase::<Api>::new(backend.clone()));
+    use_context_provider(|| AppContext::new(backend, None, login_use_case));
 
     rsx! {
         document::Link { rel: "icon", href: asset!("/assets/favicon.png") }

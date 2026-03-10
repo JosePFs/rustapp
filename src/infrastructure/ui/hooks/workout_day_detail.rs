@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use futures::try_join;
 
-use crate::application::ports::Backend;
+use crate::application::Backend;
 use crate::domain::entities::{SessionExerciseFeedback, WorkoutExercise, WorkoutSession};
 use crate::domain::error::{DomainError, Result};
 use crate::domain::session::Session;

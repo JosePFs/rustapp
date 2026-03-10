@@ -4,10 +4,10 @@ use dioxus_i18n::t;
 use serde::Deserialize;
 
 use super::client::SupabaseClient;
-use crate::application::ports::Backend;
-use crate::application::services::data_mutator::DataMutator;
-use crate::application::services::data_provider::DataProvider;
-use crate::application::services::AuthService;
+use crate::application::ports::data_mutator::DataMutator;
+use crate::application::ports::data_provider::DataProvider;
+use crate::application::ports::AuthService;
+use crate::application::Backend;
 use crate::domain::credentials::Credentials;
 use crate::domain::entities::{
     Exercise, PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback,
@@ -321,7 +321,10 @@ impl DataProvider for Api {
             "/workout_sessions?patient_program_id=eq.{}&select=id",
             patient_program_id
         );
-        let body = self.client.rest_get(Some(access_token), &sessions_path).await?;
+        let body = self
+            .client
+            .rest_get(Some(access_token), &sessions_path)
+            .await?;
         #[derive(Deserialize)]
         struct IdRow {
             id: String,
@@ -704,11 +707,7 @@ impl DataMutator for Api {
             .ok_or_else(|| "No row returned".to_string())
     }
 
-    async fn complete_session(
-        &self,
-        access_token: &str,
-        session_id: &str,
-    ) -> Result<(), String> {
+    async fn complete_session(&self, access_token: &str, session_id: &str) -> Result<(), String> {
         let payload = serde_json::json!({
             "completed_at": chrono::Utc::now().to_rfc3339()
         });
@@ -756,7 +755,10 @@ impl DataMutator for Api {
             "/session_exercise_feedback?workout_session_id=eq.{}&exercise_id=eq.{}",
             workout_session_id, exercise_id
         );
-        self.client.rest_delete(Some(access_token), &path).await.ok();
+        self.client
+            .rest_delete(Some(access_token), &path)
+            .await
+            .ok();
         self.client
             .rest_post(Some(access_token), "/session_exercise_feedback", &payload)
             .await?;
