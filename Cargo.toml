@@ -28,6 +28,13 @@ futures = "0.3"
 stream = "0.1"
 log = "0.4"
 wasm-logger = "0.2"
+clap = { version = "4", features = ["derive"] }
+notify = "8"
+
+# CLI command
+[[bin]]
+name = "dev"
+path = "src/bin/dev.rs"
 
 # HTTP: native uses reqwest, WASM uses gloo-net
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

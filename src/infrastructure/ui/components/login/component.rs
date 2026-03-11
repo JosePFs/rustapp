@@ -20,13 +20,51 @@ pub fn Login(
 ) -> Element {
     let mut email = use_signal(|| String::new());
     let mut password = use_signal(|| String::new());
+    let mut entered = use_signal(|| false);
+
+    use_effect(move || {
+        entered.set(true);
+    });
 
     rsx! {
         div {
-            class: "view login w-full h-full min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat",
+            style: "
+                width: 100%;
+                height: 100%;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 1rem;
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+            ",
             background_image: "url('{background_image}')",
             div {
-                class: "content opacity-90 pt-8 max-w-[22rem] w-full mx-auto",
+                style: if entered() {
+                    "
+                        opacity: 0.9;
+                        transform: scale(1);
+                        transition: opacity 220ms ease-out, transform 220ms ease-out;
+                        padding-top: 2rem;
+                        max-width: 22rem;
+                        width: 100%;
+                        margin-left: auto;
+                        margin-right: auto;
+                    "
+                } else {
+                    "
+                        opacity: 0;
+                        transform: scale(0.9);
+                        transition: opacity 220ms ease-out, transform 220ms ease-out;
+                        padding-top: 2rem;
+                        max-width: 22rem;
+                        width: 100%;
+                        margin-left: auto;
+                        margin-right: auto;
+                    "
+                },
                 Card {
                     CardHeader {
                         CardTitle {

@@ -7,3 +7,12 @@ title = "Clinica Fisioterapia — MVP"
 
 [build]
 release = false
+
+[bundle]
+identifier = "org.eixe.mvp"
+publisher = "org.eixe"
+icon = ["assets/favicon.png"]
+category = "health"
+copyright = "2026 Eixe"
+short_description = "MVP Phase 1 — Physiotherapy clinic app (Dioxus + Supabase)"
+resources = ["assets/app.css", "assets/favicon.png"]

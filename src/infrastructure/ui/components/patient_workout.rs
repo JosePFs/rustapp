@@ -22,6 +22,7 @@ pub fn PatientWorkout(
     let ex_id_pain = exercise_id.clone();
     let ex_id_comment = exercise_id.clone();
     let ex_id_effect = exercise_id.clone();
+
     let mut effort = use_signal(|| 5i32);
     let mut pain = use_signal(|| 0i32);
     let mut comment = use_signal(|| String::new());

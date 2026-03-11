@@ -76,9 +76,7 @@ fn App() -> Element {
 
     rsx! {
         document::Link { rel: "icon", href: asset!("/assets/favicon.png") }
-        document::Stylesheet { href: asset!("/assets/dx-components-theme.css") }
-        document::Stylesheet { href: asset!("/assets/tailwind.css") }
-        document::Stylesheet { href: asset!("/assets/styling/main.css") }
+        document::Stylesheet { href: asset!("/assets/app.css") }
 
         Title { "Eixe - MVP" }
 
@@ -104,7 +102,7 @@ fn init_logging() {
     android_logger::init_once(
         android_logger::Config::default()
             .with_max_level(log::LevelFilter::Debug)
-            .with_tag("MiApp"),
+            .with_tag("MyApp"),
     );
 }
 
