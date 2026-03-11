@@ -186,7 +186,7 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                                     value: Some(SliderValue::Single(effort)),
                                     on_value_change: move |value: SliderValue| {
                                         let SliderValue::Single(v) = value;
-                                        let mut m = exercise_feedback();
+                                        let mut m = exercise_feedback.peek().clone();
                                         let entry = m.entry(ex_id_effort.clone()).or_insert((v as i32, pain as i32, String::new()));
                                         entry.0 = v as i32;
                                         exercise_feedback.set(m);
@@ -209,7 +209,7 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                                     value: Some(SliderValue::Single(pain)),
                                     on_value_change: move |value: SliderValue| {
                                         let SliderValue::Single(v) = value;
-                                        let mut m = exercise_feedback();
+                                        let mut m = exercise_feedback.peek().clone();
                                         let entry = m.entry(ex_id_pain.clone()).or_insert((effort as i32, v as i32, String::new()));
                                         entry.1 = v as i32;
                                         exercise_feedback.set(m);
