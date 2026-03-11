@@ -28,7 +28,7 @@ use crate::domain::entities::{
     PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession,
 };
 use crate::infrastructure::app_context::AppContext;
-use crate::infrastructure::ui::components::AgendaBlock;
+use crate::infrastructure::ui::components::Agenda;
 use crate::Route;
 
 #[derive(Clone, Debug)]
@@ -160,7 +160,7 @@ pub fn PatientProgress(id: String) -> Element {
                                     p { class: "text-sm text-text-muted mb-2", "{desc}" }
                                 }
                                 p { class: "text-xs text-text-muted mb-2", "Estado: {pws.assignment.status}" }
-                                AgendaBlock {
+                                Agenda {
                                     sessions: pws.sessions.clone(),
                                     program_feedback: pws.program_feedback.clone(),
                                     schedule: pws.schedule.clone(),

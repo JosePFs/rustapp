@@ -1,15 +1,12 @@
-//! Página de detalle de un día de entrenamiento para el paciente:
-//! muestra los ejercicios del entrenamiento y permite guardar/editar el feedback.
+use std::collections::HashMap;
 
 use dioxus::prelude::*;
-
-use dioxus_primitives::slider::SliderValue;
-use dioxus_router::Link;
 use dioxus_i18n::t;
+use dioxus_router::Link;
 
 use crate::infrastructure::app_context::AppContext;
 use crate::infrastructure::ui::components::{
-    Backview, Button, ButtonVariant, Card, CardContent, CardDescription, CardHeader, CardTitle, SkeletonCard, Slider, SliderRange, SliderThumb, SliderTrack, Textarea, TextareaVariant
+    Backview, Button, ButtonVariant, Card, CardContent, PatientWorkout, SkeletonCard,
 };
 use crate::infrastructure::ui::hooks::workout_day_detail::use_workout_day_detail;
 use crate::Route;
@@ -29,8 +26,7 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
     );
 
     let mut session_date = use_signal(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
-    let mut exercise_feedback =
-        use_signal(|| std::collections::HashMap::<String, (i32, i32, String)>::new());
+    let mut exercise_feedback = use_signal(|| HashMap::<String, (i32, i32, String)>::new());
     let mut submit_loading = use_signal(|| false);
     let mut submit_error = use_signal(|| Option::<String>::None);
 
@@ -108,146 +104,41 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
         exercises_for_detail
             .iter()
             .map(|we| {
+                let embed_url = we.exercise.video_url.as_ref().and_then(|u| {
+                    if let Some(pos) = u.find("v=") {
+                        let id = u[pos + 2..]
+                            .split('&')
+                            .next()
+                            .unwrap_or("")
+                            .trim()
+                            .to_string();
+                        if !id.is_empty() {
+                            return Some(format!("https://www.youtube.com/embed/{}", id));
+                        }
+                    }
+                    if let Some(pos) = u.rfind('/') {
+                        let id = u[pos + 1..]
+                            .split(&['?', '&'][..])
+                            .next()
+                            .unwrap_or("")
+                            .trim()
+                            .to_string();
+                        if !id.is_empty() {
+                            return Some(format!("https://www.youtube.com/embed/{}", id));
+                        }
+                    }
+                    None
+                });
                 (
                     we.exercise.id.clone(),
                     we.exercise.name.clone(),
                     we.exercise.description.clone(),
-                    we.exercise.video_url.clone(),
+                    embed_url,
                     we.sets,
                     we.reps,
                 )
             })
             .collect();
-
-    let exercise_rows: Vec<dioxus::prelude::Element> = exercise_row_data
-        .into_iter()
-        .map(|(ex_id, ex_name, ex_desc, ex_video_url, sets, reps)| {
-            let ex_id_effort = ex_id.clone();
-            let ex_id_pain = ex_id.clone();
-            let ex_id_comment = ex_id.clone();
-            let embed_url = ex_video_url.as_ref().and_then(|u| {
-                if let Some(pos) = u.find("v=") {
-                    let id = u[pos + 2..]
-                        .split('&')
-                        .next()
-                        .unwrap_or("")
-                        .trim()
-                        .to_string();
-                    if !id.is_empty() {
-                        return Some(format!("https://www.youtube.com/embed/{}", id));
-                    }
-                }
-                if let Some(pos) = u.rfind('/') {
-                    let id = u[pos + 1..]
-                        .split(&['?', '&'][..])
-                        .next()
-                        .unwrap_or("")
-                        .trim()
-                        .to_string();
-                    if !id.is_empty() {
-                        return Some(format!("https://www.youtube.com/embed/{}", id));
-                    }
-                }
-                None
-            });
-            
-            let effort = exercise_feedback().get(&ex_id).map(|t| t.0 as f64).unwrap_or(1.0);
-            let pain = exercise_feedback().get(&ex_id).map(|t| t.1 as f64).unwrap_or(0.0);
-            let comment = exercise_feedback().get(&ex_id).map(|t| t.2.clone()).unwrap_or_default();
-            rsx! {
-                article { class: "mb-4",
-                    Card {
-                    key: "{ex_id}",
-                    CardHeader {
-                        CardTitle {
-                            "{ex_name}"
-                        }
-                        if let Some(desc) = ex_desc.clone() {
-                            if !desc.is_empty() {
-                                CardDescription {
-                                    "{desc}"
-                                }
-                            }
-                        }
-                    }
-                    CardContent {
-                        p { class: "text-sm font-semibold text-text-muted mb-2", "Series: {sets} × Repeticiones: {reps}" }
-                        if let Some(embed) = embed_url.clone() {
-                            iframe {
-                                class: "w-full mb-6 aspect-video rounded-md border border-border bg-black",
-                                src: "{embed}",
-                                allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
-                                allowfullscreen: "true",
-                            }
-                        }
-                        div {
-                            div { class: "flex items-start justify-start gap-4",
-                                label { class: "text-sm mt-0 mb-0 w-1/4", "Esfuerzo" }
-                                Slider {
-                                    min: 1.0,
-                                    max: 10.0,
-                                    step: 1.0,
-                                    horizontal: true,
-                                    default_value: SliderValue::Single(effort),
-                                    value: Some(SliderValue::Single(effort)),
-                                    on_value_change: move |value: SliderValue| {
-                                        let SliderValue::Single(v) = value;
-                                        let mut m = exercise_feedback.peek().clone();
-                                        let entry = m.entry(ex_id_effort.clone()).or_insert((v as i32, pain as i32, String::new()));
-                                        entry.0 = v as i32;
-                                        exercise_feedback.set(m);
-                                    },
-                                    SliderTrack {
-                                        SliderRange { }
-                                        SliderThumb {}
-                                    }
-                                }
-                                span { class: "text-sm font-semibold mb-4", "{effort}" }
-                            }
-                            div { class: "flex items-start justify-start gap-4",
-                                label { class: "text-sm mt-0 mb-0 w-1/4", "Dolor" }
-                                Slider {
-                                    min: 0.0,
-                                    max: 10.0,
-                                    step: 1.0,
-                                    horizontal: true,
-                                    default_value: SliderValue::Single(pain),
-                                    value: Some(SliderValue::Single(pain)),
-                                    on_value_change: move |value: SliderValue| {
-                                        let SliderValue::Single(v) = value;
-                                        let mut m = exercise_feedback.peek().clone();
-                                        let entry = m.entry(ex_id_pain.clone()).or_insert((effort as i32, v as i32, String::new()));
-                                        entry.1 = v as i32;
-                                        exercise_feedback.set(m);
-                                    },
-                                    SliderTrack {
-                                        SliderRange { }
-                                        SliderThumb {}
-                                    }
-                                }
-                                span { class: "text-sm font-semibold mb-4", "{pain}" }
-                            }
-                            label { class: "text-sm mt-0 mb-0", for: "comment-{ex_id}", "Comentario" }
-                            Textarea {
-                                id: "comment-{ex_id}",
-                                variant: TextareaVariant::Outline,
-                                placeholder: "Opcional",
-                                value: "{comment}",
-                                oninput: move |e: FormEvent| {
-                                    let mut m = exercise_feedback();
-                                    let entry = m.entry(ex_id_comment.clone()).or_insert((effort as i32, pain as i32, e.value().clone()));
-                                    entry.2 = e.value().clone();
-                                    exercise_feedback.set(m);
-                                },
-                            }
-                        }
-                    }
-                }
-                }
-            }
-            .into()
-        })
-        .collect();
     let feedback_sid_submit = feedback_sid.clone();
     let feedback_sid_uncomplete = feedback_sid.clone();
 
@@ -281,10 +172,21 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                         }
                     }
                     section {
-                        if exercise_rows.is_empty() {
+                        if exercise_row_data.is_empty() {
                             p { class: "text-sm text-text-muted", "Este entrenamiento no tiene ejercicios configurados." }
                         } else {
-                            {exercise_rows.into_iter()}
+                            for (ex_id, ex_name, ex_desc, embed_url, sets, reps) in exercise_row_data.iter() {
+                                PatientWorkout {
+                                    key: "{ex_id}",
+                                    exercise_id: ex_id.clone(),
+                                    exercise_name: ex_name.clone(),
+                                    exercise_desc: ex_desc.clone(),
+                                    embed_url: embed_url.clone(),
+                                    sets: *sets,
+                                    reps: *reps,
+                                    exercise_feedback,
+                                }
+                            }
                         }
                         section { class: "mb-4",
                             Card {
@@ -370,7 +272,7 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                                                     &token,
                                                     &sid,
                                                     &we.exercise.id,
-                                                    Some(eff),
+                                                    Some(eff as i32),
                                                     Some(pa),
                                                     if com.is_empty() {
                                                         None

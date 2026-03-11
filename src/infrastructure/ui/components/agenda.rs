@@ -9,7 +9,7 @@ use crate::infrastructure::supabase::api::build_agenda_schedule;
 use crate::infrastructure::ui::components::{Progress, ProgressIndicator};
 
 #[component]
-pub fn AgendaBlock(
+pub fn Agenda(
     sessions: Vec<WorkoutSession>,
     program_feedback: Vec<SessionExerciseFeedback>,
     schedule: Vec<ProgramScheduleItem>,

@@ -6,7 +6,7 @@ use dioxus_router::use_navigator;
 use crate::Route;
 
 use crate::infrastructure::ui::components::{
-    AgendaBlock, Card, CardContent, CardDescription, CardHeader, CardTitle, SkeletonCard,
+    Agenda, Card, CardContent, CardDescription, CardHeader, CardTitle, SkeletonCard,
 };
 use crate::infrastructure::ui::hooks::patient_programs::use_patient_programs;
 use crate::infrastructure::ui::hooks::AsyncState;
@@ -58,7 +58,7 @@ pub fn PatientDashboard() -> Element {
                                     }
                                 }
                                 CardContent {
-                                    AgendaBlock {
+                                    Agenda {
                                         sessions: prog.sessions.clone(),
                                         program_feedback: prog.program_feedback.clone(),
                                         schedule: prog.schedule.clone(),

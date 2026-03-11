@@ -3,9 +3,10 @@ mod backview;
 #[path = "../../../components/mod.rs"]
 mod components;
 mod login;
+mod patient_workout;
 mod skeleton;
 
-pub use agenda::AgendaBlock;
+pub use agenda::Agenda;
 pub use backview::*;
 pub use components::button::*;
 pub use components::card::*;
@@ -18,4 +19,5 @@ pub use components::slider::*;
 pub use components::textarea::*;
 pub use components::tooltip::*;
 pub use login::*;
+pub use patient_workout::PatientWorkout;
 pub use skeleton::*;
