@@ -69,7 +69,13 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
     let session = session_signal.read().clone();
     if session.is_none() {
         return rsx! {
-            div { "Debes iniciar sesión. " Link { to: Route::LoginView {}, "Ir a login" } }
+            div {
+                class: "view container mx-auto patient-workout-day",
+                div {
+                    class: "content min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
+                    div { "Debes iniciar sesión. " Link { to: Route::LoginView {}, "Ir a login" } }
+                }
+            }
         };
     }
 
@@ -298,27 +304,38 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                         section { class: "mb-6",
                             button {
                                 class: "mt-4 min-h-11 px-4 rounded-md bg-primary text-white font-medium",
+                                class: if submit_loading() { "opacity-50 !cursor-not-allowed" } else { "" },
                                 disabled: submit_loading(),
                                 onclick: move |_| {
                                     let date_str = session_date().clone();
                                     let backend = backend_submit.clone();
                                     let sess = session_signal_clone.read().clone();
-                                    let Some(sess) = sess else { return };
-                                    let token = sess.access_token().to_string();
-                                    let pid = detail.as_ref().map(|d| d.patient_program_id.clone()).unwrap_or_default();
-                                    let di = day_idx;
+                                    let detail = detail.clone();
                                     let sid_opt = feedback_sid_submit.clone();
                                     let completed = feedback_completed;
                                     let fb_map = exercise_feedback();
                                     let exercises_list = exercises_for_detail.clone();
-                                    submit_loading.set(true);
-                                    submit_error.set(None);
                                     let mut data = data_clone.clone();
-                                    spawn(async move {
+
+                                    async move {
+                                        let Some(sess) = sess else { return; };
+                                        let token = sess.access_token().to_string();
+                                        let pid = detail
+                                            .as_ref()
+                                            .map(|d| d.patient_program_id.clone())
+                                            .unwrap_or_default();
+                                        let di = day_idx;
+
+                                        submit_loading.set(true);
+                                        submit_error.set(None);
+
                                         let sid = match sid_opt.as_ref() {
                                             Some(s) => s.clone(),
                                             None => {
-                                                match backend.get_or_create_session(&token, &pid, di, &date_str).await {
+                                                match backend
+                                                    .get_or_create_session(&token, &pid, di, &date_str)
+                                                    .await
+                                                {
                                                     Ok(s) => s.id,
                                                     Err(err) => {
                                                         submit_error.set(Some(err));
@@ -328,11 +345,10 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                                                 }
                                             }
                                         };
-                                        if let Err(e) = backend.update_session(
-                                            &token,
-                                            &sid,
-                                            Some(&date_str),
-                                        ).await {
+                                        if let Err(e) = backend
+                                            .update_session(&token, &sid, Some(&date_str))
+                                            .await
+                                        {
                                             submit_error.set(Some(e));
                                             submit_loading.set(false);
                                             return;
@@ -345,27 +361,38 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                                             }
                                         }
                                         for we in &exercises_list {
-                                            let (eff, pa, com) = fb_map.get(&we.exercise.id).cloned().unwrap_or((5, 0, String::new()));
-                                            if let Err(e) = backend.upsert_session_exercise_feedback(
-                                                &token,
-                                                &sid,
-                                                &we.exercise.id,
-                                                Some(eff),
-                                                Some(pa),
-                                                if com.is_empty() { None } else { Some(com.as_str()) },
-                                            ).await {
+                                            let (eff, pa, com) = fb_map
+                                                .get(&we.exercise.id)
+                                                .cloned()
+                                                .unwrap_or((5, 0, String::new()));
+                                            if let Err(e) = backend
+                                                .upsert_session_exercise_feedback(
+                                                    &token,
+                                                    &sid,
+                                                    &we.exercise.id,
+                                                    Some(eff),
+                                                    Some(pa),
+                                                    if com.is_empty() {
+                                                        None
+                                                    } else {
+                                                        Some(com.as_str())
+                                                    },
+                                                )
+                                                .await
+                                            {
                                                 submit_error.set(Some(e));
                                                 break;
                                             }
                                         }
                                         data.restart();
                                         submit_loading.set(false);
-                                    });
+                                    }
                                 },
                                 if feedback_completed { "Guardar cambios" } else { "Marcar completada y enviar feedback" }
                             }
                             if feedback_completed {
-                                Button { class: "mt-6 mb-4",
+                                Button {
+                                    class: if submit_loading() { "opacity-50 !cursor-not-allowed mt-6 mb-4" } else { "mt-6 mb-4" },
                                     variant: ButtonVariant::Outline,
                                     disabled: submit_loading(),
                                     onclick: move |_| {
