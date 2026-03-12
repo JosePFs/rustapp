@@ -2,9 +2,10 @@ use std::path::Path;
 use std::process::Command;
 use std::sync::mpsc::channel;
 use std::thread;
+use std::time::{Duration, Instant};
 
 use clap::{Parser, Subcommand};
-use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{Config, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 
 #[derive(Parser)]
 #[command(author, version, about)]
@@ -72,7 +73,7 @@ fn build_app_css() {
 fn start_css_watcher() {
     let (tx, rx) = channel();
 
-    let mut watcher: RecommendedWatcher =
+    let mut watcher =
         RecommendedWatcher::new(tx, Config::default()).expect("failed to create CSS watcher");
 
     for path in [
@@ -86,12 +87,29 @@ fn start_css_watcher() {
     }
 
     thread::spawn(move || {
-        for res in rx {
+        let _watcher = watcher;
+
+        let mut last_rebuild = Instant::now();
+        let debounce = Duration::from_millis(300);
+
+        while let Ok(res) = rx.recv() {
             match res {
-                Ok(_event) => {
+                Ok(event) => {
+                    if !matches!(event.kind, EventKind::Modify(_)) {
+                        continue;
+                    }
+
+                    let now = Instant::now();
+                    if now.duration_since(last_rebuild) < debounce {
+                        continue;
+                    }
+
                     build_app_css();
+                    last_rebuild = now;
                 }
-                Err(e) => eprintln!("Error in CSS watcher: {e}"),
+                Err(e) => {
+                    eprintln!("CSS watcher error: {e}");
+                }
             }
         }
     });

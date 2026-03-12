@@ -120,6 +120,7 @@ html[data-theme="light"] {
     --font-weight-semibold: 600;
     --radius-md: 8px;
     --radius-lg: 12px;
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
     --aspect-video: 16 / 9;
     --default-font-family: var(--font-sans);
     --default-mono-font-family: var(--font-mono);
@@ -389,9 +390,6 @@ html[data-theme="light"] {
   .h-8 {
     height: calc(var(--spacing) * 8);
   }
-  .h-full {
-    height: 100%;
-  }
   .max-h-48 {
     max-height: calc(var(--spacing) * 48);
   }
@@ -403,9 +401,6 @@ html[data-theme="light"] {
   }
   .min-h-11 {
     min-height: calc(var(--spacing) * 11);
-  }
-  .min-h-screen {
-    min-height: 100vh;
   }
   .w-1\/2 {
     width: calc(1/2 * 100%);
@@ -427,9 +422,6 @@ html[data-theme="light"] {
   }
   .w-full {
     width: 100%;
-  }
-  .max-w-\[22rem\] {
-    max-width: 22rem;
   }
   .max-w-md {
     max-width: var(--container-md);
@@ -481,9 +473,6 @@ html[data-theme="light"] {
   }
   .justify-between {
     justify-content: space-between;
-  }
-  .justify-center {
-    justify-content: center;
   }
   .justify-start {
     justify-content: flex-start;
@@ -553,15 +542,6 @@ html[data-theme="light"] {
   .bg-transparent {
     background-color: transparent;
   }
-  .bg-cover {
-    background-size: cover;
-  }
-  .bg-center {
-    background-position: center;
-  }
-  .bg-no-repeat {
-    background-repeat: no-repeat;
-  }
   .p-0 {
     padding: calc(var(--spacing) * 0);
   }
@@ -597,9 +577,6 @@ html[data-theme="light"] {
   }
   .py-4 {
     padding-block: calc(var(--spacing) * 4);
-  }
-  .pt-8 {
-    padding-top: calc(var(--spacing) * 8);
   }
   .text-center {
     text-align: center;
@@ -672,9 +649,6 @@ html[data-theme="light"] {
   .opacity-65 {
     opacity: 65%;
   }
-  .opacity-90 {
-    opacity: 90%;
-  }
   .shadow-md {
     --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 2px 4px -2px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
@@ -689,6 +663,10 @@ html[data-theme="light"] {
   }
   .filter {
     filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+  }
+  .ease-out {
+    --tw-ease: var(--ease-out);
+    transition-timing-function: var(--ease-out);
   }
   .hover\:border-primary {
     &:hover {
@@ -935,6 +913,10 @@ html[data-theme="light"] {
   syntax: "*";
   inherits: false;
 }
+@property --tw-ease {
+  syntax: "*";
+  inherits: false;
+}
 @layer properties {
   @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
     *, ::before, ::after, ::backdrop {
@@ -973,6 +955,28 @@ html[data-theme="light"] {
       --tw-drop-shadow-color: initial;
       --tw-drop-shadow-alpha: 100%;
       --tw-drop-shadow-size: initial;
+      --tw-ease: initial;
     }
   }
 }
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: #f5f5f5;
+}
+
+
+@keyframes login-card-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
+  }
+
+  to {
+    opacity: 0.9;
+    transform: scale(1) translateY(0);
+  }
+}
+
