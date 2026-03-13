@@ -41,7 +41,6 @@ impl<B: Backend> SubmitPatientWorkoutFeedbackUseCase<B> {
             .map_err(DomainError::Api)?;
         let session_id = session.id;
 
-        // Update session date and (optionally) mark as completed in parallel.
         let update_fut = self
             .backend
             .update_session(token, &session_id, Some(&args.session_date));

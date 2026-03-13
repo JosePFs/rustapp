@@ -11,7 +11,6 @@ use crate::infrastructure::ui::hooks::app_context::use_app_context;
 use crate::infrastructure::ui::hooks::submit_workout_feedback::use_submit_workout_feedback;
 use crate::infrastructure::ui::hooks::uncomplete_workout_session::use_uncomplete_workout_session;
 use crate::infrastructure::ui::hooks::workout_day_detail::use_workout_day_detail;
-use crate::infrastructure::ui::hooks::AsyncState;
 use crate::Route;
 
 #[component]
@@ -25,6 +24,7 @@ pub fn PatientWorkoutSessionView(patient_program_id: String, day_index: String) 
     let mut session_date = use_signal(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
     let mut exercise_feedback = use_signal(|| HashMap::<String, (i32, i32, String)>::new());
     let mut submit_error = use_signal(|| Option::<String>::None);
+    let mut marked_as_completed = use_signal(|| false);
 
     use_effect(move || {
         let detail = workout_day_detail
@@ -38,8 +38,10 @@ pub fn PatientWorkoutSessionView(patient_program_id: String, day_index: String) 
 
         if let Some(ref sess) = d.session {
             session_date.set(sess.session_date.clone());
+            marked_as_completed.set(true);
         } else {
             session_date.set(chrono::Utc::now().format("%Y-%m-%d").to_string());
+            marked_as_completed.set(false);
         }
 
         let mut map = HashMap::new();
@@ -94,6 +96,7 @@ pub fn PatientWorkoutSessionView(patient_program_id: String, day_index: String) 
         .as_ref()
         .map(|s| s.completed_at.is_some())
         .unwrap_or(false);
+
     let feedback_sid = session_opt.as_ref().map(|s| s.id.clone());
     let exercises_for_detail = detail
         .as_ref()
@@ -213,32 +216,34 @@ pub fn PatientWorkoutSessionView(patient_program_id: String, day_index: String) 
                         section { class: "mb-6",
                             button {
                                 class: "mt-4 min-h-11 px-4 rounded-md bg-primary text-white font-medium",
-                                class: if matches!(*submit_feedback.state.read(), AsyncState::Loading) {
+                                class: if submit_feedback.state.read().is_loading() {
                                     "opacity-50 !cursor-not-allowed"
                                 } else {
                                     ""
                                 },
-                                disabled: matches!(*submit_feedback.state.read(), AsyncState::Loading),
+                                disabled: submit_feedback.state.read().is_loading(),
                                 onclick: move |_| {
                                     submit_error.set(None);
                                     submit_feedback.action.call(());
+                                    marked_as_completed.set(true);
                                 },
-                                if feedback_completed { "Guardar cambios" } else { "Marcar completada y enviar feedback" }
+                                if marked_as_completed() { "Guardar cambios" } else { "Marcar completada y enviar feedback" }
                             }
-                            if feedback_completed {
+                            if marked_as_completed() {
                                 Button {
-                                    class: if matches!(*uncomplete_workout_session.state.read(), AsyncState::Loading) {
+                                    class: if uncomplete_workout_session.state.read().is_loading() {
                                         "opacity-50 !cursor-not-allowed mt-6 mb-4"
                                     } else {
                                         "mt-6 mb-4"
                                     },
                                     variant: ButtonVariant::Outline,
-                                    disabled: matches!(*uncomplete_workout_session.state.read(), AsyncState::Loading),
+                                    disabled: uncomplete_workout_session.state.read().is_loading(),
                                     onclick: move |_| {
                                         let Some(ref session_id) = feedback_sid_uncomplete else { return };
                                         let session_id = session_id.clone();
                                         submit_error.set(None);
                                         uncomplete_workout_session.action.call(session_id);
+                                        marked_as_completed.set(false);
                                     },
                                     { t!("mark_as_uncompleted") }
                                 }

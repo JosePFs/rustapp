@@ -17,7 +17,7 @@ pub fn use_uncomplete_workout_session() -> UseUncompleteWorkoutSession {
     let use_case: std::sync::Arc<UncompletePatientWorkoutSessionUseCase<_>> =
         app_context.uncomplete_patient_workout_session_use_case();
     let session_signal = app_context.session();
-    let state = use_signal(|| AsyncState::Ready(()));
+    let state = use_signal(|| AsyncState::Idle);
 
     let use_case_for_action = use_case.clone();
     let session_signal_for_action = session_signal.clone();

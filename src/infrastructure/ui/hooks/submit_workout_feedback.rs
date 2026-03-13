@@ -25,7 +25,7 @@ pub fn use_submit_workout_feedback(
     let submit_use_case: std::sync::Arc<SubmitPatientWorkoutFeedbackUseCase<_>> =
         app_context.submit_patient_workout_feedback_use_case();
     let session_signal = app_context.session();
-    let state = use_signal(|| AsyncState::Ready(()));
+    let state = use_signal(|| AsyncState::Idle);
 
     let submit_use_case_for_action = submit_use_case.clone();
     let session_signal_for_action = session_signal.clone();

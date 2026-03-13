@@ -30,7 +30,7 @@ pub fn PatientDashboard() -> Element {
     });
 
     let programs_content = match &*patient_programs.state.read() {
-        AsyncState::Loading => rsx! {
+        AsyncState::Idle | AsyncState::Loading => rsx! {
             SkeletonCard { }
         },
         AsyncState::Error(_) => rsx! {
