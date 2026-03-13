@@ -4,30 +4,26 @@ use dioxus::prelude::*;
 use dioxus_i18n::t;
 use dioxus_router::Link;
 
-use crate::infrastructure::app_context::AppContext;
 use crate::infrastructure::ui::components::{
     Backview, Button, ButtonVariant, Card, CardContent, PatientWorkout, SkeletonCard,
 };
+use crate::infrastructure::ui::hooks::app_context::use_app_context;
+use crate::infrastructure::ui::hooks::submit_workout_feedback::use_submit_workout_feedback;
+use crate::infrastructure::ui::hooks::uncomplete_workout_session::use_uncomplete_workout_session;
 use crate::infrastructure::ui::hooks::workout_day_detail::use_workout_day_detail;
+use crate::infrastructure::ui::hooks::AsyncState;
 use crate::Route;
 
 #[component]
-pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Element {
-    let app_context = use_context::<AppContext>();
-    let backend = app_context.backend();
+pub fn PatientWorkoutSessionView(patient_program_id: String, day_index: String) -> Element {
+    let app_context = use_app_context();
     let session_signal = app_context.session();
 
     let day_index_val = day_index.parse::<i32>().unwrap_or(0);
-    let workout_day_detail = use_workout_day_detail(
-        session_signal.read().clone(),
-        backend.clone(),
-        patient_program_id.clone(),
-        day_index_val,
-    );
+    let workout_day_detail = use_workout_day_detail(patient_program_id.clone(), day_index_val);
 
     let mut session_date = use_signal(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
     let mut exercise_feedback = use_signal(|| HashMap::<String, (i32, i32, String)>::new());
-    let mut submit_loading = use_signal(|| false);
     let mut submit_error = use_signal(|| Option::<String>::None);
 
     use_effect(move || {
@@ -36,30 +32,33 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
             .as_ref()
             .and_then(|r| r.as_ref().ok().cloned());
 
-        if let Some(d) = detail {
-            if let Some(ref sess) = d.session {
-                session_date.set(sess.session_date.clone());
-            } else {
-                session_date.set(chrono::Utc::now().format("%Y-%m-%d").to_string());
-            }
-            let mut map = std::collections::HashMap::new();
-            for we in &d.exercises {
-                let (effort, pain, comment) = d
-                    .feedback
-                    .iter()
-                    .find(|f| f.exercise_id == we.exercise.id)
-                    .map(|f| {
-                        (
-                            f.effort.unwrap_or(5),
-                            f.pain.unwrap_or(0),
-                            f.comment.clone().unwrap_or_default(),
-                        )
-                    })
-                    .unwrap_or((5, 0, String::new()));
-                map.insert(we.exercise.id.clone(), (effort, pain, comment));
-            }
-            exercise_feedback.set(map);
+        let Some(d) = detail else {
+            return;
+        };
+
+        if let Some(ref sess) = d.session {
+            session_date.set(sess.session_date.clone());
+        } else {
+            session_date.set(chrono::Utc::now().format("%Y-%m-%d").to_string());
         }
+
+        let mut map = HashMap::new();
+        for we in &d.exercises {
+            let (effort, pain, comment) = d
+                .feedback
+                .iter()
+                .find(|f| f.exercise_id == we.exercise.id)
+                .map(|f| {
+                    (
+                        f.effort.unwrap_or(5),
+                        f.pain.unwrap_or(0),
+                        f.comment.clone().unwrap_or_default(),
+                    )
+                })
+                .unwrap_or((5, 0, String::new()));
+            map.insert(we.exercise.id.clone(), (effort, pain, comment));
+        }
+        exercise_feedback.set(map);
     });
 
     let session = session_signal.read().clone();
@@ -139,13 +138,21 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                 )
             })
             .collect();
-    let feedback_sid_submit = feedback_sid.clone();
+
     let feedback_sid_uncomplete = feedback_sid.clone();
 
-    let backend_submit = backend.clone();
-    let backend_uncomplete = backend.clone();
-    let session_signal_clone = session_signal.clone();
-    let data_clone = workout_day_detail.clone();
+    let mut submit_feedback = use_submit_workout_feedback(
+        detail
+            .as_ref()
+            .map(|d| d.patient_program_id.clone())
+            .unwrap_or_default(),
+        day_idx,
+        session_date,
+        exercise_feedback,
+        feedback_completed,
+    );
+
+    let mut uncomplete_workout_session = use_uncomplete_workout_session();
 
     rsx! {
         div {
@@ -206,115 +213,32 @@ pub fn PatientWorkoutDay(patient_program_id: String, day_index: String) -> Eleme
                         section { class: "mb-6",
                             button {
                                 class: "mt-4 min-h-11 px-4 rounded-md bg-primary text-white font-medium",
-                                class: if submit_loading() { "opacity-50 !cursor-not-allowed" } else { "" },
-                                disabled: submit_loading(),
+                                class: if matches!(*submit_feedback.state.read(), AsyncState::Loading) {
+                                    "opacity-50 !cursor-not-allowed"
+                                } else {
+                                    ""
+                                },
+                                disabled: matches!(*submit_feedback.state.read(), AsyncState::Loading),
                                 onclick: move |_| {
-                                    let date_str = session_date().clone();
-                                    let backend = backend_submit.clone();
-                                    let sess = session_signal_clone.read().clone();
-                                    let detail = detail.clone();
-                                    let sid_opt = feedback_sid_submit.clone();
-                                    let completed = feedback_completed;
-                                    let fb_map = exercise_feedback();
-                                    let exercises_list = exercises_for_detail.clone();
-                                    let mut data = data_clone.clone();
-
-                                    async move {
-                                        let Some(sess) = sess else { return; };
-                                        let token = sess.access_token().to_string();
-                                        let pid = detail
-                                            .as_ref()
-                                            .map(|d| d.patient_program_id.clone())
-                                            .unwrap_or_default();
-                                        let di = day_idx;
-
-                                        submit_loading.set(true);
-                                        submit_error.set(None);
-
-                                        let sid = match sid_opt.as_ref() {
-                                            Some(s) => s.clone(),
-                                            None => {
-                                                match backend
-                                                    .get_or_create_session(&token, &pid, di, &date_str)
-                                                    .await
-                                                {
-                                                    Ok(s) => s.id,
-                                                    Err(err) => {
-                                                        submit_error.set(Some(err));
-                                                        submit_loading.set(false);
-                                                        return;
-                                                    }
-                                                }
-                                            }
-                                        };
-                                        if let Err(e) = backend
-                                            .update_session(&token, &sid, Some(&date_str))
-                                            .await
-                                        {
-                                            submit_error.set(Some(e));
-                                            submit_loading.set(false);
-                                            return;
-                                        }
-                                        if !completed {
-                                            if let Err(e) = backend.complete_session(&token, &sid).await {
-                                                submit_error.set(Some(e));
-                                                submit_loading.set(false);
-                                                return;
-                                            }
-                                        }
-                                        for we in &exercises_list {
-                                            let (eff, pa, com) = fb_map
-                                                .get(&we.exercise.id)
-                                                .cloned()
-                                                .unwrap_or((5, 0, String::new()));
-                                            if let Err(e) = backend
-                                                .upsert_session_exercise_feedback(
-                                                    &token,
-                                                    &sid,
-                                                    &we.exercise.id,
-                                                    Some(eff as i32),
-                                                    Some(pa),
-                                                    if com.is_empty() {
-                                                        None
-                                                    } else {
-                                                        Some(com.as_str())
-                                                    },
-                                                )
-                                                .await
-                                            {
-                                                submit_error.set(Some(e));
-                                                break;
-                                            }
-                                        }
-                                        data.restart();
-                                        submit_loading.set(false);
-                                    }
+                                    submit_error.set(None);
+                                    submit_feedback.action.call(());
                                 },
                                 if feedback_completed { "Guardar cambios" } else { "Marcar completada y enviar feedback" }
                             }
                             if feedback_completed {
                                 Button {
-                                    class: if submit_loading() { "opacity-50 !cursor-not-allowed mt-6 mb-4" } else { "mt-6 mb-4" },
+                                    class: if matches!(*uncomplete_workout_session.state.read(), AsyncState::Loading) {
+                                        "opacity-50 !cursor-not-allowed mt-6 mb-4"
+                                    } else {
+                                        "mt-6 mb-4"
+                                    },
                                     variant: ButtonVariant::Outline,
-                                    disabled: submit_loading(),
+                                    disabled: matches!(*uncomplete_workout_session.state.read(), AsyncState::Loading),
                                     onclick: move |_| {
                                         let Some(ref session_id) = feedback_sid_uncomplete else { return };
-                                        let backend = backend_uncomplete.clone();
-                                        let sess = session_signal_clone.read().clone();
-                                        let Some(sess) = sess else { return };
-                                        let token = sess.access_token().to_string();
                                         let session_id = session_id.clone();
-                                        let mut data = workout_day_detail.clone();
-                                        submit_loading.set(true);
                                         submit_error.set(None);
-                                        spawn(async move {
-                                            let res = backend.uncomplete_session(&token, &session_id).await;
-                                            match res {
-                                                Ok(_) => data.restart(),
-                                                Err(e) => submit_error.set(Some(e)),
-                                            }
-                                            submit_loading.set(false);
-                                        });
+                                        uncomplete_workout_session.action.call(session_id);
                                     },
                                     { t!("mark_as_uncompleted") }
                                 }

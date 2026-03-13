@@ -21,5 +21,4 @@ Examples reference:
 
 Dependency injection:
 
-src/infrastructure/app_context.rs
-acts as a dependency container.
+src/infrastructure/app_context.rs acts as a dependency container.

@@ -3,7 +3,9 @@ use crate::domain::error::DomainError;
 pub mod app_context;
 pub mod login;
 pub mod patient_programs;
+pub mod submit_workout_feedback;
 pub mod workout_day_detail;
+pub mod uncomplete_workout_session;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AsyncState<T> {

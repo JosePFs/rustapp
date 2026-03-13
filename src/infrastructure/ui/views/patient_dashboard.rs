@@ -22,7 +22,7 @@ pub fn PatientDashboard() -> Element {
             Some(v) => v,
             None => return,
         };
-        navigator.push(Route::PatientWorkoutDay {
+        navigator.push(Route::PatientWorkoutSessionView {
             patient_program_id: pid,
             day_index: day_index.to_string(),
         });

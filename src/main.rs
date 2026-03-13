@@ -1,25 +1,17 @@
-use std::sync::Arc;
-
 use dioxus::prelude::*;
+
 use dioxus_i18n::prelude::*;
 use dioxus_router::{Routable, Router};
 use unic_langid::langid;
 
-use crate::{
-    application::use_cases::{
-        get_patient_programs::GetPatientProgramsUseCase, login::LoginUseCase,
-    },
-    infrastructure::{
-        app_context::AppContext,
-        supabase::{api::Api, client::SupabaseClient, config::SupabaseConfig},
-        ui::views::{
-            ExerciseLibrary, LoginView, PatientDashboard, PatientProgress, PatientWorkoutDay,
-            ProgramEditor, SpecialistPatients, SpecialistPrograms, WorkoutEditor, WorkoutLibrary,
-        },
-    },
+use crate::context::build_app_context;
+use crate::infrastructure::ui::views::{
+    ExerciseLibrary, LoginView, PatientDashboard, PatientProgress, PatientWorkoutSessionView,
+    ProgramEditor, SpecialistPatients, SpecialistPrograms, WorkoutEditor, WorkoutLibrary,
 };
 
 mod application;
+mod context;
 mod domain;
 mod infrastructure;
 
@@ -42,7 +34,7 @@ pub enum Route {
     #[route("/patient")]
     PatientDashboard {},
     #[route("/patient/program/:patient_program_id/day/:day_index")]
-    PatientWorkoutDay {
+    PatientWorkoutSessionView {
         patient_program_id: String,
         day_index: String,
     },
@@ -60,19 +52,13 @@ fn main() {
 fn App() -> Element {
     init_i18n();
 
-    let config = SupabaseConfig::from_env();
-    if config.is_none() {
-        return rsx! { div { "Configuration error" } };
-    }
-
-    let api = Api::new(SupabaseClient::new(config.unwrap()));
-    let backend = Arc::new(api);
-    let login_use_case = Arc::new(LoginUseCase::<Api>::new(backend.clone()));
-    let get_patient_programs_use_case =
-        Arc::new(GetPatientProgramsUseCase::<Api>::new(backend.clone()));
-    use_context_provider(|| {
-        AppContext::new(backend, None, login_use_case, get_patient_programs_use_case)
-    });
+    let app_context = match build_app_context() {
+        Some(ctx) => ctx,
+        None => {
+            return rsx! { div { "Configuration error" } };
+        }
+    };
+    use_context_provider(|| app_context);
 
     rsx! {
         document::Link { rel: "icon", href: asset!("/assets/favicon.png") }

@@ -22,3 +22,7 @@ mark_as_uncompleted = Marcar como non completado
 # Errors
 wrong_credentials = Enderezo de correo electrónico ou contrasinal incorrectos
 error_programs = Erro ao obter os programas
+error_no_active_assignment = Non se atopa a asignación activa
+error_program_not_found = Programa non atopado
+error_day_not_found = Día non atopado na programación
+error_rest_day = Este día é de descanso (sen adestramento)

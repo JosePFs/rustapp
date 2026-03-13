@@ -10,3 +10,4 @@ Rules:
 - Components call application services.
 - State should be minimal and UI focused.
 - Avoid raw RSX when a Dioxus component already exists from: https://dioxuslabs.com/components
+- All texts must be translatable using .flt files, which are in the i18n folder, so keys will be used to identify strings, including error strings.

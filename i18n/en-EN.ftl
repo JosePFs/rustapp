@@ -22,3 +22,7 @@ mark_as_uncompleted = Mark as uncompleted
 # Errors
 wrong_credentials = Incorrect email address or password
 error_programs = Error fetching programs
+error_no_active_assignment = Active assignment not found
+error_program_not_found = Program not found
+error_day_not_found = Day not found in schedule
+error_rest_day = This day is a rest day (no workout)
