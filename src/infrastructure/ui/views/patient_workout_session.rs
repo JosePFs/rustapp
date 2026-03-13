@@ -38,11 +38,17 @@ pub fn PatientWorkoutSessionView(patient_program_id: String, day_index: String) 
 
         if let Some(ref sess) = d.session {
             session_date.set(sess.session_date.clone());
-            marked_as_completed.set(true);
         } else {
             session_date.set(chrono::Utc::now().format("%Y-%m-%d").to_string());
-            marked_as_completed.set(false);
         }
+
+        let feedback_completed = d
+            .session
+            .as_ref()
+            .map(|ws| ws.completed_at.is_some())
+            .unwrap_or(false);
+
+        marked_as_completed.set(feedback_completed);
 
         let mut map = HashMap::new();
         for we in &d.exercises {
@@ -91,11 +97,6 @@ pub fn PatientWorkoutSessionView(patient_program_id: String, day_index: String) 
         ),
         None => (String::new(), String::new(), None, day_index_val, None),
     };
-
-    let feedback_completed = session_opt
-        .as_ref()
-        .map(|s| s.completed_at.is_some())
-        .unwrap_or(false);
 
     let feedback_sid = session_opt.as_ref().map(|s| s.id.clone());
     let exercises_for_detail = detail
@@ -152,7 +153,7 @@ pub fn PatientWorkoutSessionView(patient_program_id: String, day_index: String) 
         day_idx,
         session_date,
         exercise_feedback,
-        feedback_completed,
+        marked_as_completed.peek().cloned(),
     );
 
     let mut uncomplete_workout_session = use_uncomplete_workout_session();
