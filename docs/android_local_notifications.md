@@ -77,6 +77,22 @@ The real Android implementation is in `notifications.rs` (compiled only for `tar
 
 To run checks for both host and Android, use the VS Code task **"cargo check (host + android)"** (or run `cargo check` and `cargo check --target aarch64-linux-android --features mobile --no-default-features`). For Android you need the NDK toolchain in `PATH` or set `CC_aarch64_linux_android`, `CXX_aarch64_linux_android`, `AR_aarch64_linux_android`.
 
+## Status bar and navigation bar
+
+The app uses a custom theme so the **status bar** and **navigation bar** use the same background as the app (white in light mode).
+
+- **Project resources**: `android/app/src/main/res/values/colors.xml` and `styles.xml` define `AppTheme` with `android:statusBarColor` and `android:navigationBarColor` set to `@color/statusBarBackground` (#FFFFFF), and `android:windowLightStatusBar` so icons are dark on the light background.
+- **Applying**: Dioxus generates the Android project under `target/dx/...`. To use the custom theme, copy the project’s values over the generated ones after each build:
+
+  ```bash
+  # Debug build (after cargo dev-android or dx bundle --platform android)
+  cp -r android/app/src/main/res/values/* target/dx/rustapp/debug/android/app/app/src/main/res/values/
+  ```
+
+  For release, use the `release` segment in the path instead of `debug`.
+
+- Optional: run `./scripts/apply-android-theme.sh` (creates the target path if missing, then copies).
+
 ## Build
 
 - `jni` and `ndk-context` dependencies are conditional on `target_os = "android"` (see `Cargo.toml`).

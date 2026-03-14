@@ -1,0 +1,9 @@
+<resources>
+    <!-- Base application theme. Status bar matches app background. -->
+    <style name="AppTheme" parent="@style/Theme.AppCompat.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/statusBarBackground</item>
+        <item name="android:navigationBarColor">@color/statusBarBackground</item>
+        <!-- Light status bar (dark icons) on light background -->
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>
