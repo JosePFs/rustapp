@@ -9,6 +9,7 @@ Patterns:
 - Views are container components.
 - Business logic lives in custom hooks.
 - Child components are presentation-only.
+- Avoid waterfall requests using streams and/or try_join!.
 
 Examples reference:
 
@@ -18,6 +19,9 @@ Examples reference:
 - use_resource
   src/infrastructure/ui/views/patient_dashboard.rs
   src/infrastructure/ui/hooks/patient_programs.rs
+- parallel requests:
+  src/application/use_cases/get_patient_programs.rs
+  src/application/use_cases/submit_patient_workout_feedback.rs
 
 Dependency injection:
 

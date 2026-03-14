@@ -4,6 +4,8 @@ use dioxus_i18n::t;
 use dioxus_router::Link;
 
 use crate::infrastructure::app_context::AppContext;
+use crate::infrastructure::ui::hooks::exercise_library::use_exercise_library;
+use crate::infrastructure::ui::hooks::AsyncState;
 use crate::Route;
 
 #[component]
@@ -12,32 +14,7 @@ pub fn ExerciseLibrary() -> Element {
     let backend = app_context.backend();
     let session_signal = app_context.session();
     let mut filter = use_signal(|| String::new());
-
-    let backend_for_resource = backend.clone();
-    let session_for_resource = session_signal.read().clone();
-    let filter_val_for_resource = filter().clone();
-    let mut exercises = use_resource(move || {
-        let backend = backend_for_resource.clone();
-        let sess_opt = session_for_resource.clone();
-        let fv = filter_val_for_resource.clone();
-        async move {
-            let sess = match sess_opt.as_ref() {
-                Some(s) => s,
-                None => return Err("No session".to_string()),
-            };
-            backend
-                .list_exercise_library(
-                    &sess.access_token(),
-                    sess.user_id(),
-                    if fv.is_empty() {
-                        None
-                    } else {
-                        Some(fv.as_str())
-                    },
-                )
-                .await
-        }
-    });
+    let exercises = use_exercise_library(filter);
 
     let mut new_name = use_signal(|| String::new());
     let mut new_desc = use_signal(|| String::new());
@@ -60,29 +37,19 @@ pub fn ExerciseLibrary() -> Element {
         };
     }
 
-    let list = exercises
-        .read()
-        .as_ref()
-        .and_then(|r| r.as_ref().ok().cloned())
-        .unwrap_or_default();
-
-    let list_len = list.len();
-    let empty_ok = exercises
-        .read()
-        .as_ref()
-        .as_ref()
-        .map(|r| r.is_ok())
-        .unwrap_or(false);
+    let (list, list_len, empty_ok) = match &*exercises.state.read() {
+        AsyncState::Idle | AsyncState::Loading => (Vec::new(), 0, false),
+        AsyncState::Error(_) => (Vec::new(), 0, false),
+        AsyncState::Ready(data) => (data.clone(), data.len(), true),
+    };
     let backend_for_rows = backend.clone();
-    let session_for_rows = session.clone();
     let backend_for_create = backend.clone();
-    let session_for_create = session.clone();
+    let session_for_create = session_signal.read().clone();
     let rows: Vec<Element> = list
         .into_iter()
         .map(|ex| {
             let backend_row = backend_for_rows.clone();
-            let session_row = session_for_rows.clone();
-            let exercises_row = exercises.clone();
+            let session_row = session_for_create.clone();
             let ex_id = ex.id.clone();
             let ex_id_edit = ex_id.clone();
             let ex_id_del = ex_id.clone();
@@ -121,22 +88,22 @@ pub fn ExerciseLibrary() -> Element {
                                     let d = edit_desc().clone();
                                     let v = edit_video_url().clone();
                                     editing_id.set(None);
-                                    let mut refresh = exercises_row.clone();
+                                    let mut resource = exercises.resource.clone();
                                     spawn(async move {
                                         let _ = backend.update_exercise(&token, &eid, Some(&n), Some(if d.is_empty() { "" } else { &d }), None, Some(if v.is_empty() { None } else { Some(v.as_str()) })).await;
-                                        refresh.restart();
+                                        resource.restart();
                                     });
                                 },
-                                "Guardar"
+                                { t!("exercise_library_save") }
                             }
-                            button { class: "min-h-9 px-2 text-sm rounded-md border border-border", onclick: move |_| editing_id.set(None), "Cancelar" }
+                            button { class: "min-h-9 px-2 text-sm rounded-md border border-border", onclick: move |_| editing_id.set(None), { t!("exercise_library_cancel") } }
                         }
                     } else {
                         span { class: "block",
                             strong { "{name}" }
                             if !desc.is_empty() { span { " — {desc}" } }
                             if is_deleted {
-                                span { class: "text-xs text-text-muted", " (eliminado)" }
+                                span { class: "text-xs text-text-muted", { t!("exercise_library_deleted_label") } }
                             }
                         }
                         if !is_deleted {
@@ -148,7 +115,7 @@ pub fn ExerciseLibrary() -> Element {
                                     edit_video_url.set(video.clone());
                                     editing_id.set(Some(ex_id_edit.clone()));
                                 },
-                                "Editar"
+                                { t!("exercise_library_edit") }
                             }
                             button {
                                 class: "min-h-9 px-2 text-sm rounded-md bg-error text-white mt-2 mr-2",
@@ -156,13 +123,13 @@ pub fn ExerciseLibrary() -> Element {
                                     let backend = backend_row.clone();
                                     let token = session_row.as_ref().map(|s| s.access_token().to_string()).unwrap_or_default();
                                     let eid = ex_id_del.clone();
-                                    let mut refresh = exercises_row.clone();
+                                    let mut resource = exercises.resource.clone();
                                     spawn(async move {
                                         let _ = backend.soft_delete_exercise(token.as_str(), &eid).await;
-                                        refresh.restart();
+                                        resource.restart();
                                     });
                                 },
-                                "Eliminar"
+                                { t!("exercise_library_delete") }
                             }
                         } else {
                             button {
@@ -171,13 +138,13 @@ pub fn ExerciseLibrary() -> Element {
                                     let backend = backend_row.clone();
                                     let token = session_row.as_ref().map(|s| s.access_token().to_string()).unwrap_or_default();
                                     let eid = ex_id_restore.clone();
-                                    let mut refresh = exercises_row.clone();
+                                    let mut resource = exercises.resource.clone();
                                     spawn(async move {
                                         let _ = backend.restore_exercise(token.as_str(), &eid).await;
-                                        refresh.restart();
+                                        resource.restart();
                                     });
                                 },
-                                "Restaurar"
+                                { t!("exercise_library_restore") }
                             }
                         }
                     }
@@ -200,42 +167,42 @@ pub fn ExerciseLibrary() -> Element {
                             button {
                                 class: "min-h-11 px-0 bg-transparent text-2xl font-semibold inline-flex items-center gap-2 text-text",
                                 onclick: move |_| nav_open.set(!nav_open()),
-                                span { "Biblioteca de ejercicios" }
+                                span { { t!("exercise_library_title") } }
                                 span { class: "text-xs", if nav_open() { "▲" } else { "▼" } }
                             }
                             if nav_open() {
                                 div { class: "absolute z-10 mt-2 w-56 bg-surface border border-border rounded-md shadow-md flex flex-col py-1",
-                                    Link { to: Route::SpecialistPatients {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", "Pacientes" }
+                                    Link { to: Route::SpecialistPatients {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", { t!("exercise_library_nav_patients") } }
                                 }
                             }
                         }
                     }
                 }
-                p { class: "text-sm text-text-muted mb-4", "Crea y edita ejercicios aquí. Luego añádelos a entrenamientos desde el editor del programa." }
+                p { class: "text-sm text-text-muted mb-4", { t!("exercise_library_intro") } }
                 input {
                     class: "w-full min-h-11 px-4 border border-border rounded-md mb-4 focus:outline-none focus:border-primary",
-                    placeholder: "Filtrar por nombre...",
+                    placeholder: "{t!(\"exercise_library_filter_placeholder\")}",
                     value: "{filter()}",
-                    oninput: move |ev| { filter.set(ev.value().clone()); exercises.restart(); },
+                    oninput: move |ev| filter.set(ev.value().clone()),
                 }
                 section { class: "bg-surface rounded-lg p-4 mb-6 border border-border",
-                    h2 { class: "text-xl font-semibold mt-0 mb-4", "Nuevo ejercicio" }
+                    h2 { class: "text-xl font-semibold mt-0 mb-4", { t!("exercise_library_new_section") } }
                     div { class: "flex flex-col gap-4 max-w-md",
                         input {
                             class: "w-full min-h-11 px-4 border border-border rounded-md focus:outline-none focus:border-primary",
-                            placeholder: "Nombre",
+                            placeholder: "{t!(\"exercise_library_name_placeholder\")}",
                             value: "{new_name()}",
                             oninput: move |ev| new_name.set(ev.value().clone()),
                         }
                         input {
                             class: "w-full min-h-11 px-4 border border-border rounded-md focus:outline-none focus:border-primary",
-                            placeholder: "Descripción (opcional)",
+                            placeholder: "{t!(\"exercise_library_desc_placeholder\")}",
                             value: "{new_desc()}",
                             oninput: move |ev| new_desc.set(ev.value().clone()),
                         }
                         input {
                             class: "w-full min-h-11 px-4 border border-border rounded-md focus:outline-none focus:border-primary",
-                            placeholder: "URL vídeo YouTube (opcional)",
+                            placeholder: "{t!(\"exercise_library_video_placeholder\")}",
                             value: "{new_video_url()}",
                             oninput: move |ev| new_video_url.set(ev.value().clone()),
                         }
@@ -253,7 +220,7 @@ pub fn ExerciseLibrary() -> Element {
                                 let video = new_video_url().clone();
                                 create_loading.set(true);
                                 create_error.set(None);
-                                let mut refresh = exercises.clone();
+                                let mut resource = exercises.resource.clone();
                                 spawn(async move {
                                     match backend.create_exercise(
                                         &token,
@@ -267,14 +234,14 @@ pub fn ExerciseLibrary() -> Element {
                                             new_name.set(String::new());
                                             new_desc.set(String::new());
                                             new_video_url.set(String::new());
-                                            refresh.restart();
+                                            resource.restart();
                                         }
-                                        Err(e) => create_error.set(Some(e)),
+                                        Err(e) => create_error.set(Some(e.to_string())),
                                     }
                                     create_loading.set(false);
                                 });
                             },
-                            "Crear ejercicio"
+                            { t!("exercise_library_create_btn") }
                         }
                         if let Some(ref e) = *create_error.read() {
                             p { class: "text-error text-sm mt-2", "{e}" }
@@ -282,12 +249,12 @@ pub fn ExerciseLibrary() -> Element {
                     }
                 }
                 section { class: "bg-surface rounded-lg p-4 border border-border",
-                    h2 { class: "text-xl font-semibold mt-0 mb-4", "Ejercicios ({list_len})" }
+                    h2 { class: "text-xl font-semibold mt-0 mb-4", { t!("exercise_library_list_title", count: list_len.to_string()) } }
                     ul { class: "list-none p-0 m-0",
                         {rows.into_iter()}
                     }
                     if list_len == 0 && empty_ok {
-                        p { class: "text-text-muted italic py-4", "Aún no hay ejercicios. Crea uno arriba." }
+                        p { class: "text-text-muted italic py-4", { t!("exercise_library_empty") } }
                     }
                 }
             }

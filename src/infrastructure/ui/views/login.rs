@@ -13,18 +13,20 @@ pub fn LoginView() -> Element {
 
     use_effect(move || {
         let use_login_state = login.state.read();
-        if use_login_state.is_login_as_patient() {
-            nav.push(Route::PatientDashboard {});
-        } else if use_login_state.is_login_as_specialist() {
-            nav.push(Route::SpecialistPatients {});
+        if let Some(login_use_case_result) = use_login_state.data() {
+            if login_use_case_result.is_login_as_patient() {
+                nav.push(Route::PatientDashboard {});
+            } else if login_use_case_result.is_login_as_specialist() {
+                nav.push(Route::SpecialistPatients {});
+            }
         }
     });
 
     let use_login_state = login.state.read();
-    let login_result = if use_login_state.is_pending() {
+    let login_result = if let Some(error) = use_login_state.error() {
+        LoginResult::Error(error.to_string())
+    } else if use_login_state.is_loading() {
         LoginResult::Pending
-    } else if use_login_state.is_error() {
-        LoginResult::Error(use_login_state.error())
     } else {
         LoginResult::None
     };

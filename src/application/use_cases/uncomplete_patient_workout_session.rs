@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::application::Backend;
-use crate::domain::error::{DomainError, Result};
+use crate::domain::error::Result;
 
 #[derive(Clone)]
 pub struct UncompletePatientWorkoutSessionArgs {
@@ -22,7 +22,5 @@ impl<B: Backend> UncompletePatientWorkoutSessionUseCase<B> {
         self.backend
             .uncomplete_session(&args.token, &args.session_id)
             .await
-            .map_err(DomainError::Api)
     }
 }
-

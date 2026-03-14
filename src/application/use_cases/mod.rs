@@ -1,5 +1,11 @@
 pub mod get_patient_programs;
+pub mod get_specialist_patients_with_profiles;
+pub mod list_exercise_library;
+pub mod list_workout_library;
 pub mod login;
+pub mod specialist_programs_data;
+pub mod patient_progress;
 pub mod patient_workout_session;
 pub mod submit_patient_workout_feedback;
 pub mod uncomplete_patient_workout_session;
+pub mod workout_editor_data;

@@ -59,7 +59,7 @@ fn App() -> Element {
             return rsx! {
                 div {
                     class: "p-4 text-destructive bg-destructive/10 rounded",
-                    { t!("error_config", detail: e.clone()) }
+                    { t!("error_config", detail: e.to_string()) }
                 }
             };
         }

@@ -1,9 +1,12 @@
 use dioxus::prelude::*;
+
 use dioxus_i18n::t;
 use dioxus_router::Link;
 
 use crate::domain::entities::Exercise;
 use crate::infrastructure::app_context::AppContext;
+use crate::infrastructure::ui::hooks::workout_editor::use_workout_editor;
+use crate::infrastructure::ui::hooks::AsyncState;
 use crate::Route;
 
 #[component]
@@ -11,57 +14,7 @@ pub fn WorkoutEditor(id: String) -> Element {
     let app_context = use_context::<AppContext>();
     let backend = app_context.backend();
     let session_signal = app_context.session();
-    let id_workout = id.clone();
-    let id_exercises = id.clone();
-
-    let backend_workout = backend.clone();
-    let workout = use_resource(move || {
-        let wid = id_workout.clone();
-        let backend = backend_workout.clone();
-        let session = session_signal.read().clone();
-        async move {
-            let sess = match session {
-                Some(s) => s,
-                None => return Err("No session".to_string()),
-            };
-            let rows = backend
-                .get_workouts_by_ids(sess.access_token(), &[wid])
-                .await?;
-            Ok(rows.into_iter().next())
-        }
-    });
-
-    let backend_exercises = backend.clone();
-    let exercises = use_resource(move || {
-        let wid = id_exercises.clone();
-        let backend = backend_exercises.clone();
-        let session = session_signal.read().clone();
-        async move {
-            let sess = match session {
-                Some(s) => s,
-                None => return Err("No session".to_string()),
-            };
-            backend
-                .list_exercises_for_workout(sess.access_token(), &wid)
-                .await
-        }
-    });
-
-    let backend_library = backend.clone();
-    let library = use_resource(move || {
-        let backend = backend_library.clone();
-        let session = session_signal.read().clone();
-        async move {
-            let sess = match session {
-                Some(s) => s,
-                None => return Err("No session".to_string()),
-            };
-            let specialist_id = sess.user_id().to_string();
-            backend
-                .list_exercise_library(sess.access_token(), &specialist_id, None)
-                .await
-        }
-    });
+    let data = use_workout_editor(id.clone());
 
     let mut add_exercise_id = use_signal(|| Option::<String>::None);
     let mut add_loading = use_signal(|| false);
@@ -78,20 +31,11 @@ pub fn WorkoutEditor(id: String) -> Element {
         };
     }
 
-    let workout_opt = workout
-        .read()
-        .as_ref()
-        .and_then(|r| r.as_ref().ok().and_then(|o| o.clone()));
-    let exs = exercises
-        .read()
-        .as_ref()
-        .and_then(|r| r.as_ref().ok().cloned())
-        .unwrap_or_default();
-    let library_list = library
-        .read()
-        .as_ref()
-        .and_then(|r| r.as_ref().ok().cloned())
-        .unwrap_or_default();
+    let (workout_opt, exs, library_list) = match &*data.state.read() {
+        AsyncState::Idle | AsyncState::Loading => (None, Vec::new(), Vec::new()),
+        AsyncState::Error(_) => (None, Vec::new(), Vec::new()),
+        AsyncState::Ready(d) => (d.workout.clone(), d.exercises.clone(), d.library.clone()),
+    };
     let ex_ids_in_workout: std::collections::HashSet<String> =
         exs.iter().map(|we| we.exercise.id.clone()).collect();
     let available_to_add: Vec<&Exercise> = library_list
@@ -109,7 +53,7 @@ pub fn WorkoutEditor(id: String) -> Element {
             let deleted = e.deleted_at.is_some();
             let (sets_val, reps_val) = sets_reps().get(&eid).copied().unwrap_or((we.sets, we.reps));
             let wid = id.clone();
-            let ex_refresh = exercises.clone();
+            let ex_refresh = data.resource.clone();
             let mut sets_reps_sig = sets_reps;
             let backend_sets = backend.clone();
             let backend_reps = backend.clone();
@@ -302,7 +246,7 @@ pub fn WorkoutEditor(id: String) -> Element {
                             p { "{d}" }
                         }
                     }
-                } else if workout.read().as_ref().as_ref().map(|r| r.is_ok()).unwrap_or(false) {
+                } else if matches!(&*data.state.read(), AsyncState::Ready(_)) {
                     p { "Entrenamiento no encontrado." }
                 } else {
                     p { "Cargando..." }
@@ -345,11 +289,11 @@ pub fn WorkoutEditor(id: String) -> Element {
                                     let wid = id.clone();
                                     let order_index = exs.len() as i32;
                                     add_loading.set(true);
-                                    let mut ex_refresh = exercises.clone();
+                                    let mut resource = data.resource.clone();
                                     let mut add_id_signal = add_exercise_id;
                                     spawn(async move {
                                         let _ = backend.add_exercise_to_workout(s.access_token(), &wid, &eid, order_index, 3, 10).await;
-                                        ex_refresh.restart();
+                                        resource.restart();
                                         add_id_signal.set(None);
                                         add_loading.set(false);
                                     });

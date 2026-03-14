@@ -6,10 +6,11 @@ use dioxus_i18n::t;
 use dioxus_primitives::ContentSide;
 use dioxus_router::Link;
 
-use crate::domain::error::DomainError;
 use crate::domain::profile::Profile;
 use crate::infrastructure::app_context::AppContext;
 use crate::infrastructure::ui::components::{Tooltip, TooltipContent, TooltipTrigger};
+use crate::infrastructure::ui::hooks::specialist_patients::use_specialist_patients;
+use crate::infrastructure::ui::hooks::AsyncState;
 use crate::Route;
 
 #[component]
@@ -17,30 +18,8 @@ pub fn SpecialistPatients() -> Element {
     let app_context = use_context::<AppContext>();
     let session_signal = app_context.session();
     let backend = app_context.backend();
+    let patients = use_specialist_patients();
 
-    // Pacientes del especialista
-    let backend_patients = backend.clone();
-    let patients = use_resource(move || {
-        let session = session_signal.read().clone();
-        let backend = backend_patients.clone();
-        async move {
-            let sess = match session {
-                Some(s) => s,
-                None => return Err("No session".to_string()),
-            };
-            let links = backend
-                .list_specialist_patients(sess.access_token())
-                .await?;
-            let ids: Vec<String> = links.iter().map(|l| l.patient_id.clone()).collect();
-            let profiles = backend
-                .get_profiles_by_ids(&ids, sess.access_token())
-                .await
-                .map_err(|e| DomainError::Api(e.to_string()));
-            Ok::<_, String>((links, profiles))
-        }
-    });
-
-    // Estado local para añadir paciente existente
     let mut add_patient_email = use_signal(|| String::new());
     let mut add_patient_loading = use_signal(|| false);
     let mut add_patient_error = use_signal(|| Option::<String>::None);
@@ -109,79 +88,82 @@ pub fn SpecialistPatients() -> Element {
                             }
                         }
                     }
-                    if let Some(Ok((links, profiles))) = patients.read().as_ref() {
-                        ul { class: "list-none p-0 m-0 mb-4",
-                            for link in links.iter() {
-                                li { key: "{link.id}", class: "mb-1",
-                                    Link {
-                                        to: Route::PatientProgress { id: link.patient_id.clone() },
-                                        class: "block p-4 min-h-11 text-primary no-underline rounded-md border border-border bg-surface hover:bg-gray-50 hover:border-primary",
-                                        {
-                                            profiles
-                                                .as_ref()
-                                                .unwrap()
-                                                .iter()
-                                                .find(|p| p.id().value() == link.patient_id)
-                                                .map(|p: &Profile| rsx! { "{p.full_name()} ({p.email()})" })
-                                                .unwrap_or(rsx! { "{link.patient_id}" })
+                    {
+                        match &*patients.state.read() {
+                            AsyncState::Idle | AsyncState::Loading => rsx! {
+                                p { "Cargando pacientes..." }
+                            },
+                            AsyncState::Error(_) => rsx! {
+                                p { class: "text-error", { t!("error_load_patients") } }
+                            },
+                            AsyncState::Ready(data) => rsx! {
+                                ul { class: "list-none p-0 m-0 mb-4",
+                                    for link in data.links.iter() {
+                                        li { key: "{link.id}", class: "mb-1",
+                                            Link {
+                                                to: Route::PatientProgress { id: link.patient_id.clone() },
+                                                class: "block p-4 min-h-11 text-primary no-underline rounded-md border border-border bg-surface hover:bg-gray-50 hover:border-primary",
+                                                {
+                                                    data.profiles
+                                                        .iter()
+                                                        .find(|p| p.id().value() == link.patient_id)
+                                                        .map(|p: &Profile| rsx! { "{p.full_name()} ({p.email()})" })
+                                                        .unwrap_or(rsx! { "{link.patient_id}" })
+                                                }
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        }
-                        // Añadir paciente existente (por email) a este especialista.
-                        div { class: "flex flex-col gap-4 mt-4",
-                            h3 { class: "text-lg font-semibold mb-0", "Añadir paciente existente" }
-                            p { class: "text-sm text-text-muted mb-0", "Introduce el email de un paciente para vincularlo a ti." }
-                            div { class: "flex flex-wrap gap-2 items-center",
-                                input {
-                                    class: "flex-1 min-w-40 min-h-11 px-4 border border-border rounded-md bg-surface focus:outline-none focus:border-primary",
-                                    placeholder: "Email del paciente",
-                                    value: "{add_patient_email()}",
-                                    oninput: move |ev| add_patient_email.set(ev.value().clone()),
-                                }
-                                button {
-                                    class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed",
-                                    disabled: add_patient_loading() || add_patient_email().trim().is_empty(),
-                                    onclick: move |_| {
-                                        let email_val = add_patient_email().trim().to_string();
-                                        if email_val.is_empty() { return; }
-                                        let backend = backend_add_patient.clone();
-                                        let session = session_signal.read().clone();
-                                        let Some(sess) = session else { return };
-                                        let token = sess.access_token().to_string();
-                                        let specialist_id = sess.user_id().to_string();
-                                        add_patient_loading.set(true);
-                                        add_patient_error.set(None);
-                                        let mut patients_ref = patients;
-                                        spawn(async move {
-                                            match backend.get_patient_id_by_email(&token, &email_val).await {
-                                                Ok(Some(patient_id)) => {
-                                                    match backend.add_specialist_patient(&token, &specialist_id, &patient_id).await {
-                                                        Ok(_) => {
-                                                            add_patient_email.set(String::new());
-                                                            patients_ref.restart();
+                                div { class: "flex flex-col gap-4 mt-4",
+                                    h3 { class: "text-lg font-semibold mb-0", { t!("add_patient_existing") } }
+                                    p { class: "text-sm text-text-muted mb-0", { t!("add_patient_hint") } }
+                                    div { class: "flex flex-wrap gap-2 items-center",
+                                        input {
+                                            class: "flex-1 min-w-40 min-h-11 px-4 border border-border rounded-md bg-surface focus:outline-none focus:border-primary",
+                                            placeholder: "{t!(\"add_patient_email_placeholder\")}",
+                                            value: "{add_patient_email()}",
+                                            oninput: move |ev| add_patient_email.set(ev.value().clone()),
+                                        }
+                                        button {
+                                            class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed",
+                                            disabled: add_patient_loading() || add_patient_email().trim().is_empty(),
+                                            onclick: move |_| {
+                                                let email_val = add_patient_email().trim().to_string();
+                                                if email_val.is_empty() { return; }
+                                                let backend = backend_add_patient.clone();
+                                                let session = session_signal.read().clone();
+                                                let Some(sess) = session else { return };
+                                                let token = sess.access_token().to_string();
+                                                let specialist_id = sess.user_id().to_string();
+                                                add_patient_loading.set(true);
+                                                add_patient_error.set(None);
+                                                let mut resource = patients.resource.clone();
+                                                spawn(async move {
+                                                    match backend.get_patient_id_by_email(&token, &email_val).await {
+                                                        Ok(Some(patient_id)) => {
+                                                            match backend.add_specialist_patient(&token, &specialist_id, &patient_id).await {
+                                                                Ok(_) => {
+                                                                    add_patient_email.set(String::new());
+                                                                    resource.restart();
+                                                                }
+                                                                Err(e) => add_patient_error.set(Some(e.to_string())),
+                                                            }
                                                         }
-                                                        Err(e) => add_patient_error.set(Some(e)),
+                                                        Ok(None) => add_patient_error.set(Some(t!("patient_not_found_by_email").to_string())),
+                                                        Err(e) => add_patient_error.set(Some(e.to_string())),
                                                     }
-                                                }
-                                                Ok(None) => add_patient_error.set(Some("No se encontró un paciente con ese email".to_string())),
-                                                Err(e) => add_patient_error.set(Some(e)),
-                                            }
-                                            add_patient_loading.set(false);
-                                        });
-                                    },
-                                    "Vincular paciente"
+                                                    add_patient_loading.set(false);
+                                                });
+                                            },
+                                            { t!("add_patient_link") }
+                                        }
+                                    }
+                                    if let Some(ref e) = *add_patient_error.read() {
+                                        p { class: "text-error text-sm mt-2", "{e}" }
+                                    }
                                 }
-                            }
-                            if let Some(ref e) = *add_patient_error.read() {
-                                p { class: "text-error text-sm mt-2", "{e}" }
-                            }
+                            },
                         }
-                    } else if patients.read().as_ref().map(|r| r.is_err()).unwrap_or(false) {
-                        p { class: "text-error", "Error al cargar pacientes" }
-                    } else {
-                        p { "Cargando pacientes..." }
                     }
                 }
             }

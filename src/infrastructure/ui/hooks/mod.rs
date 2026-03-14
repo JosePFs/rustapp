@@ -1,8 +1,14 @@
 use crate::domain::error::DomainError;
 
 pub mod app_context;
+pub mod exercise_library;
 pub mod login;
 pub mod patient_programs;
+pub mod patient_progress;
+pub mod specialist_patients;
+pub mod specialist_programs;
+pub mod workout_editor;
+pub mod workout_library;
 pub mod submit_workout_feedback;
 pub mod uncomplete_workout_session;
 pub mod workout_day_detail;
@@ -35,6 +41,13 @@ impl<T> AsyncState<T> {
     pub fn data(&self) -> Option<&T> {
         match self {
             AsyncState::Ready(data) => Some(data),
+            _ => None,
+        }
+    }
+
+    pub fn error(&self) -> Option<&DomainError> {
+        match self {
+            AsyncState::Error(error) => Some(error),
             _ => None,
         }
     }

@@ -4,25 +4,29 @@ use dioxus_i18n::t;
 use serde::Deserialize;
 
 use super::client::SupabaseClient;
-use crate::application::ports::data_mutator::DataMutator;
-use crate::application::ports::data_provider::DataProvider;
-use crate::application::ports::AuthService;
-use crate::application::Backend;
-use crate::domain::credentials::Credentials;
-use crate::domain::entities::{
-    Exercise, PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback,
-    SpecialistPatient, Workout, WorkoutExercise, WorkoutSession,
+use crate::application::{
+    ports::data_mutator::DataMutator, ports::data_provider::DataProvider, ports::AuthService,
+    Backend,
 };
-use crate::domain::error::DomainError;
-use crate::domain::profile::Profile;
-use crate::domain::session::Session;
+use crate::domain::entities::SessionExerciseFeedback;
+use crate::domain::{
+    credentials::Credentials,
+    entities::{
+        Exercise, PatientProgram, Program, ProgramScheduleItem, SpecialistPatient, Workout,
+        WorkoutExercise, WorkoutSession,
+    },
+    error::DomainError,
+    error::Result,
+    profile::Profile,
+    session::Session,
+};
 use crate::infrastructure::api::dtos::{
     ExerciseDto, PatientProgramDto, ProfileDto, ProgramDto, ProgramScheduleItemDto,
     SessionExerciseFeedbackDto, SpecialistPatientDto, WorkoutDto, WorkoutExerciseRow,
     WorkoutSessionDto,
 };
 
-fn parse_json<T: for<'de> Deserialize<'de>>(body: &[u8]) -> Result<T, String> {
+fn parse_json<T: for<'de> Deserialize<'de>>(body: &[u8]) -> std::result::Result<T, String> {
     serde_json::from_slice(body).map_err(|e| e.to_string())
 }
 
@@ -57,7 +61,7 @@ impl DataProvider for Api {
         &self,
         ids: &[String],
         access_token: &str,
-    ) -> Result<Vec<Profile>, String> {
+    ) -> Result<Vec<Profile>> {
         if ids.is_empty() {
             return Ok(vec![]);
         }
@@ -66,12 +70,8 @@ impl DataProvider for Api {
             "/profiles?select=id,email,full_name,role,created_at,updated_at&{}",
             filter
         );
-        let body = self
-            .client
-            .rest_get(Some(access_token), &path)
-            .await
-            .map_err(|e| e.to_string())?;
-        let rows: Vec<ProfileDto> = parse_json(&body).map_err(|e| e.to_string())?;
+        let body = self.client.rest_get(Some(access_token), &path).await?;
+        let rows: Vec<ProfileDto> = parse_json(&body)?;
         Ok(rows.into_iter().map(|r| r.into()).collect())
     }
 
@@ -79,7 +79,7 @@ impl DataProvider for Api {
         &self,
         access_token: &str,
         email: &str,
-    ) -> Result<Option<String>, String> {
+    ) -> Result<Option<String>> {
         let path = "/rpc/get_patient_id_by_email";
         let body = serde_json::json!({ "p_email": email });
         let body_bytes = body.to_string().into_bytes();
@@ -91,10 +91,7 @@ impl DataProvider for Api {
         Ok(id)
     }
 
-    async fn list_specialist_patients(
-        &self,
-        access_token: &str,
-    ) -> Result<Vec<SpecialistPatient>, String> {
+    async fn list_specialist_patients(&self, access_token: &str) -> Result<Vec<SpecialistPatient>> {
         let body = self
             .client
             .rest_get(
@@ -106,7 +103,7 @@ impl DataProvider for Api {
         Ok(rows.into_iter().map(Into::into).collect())
     }
 
-    async fn list_programs(&self, access_token: &str) -> Result<Vec<Program>, String> {
+    async fn list_programs(&self, access_token: &str) -> Result<Vec<Program>> {
         let body = self
             .client
             .rest_get(
@@ -118,11 +115,7 @@ impl DataProvider for Api {
         Ok(rows.into_iter().map(Into::into).collect())
     }
 
-    async fn get_program(
-        &self,
-        access_token: &str,
-        program_id: &str,
-    ) -> Result<Option<Program>, String> {
+    async fn get_program(&self, access_token: &str, program_id: &str) -> Result<Option<Program>> {
         let path = format!(
             "/programs?id=eq.{}&select=id,specialist_id,name,description,created_at,updated_at",
             program_id
@@ -137,7 +130,7 @@ impl DataProvider for Api {
         access_token: &str,
         specialist_id: &str,
         name_filter: Option<&str>,
-    ) -> Result<Vec<Workout>, String> {
+    ) -> Result<Vec<Workout>> {
         let path = format!(
             "/workouts?specialist_id=eq.{}&select=id,specialist_id,name,description,order_index,created_at,updated_at&order=order_index.asc,name.asc",
             specialist_id
@@ -163,7 +156,7 @@ impl DataProvider for Api {
         &self,
         access_token: &str,
         ids: &[String],
-    ) -> Result<Vec<Workout>, String> {
+    ) -> Result<Vec<Workout>> {
         if ids.is_empty() {
             return Ok(vec![]);
         }
@@ -181,7 +174,7 @@ impl DataProvider for Api {
         &self,
         access_token: &str,
         program_id: &str,
-    ) -> Result<Vec<Workout>, String> {
+    ) -> Result<Vec<Workout>> {
         let schedule = self.list_program_schedule(access_token, program_id).await?;
         let ids: Vec<String> = schedule
             .iter()
@@ -196,7 +189,7 @@ impl DataProvider for Api {
         &self,
         access_token: &str,
         program_id: &str,
-    ) -> Result<Vec<ProgramScheduleItem>, String> {
+    ) -> Result<Vec<ProgramScheduleItem>> {
         let path = format!(
             "/program_schedule?program_id=eq.{}&select=id,program_id,order_index,workout_id,days_count,created_at&order=order_index.asc",
             program_id
@@ -210,7 +203,7 @@ impl DataProvider for Api {
         &self,
         access_token: &str,
         workout_id: &str,
-    ) -> Result<Vec<WorkoutExercise>, String> {
+    ) -> Result<Vec<WorkoutExercise>> {
         let path = format!(
             "/workout_exercises?workout_id=eq.{}&select=order_index,exercise_id,sets,reps,exercises(id,specialist_id,name,description,order_index,video_url,deleted_at,created_at)&order=order_index.asc",
             workout_id
@@ -235,7 +228,7 @@ impl DataProvider for Api {
         access_token: &str,
         specialist_id: &str,
         name_filter: Option<&str>,
-    ) -> Result<Vec<Exercise>, String> {
+    ) -> Result<Vec<Exercise>> {
         let path = format!(
             "/exercises?specialist_id=eq.{}&select=id,specialist_id,name,description,order_index,video_url,deleted_at,created_at&order=name.asc",
             specialist_id
@@ -260,7 +253,7 @@ impl DataProvider for Api {
     async fn list_patient_programs_for_specialist(
         &self,
         access_token: &str,
-    ) -> Result<Vec<PatientProgram>, String> {
+    ) -> Result<Vec<PatientProgram>> {
         let body = self
             .client
             .rest_get(
@@ -276,7 +269,7 @@ impl DataProvider for Api {
         &self,
         access_token: &str,
         id: &str,
-    ) -> Result<Option<PatientProgram>, String> {
+    ) -> Result<Option<PatientProgram>> {
         let path = format!(
             "/patient_programs?id=eq.{}&select=id,patient_id,program_id,status,assigned_at,created_at,updated_at&limit=1",
             id
@@ -290,7 +283,7 @@ impl DataProvider for Api {
         &self,
         access_token: &str,
         patient_program_id: &str,
-    ) -> Result<Vec<WorkoutSession>, String> {
+    ) -> Result<Vec<WorkoutSession>> {
         let path = format!(
             "/workout_sessions?patient_program_id=eq.{}&select=id,patient_program_id,day_index,session_date,completed_at,created_at,updated_at&order=day_index.asc",
             patient_program_id
@@ -304,7 +297,7 @@ impl DataProvider for Api {
         &self,
         access_token: &str,
         workout_session_id: &str,
-    ) -> Result<Vec<SessionExerciseFeedback>, String> {
+    ) -> Result<Vec<SessionExerciseFeedback>> {
         let path = format!(
             "/session_exercise_feedback?workout_session_id=eq.{}&select=workout_session_id,exercise_id,effort,pain,comment",
             workout_session_id
@@ -318,7 +311,7 @@ impl DataProvider for Api {
         &self,
         access_token: &str,
         patient_program_id: &str,
-    ) -> Result<Vec<SessionExerciseFeedback>, String> {
+    ) -> Result<Vec<SessionExerciseFeedback>> {
         let sessions_path = format!(
             "/workout_sessions?patient_program_id=eq.{}&select=id",
             patient_program_id
@@ -349,7 +342,7 @@ impl DataProvider for Api {
     async fn list_active_patient_programs(
         &self,
         access_token: &str,
-    ) -> Result<Vec<PatientProgram>, String> {
+    ) -> Result<Vec<PatientProgram>> {
         let path = "/patient_programs?status=eq.active&select=id,patient_id,program_id,status,assigned_at,created_at,updated_at&order=assigned_at.desc";
         let body = self.client.rest_get(Some(access_token), path).await?;
         let rows: Vec<PatientProgramDto> = parse_json(&body)?;
@@ -364,7 +357,7 @@ impl DataMutator for Api {
         access_token: &str,
         specialist_id: &str,
         patient_id: &str,
-    ) -> Result<SpecialistPatient, String> {
+    ) -> Result<SpecialistPatient> {
         let payload = serde_json::json!({
             "specialist_id": specialist_id,
             "patient_id": patient_id
@@ -378,6 +371,7 @@ impl DataMutator for Api {
             .next()
             .map(Into::into)
             .ok_or_else(|| "No row returned".to_string())
+            .map_err(DomainError::from)
     }
 
     async fn create_program(
@@ -386,7 +380,7 @@ impl DataMutator for Api {
         specialist_id: &str,
         name: &str,
         description: Option<&str>,
-    ) -> Result<Program, String> {
+    ) -> Result<Program> {
         let payload = serde_json::json!({
             "specialist_id": specialist_id,
             "name": name,
@@ -401,6 +395,7 @@ impl DataMutator for Api {
             .next()
             .map(Into::into)
             .ok_or_else(|| "No row returned".to_string())
+            .map_err(DomainError::from)
     }
 
     async fn create_workout(
@@ -409,7 +404,7 @@ impl DataMutator for Api {
         specialist_id: &str,
         name: &str,
         description: Option<&str>,
-    ) -> Result<Workout, String> {
+    ) -> Result<Workout> {
         let payload = serde_json::json!({
             "specialist_id": specialist_id,
             "name": name,
@@ -425,6 +420,7 @@ impl DataMutator for Api {
             .next()
             .map(Into::into)
             .ok_or_else(|| "No row returned".to_string())
+            .map_err(DomainError::from)
     }
 
     async fn update_workout(
@@ -434,7 +430,7 @@ impl DataMutator for Api {
         name: Option<&str>,
         description: Option<Option<&str>>,
         order_index: Option<i32>,
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         let mut payload = serde_json::json!({});
         if let Some(n) = name {
             payload["name"] = serde_json::Value::String(n.to_string());
@@ -454,7 +450,7 @@ impl DataMutator for Api {
         Ok(())
     }
 
-    async fn delete_workout(&self, access_token: &str, workout_id: &str) -> Result<(), String> {
+    async fn delete_workout(&self, access_token: &str, workout_id: &str) -> Result<()> {
         let path = format!("/workouts?id=eq.{}", workout_id);
         self.client.rest_delete(Some(access_token), &path).await?;
         Ok(())
@@ -467,7 +463,7 @@ impl DataMutator for Api {
         order_index: i32,
         workout_id: Option<&str>,
         days_count: i32,
-    ) -> Result<ProgramScheduleItem, String> {
+    ) -> Result<ProgramScheduleItem> {
         let mut payload = serde_json::json!({
             "program_id": program_id,
             "order_index": order_index,
@@ -487,13 +483,14 @@ impl DataMutator for Api {
             .next()
             .map(Into::into)
             .ok_or_else(|| "No row returned".to_string())
+            .map_err(DomainError::from)
     }
 
     async fn delete_program_schedule_item(
         &self,
         access_token: &str,
         schedule_id: &str,
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         let path = format!("/program_schedule?id=eq.{}", schedule_id);
         self.client.rest_delete(Some(access_token), &path).await?;
         Ok(())
@@ -507,7 +504,7 @@ impl DataMutator for Api {
         description: Option<&str>,
         order_index: i32,
         video_url: Option<&str>,
-    ) -> Result<Exercise, String> {
+    ) -> Result<Exercise> {
         let mut payload = serde_json::json!({
             "specialist_id": specialist_id,
             "name": name,
@@ -526,6 +523,7 @@ impl DataMutator for Api {
             .next()
             .map(Into::into)
             .ok_or_else(|| "No row returned".to_string())
+            .map_err(DomainError::from)
     }
 
     async fn add_exercise_to_workout(
@@ -536,7 +534,7 @@ impl DataMutator for Api {
         order_index: i32,
         sets: i32,
         reps: i32,
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         let payload = serde_json::json!({
             "workout_id": workout_id,
             "exercise_id": exercise_id,
@@ -558,7 +556,7 @@ impl DataMutator for Api {
         sets: i32,
         reps: i32,
         order_index: Option<i32>,
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         let mut payload = serde_json::json!({
             "sets": sets,
             "reps": reps
@@ -581,7 +579,7 @@ impl DataMutator for Api {
         access_token: &str,
         workout_id: &str,
         exercise_id: &str,
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         let path = format!(
             "/workout_exercises?workout_id=eq.{}&exercise_id=eq.{}",
             workout_id, exercise_id
@@ -598,7 +596,7 @@ impl DataMutator for Api {
         description: Option<&str>,
         order_index: Option<i32>,
         video_url: Option<Option<&str>>,
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         let mut payload = serde_json::json!({});
         if let Some(n) = name {
             payload["name"] = serde_json::Value::String(n.to_string());
@@ -621,11 +619,7 @@ impl DataMutator for Api {
         Ok(())
     }
 
-    async fn soft_delete_exercise(
-        &self,
-        access_token: &str,
-        exercise_id: &str,
-    ) -> Result<(), String> {
+    async fn soft_delete_exercise(&self, access_token: &str, exercise_id: &str) -> Result<()> {
         let payload = serde_json::json!({
             "deleted_at": chrono::Utc::now().to_rfc3339()
         });
@@ -636,7 +630,7 @@ impl DataMutator for Api {
         Ok(())
     }
 
-    async fn restore_exercise(&self, access_token: &str, exercise_id: &str) -> Result<(), String> {
+    async fn restore_exercise(&self, access_token: &str, exercise_id: &str) -> Result<()> {
         let payload = serde_json::json!({ "deleted_at": serde_json::Value::Null });
         let path = format!("/exercises?id=eq.{}", exercise_id);
         self.client
@@ -650,7 +644,7 @@ impl DataMutator for Api {
         access_token: &str,
         patient_id: &str,
         program_id: &str,
-    ) -> Result<PatientProgram, String> {
+    ) -> Result<PatientProgram> {
         let payload = serde_json::json!({
             "patient_id": patient_id,
             "program_id": program_id,
@@ -665,13 +659,14 @@ impl DataMutator for Api {
             .next()
             .map(Into::into)
             .ok_or_else(|| "No row returned".to_string())
+            .map_err(DomainError::from)
     }
 
     async fn unassign_program_from_patient(
         &self,
         access_token: &str,
         patient_program_id: &str,
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         let path = format!("/patient_programs?id=eq.{}", patient_program_id);
         self.client.rest_delete(Some(access_token), &path).await?;
         Ok(())
@@ -683,7 +678,7 @@ impl DataMutator for Api {
         patient_program_id: &str,
         day_index: i32,
         session_date: &str,
-    ) -> Result<WorkoutSession, String> {
+    ) -> Result<WorkoutSession> {
         let path = format!(
             "/workout_sessions?patient_program_id=eq.{}&day_index=eq.{}&select=id,patient_program_id,day_index,session_date,completed_at,created_at,updated_at",
             patient_program_id, day_index
@@ -707,9 +702,10 @@ impl DataMutator for Api {
             .next()
             .map(Into::into)
             .ok_or_else(|| "No row returned".to_string())
+            .map_err(DomainError::from)
     }
 
-    async fn complete_session(&self, access_token: &str, session_id: &str) -> Result<(), String> {
+    async fn complete_session(&self, access_token: &str, session_id: &str) -> Result<()> {
         let payload = serde_json::json!({
             "completed_at": chrono::Utc::now().to_rfc3339()
         });
@@ -725,7 +721,7 @@ impl DataMutator for Api {
         access_token: &str,
         session_id: &str,
         session_date: Option<&str>,
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         let mut payload = serde_json::json!({});
         if let Some(d) = session_date {
             payload["session_date"] = serde_json::Value::String(d.to_string());
@@ -745,7 +741,7 @@ impl DataMutator for Api {
         effort: Option<i32>,
         pain: Option<i32>,
         comment: Option<&str>,
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         let payload = serde_json::json!({
             "workout_session_id": workout_session_id,
             "exercise_id": exercise_id,
@@ -767,7 +763,7 @@ impl DataMutator for Api {
         Ok(())
     }
 
-    async fn uncomplete_session(&self, access_token: &str, session_id: &str) -> Result<(), String> {
+    async fn uncomplete_session(&self, access_token: &str, session_id: &str) -> Result<()> {
         let payload = serde_json::json!({ "completed_at": serde_json::Value::Null });
         let path = format!("/workout_sessions?id=eq.{}", session_id);
         self.client

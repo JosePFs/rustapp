@@ -261,14 +261,6 @@ pub fn PatientWorkoutSessionView(patient_program_id: String, day_index: String) 
                         if let Some(ref e) = *submit_error.read() {
                             p { class: "text-error text-sm mt-2", "{e}" }
                         }
-                        button {
-                            class: "mt-4 min-h-9 px-3 rounded-md border border-border text-sm text-text-muted",
-                            onclick: move |_| {
-                                let notifications = app_context.local_notifications();
-                                let _ = notifications.show_now("test-1", "Eixe", &t!("test_notification_body"));
-                            },
-                            { t!("test_notification_button") }
-                        }
                     }
                 }
             }

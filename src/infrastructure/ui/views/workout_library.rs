@@ -4,6 +4,8 @@ use dioxus_i18n::t;
 use dioxus_router::Link;
 
 use crate::infrastructure::app_context::AppContext;
+use crate::infrastructure::ui::hooks::workout_library::use_workout_library;
+use crate::infrastructure::ui::hooks::AsyncState;
 use crate::Route;
 
 #[component]
@@ -12,31 +14,7 @@ pub fn WorkoutLibrary() -> Element {
     let backend = app_context.backend();
     let session_signal = app_context.session();
     let mut filter = use_signal(|| String::new());
-
-    let backend_for_resource = backend.clone();
-    let mut workouts = use_resource(move || {
-        let backend = backend_for_resource.clone();
-        let session = session_signal.read().clone();
-        let filter_val = filter().clone();
-        async move {
-            let sess = match session {
-                Some(s) => s,
-                None => return Err("No session".to_string()),
-            };
-            let specialist_id = sess.user_id().to_string();
-            backend
-                .list_workout_library(
-                    sess.access_token(),
-                    &specialist_id,
-                    if filter_val.is_empty() {
-                        None
-                    } else {
-                        Some(filter_val.as_str())
-                    },
-                )
-                .await
-        }
-    });
+    let workouts = use_workout_library(filter);
 
     let mut new_name = use_signal(|| String::new());
     let mut new_desc = use_signal(|| String::new());
@@ -57,19 +35,11 @@ pub fn WorkoutLibrary() -> Element {
         };
     }
 
-    let list = workouts
-        .read()
-        .as_ref()
-        .and_then(|r| r.as_ref().ok().cloned())
-        .unwrap_or_default();
-
-    let list_len = list.len();
-    let empty_ok = workouts
-        .read()
-        .as_ref()
-        .as_ref()
-        .map(|r| r.is_ok())
-        .unwrap_or(false);
+    let (list, list_len, empty_ok) = match &*workouts.state.read() {
+        AsyncState::Idle | AsyncState::Loading => (Vec::new(), 0, false),
+        AsyncState::Error(_) => (Vec::new(), 0, false),
+        AsyncState::Ready(data) => (data.clone(), data.len(), true),
+    };
     let backend_for_rows = backend.clone();
     let rows: Vec<Element> = list
         .into_iter()
@@ -86,13 +56,13 @@ pub fn WorkoutLibrary() -> Element {
                         div { class: "flex flex-wrap gap-2 items-center mt-2",
                             input {
                                 class: "flex-1 min-w-32 min-h-9 px-3 border border-border rounded-md text-sm",
-                                placeholder: "Nombre",
+                                placeholder: "{t!(\"workout_library_name_placeholder\")}",
                                 value: "{edit_name()}",
                                 oninput: move |ev| edit_name.set(ev.value().clone()),
                             }
                             input {
                                 class: "flex-1 min-w-32 min-h-9 px-3 border border-border rounded-md text-sm",
-                                placeholder: "Descripción (opcional)",
+                                placeholder: "{t!(\"workout_library_desc_placeholder\")}",
                                 value: "{edit_desc()}",
                                 oninput: move |ev| edit_desc.set(ev.value().clone()),
                             }
@@ -107,15 +77,15 @@ pub fn WorkoutLibrary() -> Element {
                                     let n = edit_name().clone();
                                     let d = edit_desc().clone();
                                     editing_id.set(None);
-                                    let mut refresh = workouts;
+                                    let mut resource = workouts.resource.clone();
                                     spawn(async move {
                                         let _ = backend.update_workout(&token, &id, Some(&n), Some(if d.is_empty() { None } else { Some(d.as_str()) }), None).await;
-                                        refresh.restart();
+                                        resource.restart();
                                     });
                                 },
-                                "Guardar"
+                                { t!("workout_library_save") }
                             }
-                            button { class: "min-h-9 px-2 text-sm rounded-md border border-border", onclick: move |_| editing_id.set(None), "Cancelar" }
+                            button { class: "min-h-9 px-2 text-sm rounded-md border border-border", onclick: move |_| editing_id.set(None), { t!("workout_library_cancel") } }
                         }
                     } else {
                         span { class: "block",
@@ -125,7 +95,7 @@ pub fn WorkoutLibrary() -> Element {
                         Link {
                             to: Route::WorkoutEditor { id: wid.clone() },
                             class: "inline-block min-h-9 px-2 text-sm rounded-md border border-border mt-2 mr-2 text-primary no-underline hover:bg-gray-50",
-                            "Ejercicios"
+                            { t!("workout_library_exercises_link") }
                         }
                         button {
                             class: "min-h-9 px-2 text-sm rounded-md border border-border mt-2 mr-2",
@@ -134,7 +104,7 @@ pub fn WorkoutLibrary() -> Element {
                                 edit_desc.set(desc.clone());
                                 editing_id.set(Some(wid_edit.clone()));
                             },
-                            "Editar"
+                            { t!("workout_library_edit") }
                         }
                         button {
                             class: "min-h-9 px-2 text-sm rounded-md bg-error text-white mt-2",
@@ -143,13 +113,13 @@ pub fn WorkoutLibrary() -> Element {
                                 let sess = session_signal.read().clone();
                                 let Some(s) = sess else { return };
                                 let id = wid_del.clone();
-                                let mut refresh = workouts;
+                                let mut resource = workouts.resource.clone();
                                 spawn(async move {
                                     let _ = backend.delete_workout(s.access_token(), &id).await;
-                                    refresh.restart();
+                                    resource.restart();
                                 });
                             },
-                            "Eliminar"
+                            { t!("workout_library_delete") }
                         }
                     }
                 }
@@ -169,37 +139,37 @@ pub fn WorkoutLibrary() -> Element {
                             button {
                                 class: "min-h-11 px-0 bg-transparent text-2xl font-semibold inline-flex items-center gap-2 text-text",
                                 onclick: move |_| nav_open.set(!nav_open()),
-                                span { "Biblioteca de entrenamientos" }
+                                span { { t!("workout_library_title") } }
                                 span { class: "text-xs", if nav_open() { "▲" } else { "▼" } }
                             }
                             if nav_open() {
                                 div { class: "absolute z-10 mt-2 w-56 bg-surface border border-border rounded-md shadow-md flex flex-col py-1",
-                                    Link { to: Route::SpecialistPatients {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", "Pacientes" }
-                                    Link { to: Route::ExerciseLibrary {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", "Biblioteca de ejercicios" }
+                                    Link { to: Route::SpecialistPatients {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", { t!("workout_library_nav_patients") } }
+                                    Link { to: Route::ExerciseLibrary {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", { t!("workout_library_nav_exercises") } }
                                 }
                             }
                         }
                     }
                 }
-                p { class: "text-sm text-text-muted mb-4", "Crea y edita entrenamientos aquí. Luego añádelos a programas desde el editor del programa (programación)." }
+                p { class: "text-sm text-text-muted mb-4", { t!("workout_library_intro") } }
                 input {
                     class: "w-full min-h-11 px-4 border border-border rounded-md mb-4 focus:outline-none focus:border-primary",
-                    placeholder: "Filtrar por nombre...",
+                    placeholder: "{t!(\"workout_library_filter_placeholder\")}",
                     value: "{filter()}",
-                    oninput: move |ev| { filter.set(ev.value().clone()); workouts.restart(); },
+                    oninput: move |ev| filter.set(ev.value().clone()),
                 }
                 section { class: "bg-surface rounded-lg p-4 mb-6 border border-border",
-                    h2 { class: "text-xl font-semibold mt-0 mb-4", "Nuevo entrenamiento" }
+                    h2 { class: "text-xl font-semibold mt-0 mb-4", { t!("workout_library_new_section") } }
                     div { class: "flex flex-col gap-4 max-w-md",
                         input {
                             class: "w-full min-h-11 px-4 border border-border rounded-md focus:outline-none focus:border-primary",
-                            placeholder: "Nombre",
+                            placeholder: "{t!(\"workout_library_name_placeholder\")}",
                             value: "{new_name()}",
                             oninput: move |ev| new_name.set(ev.value().clone()),
                         }
                         input {
                             class: "w-full min-h-11 px-4 border border-border rounded-md focus:outline-none focus:border-primary",
-                            placeholder: "Descripción (opcional)",
+                            placeholder: "{t!(\"workout_library_desc_placeholder\")}",
                             value: "{new_desc()}",
                             oninput: move |ev| new_desc.set(ev.value().clone()),
                         }
@@ -217,7 +187,7 @@ pub fn WorkoutLibrary() -> Element {
                                 let desc = new_desc().clone();
                                 create_loading.set(true);
                                 create_error.set(None);
-                                let mut refresh = workouts;
+                                let mut resource = workouts.resource.clone();
                                 spawn(async move {
                                     match backend.create_workout(
                                         &token,
@@ -228,14 +198,14 @@ pub fn WorkoutLibrary() -> Element {
                                         Ok(_) => {
                                             new_name.set(String::new());
                                             new_desc.set(String::new());
-                                            refresh.restart();
+                                            resource.restart();
                                         }
-                                        Err(e) => create_error.set(Some(e)),
+                                        Err(e) => create_error.set(Some(e.to_string())),
                                     }
                                     create_loading.set(false);
                                 });
                             },
-                            "Crear entrenamiento"
+                            { t!("workout_library_create_btn") }
                         }
                         if let Some(ref e) = *create_error.read() {
                             p { class: "text-error text-sm mt-2", "{e}" }
@@ -243,12 +213,12 @@ pub fn WorkoutLibrary() -> Element {
                     }
                 }
                 section { class: "bg-surface rounded-lg p-4 border border-border",
-                    h2 { class: "text-xl font-semibold mt-0 mb-4", "Entrenamientos ({list_len})" }
+                    h2 { class: "text-xl font-semibold mt-0 mb-4", { t!("workout_library_list_title", count: list_len.to_string()) } }
                     ul { class: "list-none p-0 m-0",
                         {rows.into_iter()}
                     }
                     if list_len == 0 && empty_ok {
-                        p { class: "text-text-muted italic py-4", "Aún no hay entrenamientos. Crea uno arriba." }
+                        p { class: "text-text-muted italic py-4", { t!("workout_library_empty") } }
                     }
                 }
             }

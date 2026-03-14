@@ -8,9 +8,10 @@ use dioxus_i18n::t;
 use dioxus_primitives::ContentSide;
 use dioxus_router::Link;
 
-use crate::domain::error::DomainError;
 use crate::infrastructure::app_context::AppContext;
 use crate::infrastructure::ui::components::{Tooltip, TooltipContent, TooltipTrigger};
+use crate::infrastructure::ui::hooks::specialist_programs::use_specialist_programs;
+use crate::infrastructure::ui::hooks::AsyncState;
 use crate::Route;
 
 #[component]
@@ -18,65 +19,13 @@ pub fn SpecialistPrograms() -> Element {
     let app_context = use_context::<AppContext>();
     let session_signal = app_context.session();
     let backend = app_context.backend();
+    let data = use_specialist_programs();
 
-    let backend_patients = backend.clone();
-    let patients = use_resource(move || {
-        let session = session_signal.read().clone();
-        let backend = backend_patients.clone();
-        async move {
-            let sess = match session {
-                Some(s) => s,
-                None => return Err("No session".to_string()),
-            };
-            let links = backend
-                .list_specialist_patients(sess.access_token())
-                .await?;
-            let ids: Vec<String> = links.iter().map(|l| l.patient_id.clone()).collect();
-            let profiles = backend
-                .get_profiles_by_ids(&ids, sess.access_token())
-                .await
-                .map_err(|e| DomainError::Api(e.to_string()));
-            Ok::<_, String>((links, profiles))
-        }
-    });
-
-    // Programas del especialista
-    let backend_programs = backend.clone();
-    let programs = use_resource(move || {
-        let session = session_signal.read().clone();
-        let backend = backend_programs.clone();
-        async move {
-            let sess = match session {
-                Some(s) => s,
-                None => return Err("No session".to_string()),
-            };
-            backend.list_programs(sess.access_token()).await
-        }
-    });
-
-    // Asignaciones programas-pacientes
-    let backend_assignments = backend.clone();
-    let assignments = use_resource(move || {
-        let session = session_signal.read().clone();
-        let backend = backend_assignments.clone();
-        async move {
-            let sess = match session {
-                Some(s) => s,
-                None => return Err("No session".to_string()),
-            };
-            backend
-                .list_patient_programs_for_specialist(sess.access_token())
-                .await
-        }
-    });
-
-    // Estado local para crear programas
     let mut new_program_name = use_signal(|| String::new());
     let mut new_program_desc = use_signal(|| String::new());
     let mut create_program_error = use_signal(|| Option::<String>::None);
     let mut create_program_loading = use_signal(|| false);
 
-    // Estado local para asignación de programas
     let mut program_filter = use_signal(|| String::new());
     let mut patient_filter = use_signal(|| String::new());
     let mut selected_program_ids = use_signal(|| HashSet::<String>::new());
@@ -96,24 +45,6 @@ pub fn SpecialistPrograms() -> Element {
     }
 
     let _sess = session.as_ref().unwrap();
-
-    // Datos precalculados para la asignación.
-    let programs_ref = programs.read();
-    let assignments_ref = assignments.read();
-    let patients_ref = patients.read();
-    let assign_data = match (
-        programs_ref.as_ref(),
-        assignments_ref.as_ref(),
-        patients_ref.as_ref(),
-    ) {
-        (Some(Ok(progs)), Some(Ok(assigns)), Some(Ok((links, profiles)))) => Some((
-            progs.clone(),
-            assigns.clone(),
-            links.clone(),
-            profiles.as_ref().ok().cloned().unwrap_or_default(),
-        )),
-        _ => None,
-    };
 
     let backend_create_program = backend.clone();
     let backend_assign = backend.clone();
@@ -167,16 +98,24 @@ pub fn SpecialistPrograms() -> Element {
                             }
                         }
                     }
-                    if let Some(Ok(progs)) = programs.read().as_ref() {
-                        ul { class: "list-none p-0 m-0 mb-4",
-                            for p in progs.iter() {
-                                li { key: "{p.id}", class: "mb-1",
-                                    Link { to: Route::ProgramEditor { id: p.id.clone() }, class: "text-primary no-underline hover:underline", "{p.name}" }
+                    {
+                        match &*data.state.read() {
+                            AsyncState::Idle | AsyncState::Loading => rsx! {
+                                p { { t!("loading_programs") } }
+                            },
+                            AsyncState::Error(_) => rsx! {
+                                p { class: "text-error", { t!("error_programs") } }
+                            },
+                            AsyncState::Ready(d) => rsx! {
+                                ul { class: "list-none p-0 m-0 mb-4",
+                                    for p in d.programs.iter() {
+                                        li { key: "{p.id}", class: "mb-1",
+                                            Link { to: Route::ProgramEditor { id: p.id.clone() }, class: "text-primary no-underline hover:underline", "{p.name}" }
+                                        }
+                                    }
                                 }
-                            }
+                            },
                         }
-                    } else {
-                        p { "Cargando programas..." }
                     }
                     div { class: "flex flex-col gap-4 mt-4",
                         input {
@@ -205,11 +144,11 @@ pub fn SpecialistPrograms() -> Element {
                                 let specialist_id = sess.user_id().to_string();
                                 create_program_loading.set(true);
                                 create_program_error.set(None);
-                                let mut refresh = programs;
+                                let mut resource = data.resource.clone();
                                 spawn(async move {
                                     match backend.create_program(&token, &specialist_id, &name, if desc.is_empty() { None } else { Some(&desc) }).await {
-                                        Ok(_) => { new_program_name.set(String::new()); new_program_desc.set(String::new()); refresh.restart(); }
-                                        Err(e) => create_program_error.set(Some(e)),
+                                        Ok(_) => { new_program_name.set(String::new()); new_program_desc.set(String::new()); resource.restart(); }
+                                        Err(e) => create_program_error.set(Some(e.to_string())),
                                     }
                                     create_program_loading.set(false);
                                 });
@@ -224,12 +163,24 @@ pub fn SpecialistPrograms() -> Element {
 
                 section { class: "bg-surface rounded-lg p-4 mb-6 shadow-sm border border-border",
                     h2 { class: "text-xl font-semibold mt-0 mb-2", "Asignar programas a pacientes" }
-                    if let Some((progs, assigns, links, profiles)) = assign_data.clone() {
+                    {
+                        match &*data.state.read() {
+                            AsyncState::Idle | AsyncState::Loading => rsx! {
+                                p { { t!("loading_programs") } }
+                            },
+                            AsyncState::Error(_) => rsx! {
+                                p { class: "text-error", { t!("error_programs") } }
+                            },
+                            AsyncState::Ready(d) => {
+                                let progs = d.programs.clone();
+                                let assigns = d.assignments.clone();
+                                let links = d.links.clone();
+                                let profiles = d.profiles.clone();
+                                rsx! {
                         p { class: "text-sm text-text-muted mb-4",
                             "1) Selecciona uno o varios programas. 2) Selecciona pacientes que aún no tengan ninguno de esos programas. 3) Pulsa Asignar."
                         }
 
-                        // Bloque: selector múltiple de programas con filtro
                         div { class: "mb-6",
                             h3 { class: "text-lg font-semibold mb-2", "Programas" }
                             input {
@@ -307,7 +258,6 @@ pub fn SpecialistPrograms() -> Element {
                             }
                         }
 
-                        // Bloque: selector múltiple de pacientes elegibles con filtro
                         div { class: "mb-6",
                             h3 { class: "text-lg font-semibold mb-2", "Pacientes elegibles" }
                             if selected_program_ids().is_empty() {
@@ -321,7 +271,6 @@ pub fn SpecialistPrograms() -> Element {
                                     oninput: move |ev| patient_filter.set(ev.value().clone()),
                                 }
                                 {
-                                    // Prepara estructuras auxiliares
                                     let selected_prog_ids = selected_program_ids();
                                     let filter_pat = patient_filter().to_lowercase();
                                     let existing: HashSet<(String, String)> = assigns
@@ -334,8 +283,6 @@ pub fn SpecialistPrograms() -> Element {
                                         .iter()
                                         .filter_map(|link| {
                                             let profile = profiles.iter().find(|p| p.id().value() == link.patient_id)?.clone();
-
-                                            // Elegible si NO tiene ninguno de los programas seleccionados
                                             let has_any = selected_prog_ids
                                                 .iter()
                                                 .any(|prog_id| existing.contains(&(link.patient_id.clone(), prog_id.clone())));
@@ -427,7 +374,6 @@ pub fn SpecialistPrograms() -> Element {
                             }
                         }
 
-                        // Botones de asignar y limpiar selección
                         div { class: "flex flex-wrap items-center gap-3 mt-4",
                             button {
                                 class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed",
@@ -443,7 +389,7 @@ pub fn SpecialistPrograms() -> Element {
                                     assign_loading.set(true);
                                     assign_error.set(None);
 
-                                    let mut assignments_ref = assignments;
+                                    let mut resource = data.resource.clone();
                                     let mut selected_program_ids_ref = selected_program_ids;
                                     let mut selected_patient_ids_ref = selected_patient_ids;
 
@@ -462,18 +408,17 @@ pub fn SpecialistPrograms() -> Element {
                                         }
 
                                         if let Some(e) = any_error {
-                                            assign_error.set(Some(e));
+                                            assign_error.set(Some(e.to_string()));
                                         } else {
-                                            // Limpiar selección y refrescar asignaciones
                                             selected_program_ids_ref.set(HashSet::new());
                                             selected_patient_ids_ref.set(HashSet::new());
-                                            assignments_ref.restart();
+                                            resource.restart();
                                         }
 
                                         assign_loading.set(false);
                                     });
                                 },
-                                "Asignar programas"
+                                { t!("assign_programs") }
                             }
                             button {
                                 class: "min-h-11 px-4 font-medium rounded-md bg-secondary text-text hover:bg-secondary-hover disabled:opacity-60 disabled:cursor-not-allowed",
@@ -482,18 +427,16 @@ pub fn SpecialistPrograms() -> Element {
                                     selected_program_ids.set(HashSet::new());
                                     selected_patient_ids.set(HashSet::new());
                                 },
-                                "Limpiar selección"
+                                { t!("clear_selection") }
                             }
                         }
 
                         if let Some(ref e) = *assign_error.read() {
                             p { class: "text-error text-sm mt-2", "{e}" }
                         }
-
-                        // Nota: la lista de asignaciones actuales se ha simplificado para evitar
-                        // complejidades de préstamos; aquí solo mostramos el formulario de asignación.
-                    } else {
-                        p { "Cargando datos de programas y pacientes..." }
+                                }
+                            },
+                        }
                     }
                 }
             }

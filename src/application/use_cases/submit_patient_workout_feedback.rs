@@ -6,7 +6,7 @@ use futures::{
 };
 
 use crate::application::Backend;
-use crate::domain::error::{DomainError, Result};
+use crate::domain::error::Result;
 
 #[derive(Clone)]
 pub struct SubmitPatientWorkoutFeedbackArgs {
@@ -37,8 +37,7 @@ impl<B: Backend> SubmitPatientWorkoutFeedbackUseCase<B> {
         let session = self
             .backend
             .get_or_create_session(token, pid, di, &args.session_date)
-            .await
-            .map_err(DomainError::Api)?;
+            .await?;
         let session_id = session.id;
 
         let update_fut = self
@@ -53,7 +52,7 @@ impl<B: Backend> SubmitPatientWorkoutFeedbackUseCase<B> {
             }
         };
 
-        try_join!(update_fut, complete_fut).map_err(DomainError::Api)?;
+        try_join!(update_fut, complete_fut)?;
 
         let token = args.token.clone();
         let session_id = session_id.clone();
@@ -79,7 +78,6 @@ impl<B: Backend> SubmitPatientWorkoutFeedbackUseCase<B> {
                             },
                         )
                         .await
-                        .map_err(DomainError::Api)
                 }
             })
             .buffer_unordered(Self::MAX_CONCURRENT_REQUESTS)

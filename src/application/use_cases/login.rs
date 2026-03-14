@@ -23,6 +23,16 @@ pub enum UserProfileType {
     Patient,
 }
 
+impl LoginUseCaseResult {
+    pub fn is_login_as_patient(&self) -> bool {
+        self.user_profile_type == UserProfileType::Patient
+    }
+
+    pub fn is_login_as_specialist(&self) -> bool {
+        self.user_profile_type == UserProfileType::Specialist
+    }
+}
+
 pub struct LoginUseCase<B: Backend> {
     backend: Arc<B>,
 }

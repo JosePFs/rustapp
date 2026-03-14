@@ -1,12 +1,13 @@
+use std::collections::HashMap;
+
 use dioxus::prelude::*;
 
 use dioxus_i18n::t;
 use dioxus_router::Link;
 
-use crate::Route;
-
+use crate::domain::error::DomainError;
 use crate::infrastructure::app_context::AppContext;
-use std::collections::HashMap;
+use crate::Route;
 
 #[component]
 pub fn ProgramEditor(id: String) -> Element {
@@ -24,7 +25,7 @@ pub fn ProgramEditor(id: String) -> Element {
         async move {
             let sess = match session {
                 Some(s) => s,
-                None => return Err("No session".to_string()),
+                None => return Err(DomainError::Api("No session".to_string())),
             };
             let schedule = backend
                 .list_program_schedule(sess.access_token(), &pid)
@@ -39,7 +40,7 @@ pub fn ProgramEditor(id: String) -> Element {
                 .get_workouts_by_ids(sess.access_token(), &ids)
                 .await
                 .unwrap_or_default();
-            Ok::<_, String>((schedule, workouts))
+            Ok((schedule, workouts))
         }
     });
 
@@ -50,7 +51,7 @@ pub fn ProgramEditor(id: String) -> Element {
         async move {
             let sess = match session {
                 Some(s) => s,
-                None => return Err("No session".to_string()),
+                None => return Err(DomainError::Api("No session".to_string())),
             };
             let specialist_id = sess.user_id().to_string();
             backend
@@ -199,7 +200,7 @@ pub fn ProgramEditor(id: String) -> Element {
                                     schedule_days.set(1);
                                     sched_refresh.restart();
                                 }
-                                Err(e) => schedule_error.set(Some(e)),
+                                Err(e) => schedule_error.set(Some(e.to_string())),
                             }
                             schedule_add_loading.set(false);
                         });

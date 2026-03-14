@@ -47,6 +47,7 @@ android_manifest = "./AndroidManifest.xml"
 ```
 
 Declared permissions:
+
 - `android.permission.INTERNET`
 - `android.permission.POST_NOTIFICATIONS`
 
@@ -67,18 +68,14 @@ Scheduling via `AlarmManager` requires a `BroadcastReceiver` Kotlin/Java class c
 1. **Dioxus 0.8** — `dx eject` (PR #4274) will give full Android project control. With an ejected project, we can add a Kotlin `BroadcastReceiver`, register it in the manifest, and schedule via `AlarmManager` + `PendingIntent` from Rust/JNI.
 2. **Server-side FCM** — alternative approach: Supabase Edge Functions schedule a Firebase Cloud Messaging push at the desired time. No local `AlarmManager` needed, works cross-platform.
 
-## IDE navigation (Linux)
+## IDE navigation and diagnostics (Linux)
 
-The `android` module is behind `#[cfg(target_os = "android")]`. To get navigation and completion in Cursor/VS Code:
+The real Android implementation is in `notifications.rs` (compiled only for `target_os = "android"`). A **stub** in `notifications_stub.rs` is built on host so that:
 
-`.vscode/settings.json`:
-```json
-{
-  "rust-analyzer.cargo.target": "aarch64-linux-android"
-}
-```
+- **rust-analyzer** can use the default (host) target: you get correct diagnostics and navigation without setting `cargo.target`.
+- The `android` module is always present: you can open `notifications_stub.rs` and `notifications.rs` from the tree; the stub mirrors the public API so "Go to definition" works from `context.rs` on host.
 
-If analysis fails ("linker not found"), ensure the Android NDK is available. Set `ANDROID_NDK_HOME` or add `rust-analyzer.check.extraEnv` with `CC_aarch64_linux_android`, `CXX_aarch64_linux_android`, `AR_aarch64_linux_android` pointing to the NDK toolchain binaries.
+To run checks for both host and Android, use the VS Code task **"cargo check (host + android)"** (or run `cargo check` and `cargo check --target aarch64-linux-android --features mobile --no-default-features`). For Android you need the NDK toolchain in `PATH` or set `CC_aarch64_linux_android`, `CXX_aarch64_linux_android`, `AR_aarch64_linux_android`.
 
 ## Build
 
