@@ -1,8 +1,8 @@
-//! Specialist patients view: list patients and add existing patients.
-
 use dioxus::prelude::*;
+
 use dioxus_free_icons::icons::io_icons::IoInformationCircle;
 use dioxus_free_icons::Icon;
+use dioxus_i18n::t;
 use dioxus_primitives::ContentSide;
 use dioxus_router::Link;
 
@@ -50,8 +50,8 @@ pub fn SpecialistPatients() -> Element {
     if session.is_none() {
         return rsx! {
             div { class: "p-6 text-center",
-                p { "Debes iniciar sesión." }
-                Link { to: Route::LoginView {}, class: "text-primary underline", "Ir a login" }
+                p { { t!("must_login_message") } }
+                Link { to: Route::LoginView {}, class: "text-primary underline", { t!("go_to_login") } }
             }
         };
     }

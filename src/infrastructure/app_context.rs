@@ -2,12 +2,13 @@ use std::sync::Arc;
 
 use dioxus::signals::Signal;
 
-use crate::application::use_cases::get_patient_programs::GetPatientProgramsUseCase;
-use crate::application::use_cases::login::LoginUseCase;
-use crate::application::use_cases::patient_workout_session::PatientWorkoutSessionUseCase;
-use crate::application::use_cases::submit_patient_workout_feedback::SubmitPatientWorkoutFeedbackUseCase;
-use crate::application::use_cases::uncomplete_patient_workout_session::UncompletePatientWorkoutSessionUseCase;
-use crate::application::Backend;
+use crate::application::{
+    ports::LocalNotificationService, use_cases::get_patient_programs::GetPatientProgramsUseCase,
+    use_cases::login::LoginUseCase,
+    use_cases::patient_workout_session::PatientWorkoutSessionUseCase,
+    use_cases::submit_patient_workout_feedback::SubmitPatientWorkoutFeedbackUseCase,
+    use_cases::uncomplete_patient_workout_session::UncompletePatientWorkoutSessionUseCase, Backend,
+};
 use crate::domain::session::Session;
 use crate::infrastructure::supabase::api::Api;
 
@@ -19,8 +20,8 @@ pub struct AppContext {
     get_patient_programs_use_case: Arc<GetPatientProgramsUseCase<Api>>,
     patient_workout_session_use_case: Arc<PatientWorkoutSessionUseCase<Api>>,
     submit_patient_workout_feedback_use_case: Arc<SubmitPatientWorkoutFeedbackUseCase<Api>>,
-    uncomplete_patient_workout_session_use_case:
-        Arc<UncompletePatientWorkoutSessionUseCase<Api>>,
+    uncomplete_patient_workout_session_use_case: Arc<UncompletePatientWorkoutSessionUseCase<Api>>,
+    local_notifications: Arc<dyn LocalNotificationService>,
 }
 
 impl AppContext {
@@ -31,8 +32,10 @@ impl AppContext {
         get_patient_programs_use_case: Arc<GetPatientProgramsUseCase<Api>>,
         patient_workout_session_use_case: Arc<PatientWorkoutSessionUseCase<Api>>,
         submit_patient_workout_feedback_use_case: Arc<SubmitPatientWorkoutFeedbackUseCase<Api>>,
-        uncomplete_patient_workout_session_use_case:
-            Arc<UncompletePatientWorkoutSessionUseCase<Api>>,
+        uncomplete_patient_workout_session_use_case: Arc<
+            UncompletePatientWorkoutSessionUseCase<Api>,
+        >,
+        local_notifications: Arc<dyn LocalNotificationService>,
     ) -> Self {
         Self {
             backend,
@@ -42,6 +45,7 @@ impl AppContext {
             patient_workout_session_use_case,
             submit_patient_workout_feedback_use_case,
             uncomplete_patient_workout_session_use_case,
+            local_notifications,
         }
     }
 
@@ -61,9 +65,7 @@ impl AppContext {
         self.get_patient_programs_use_case.clone()
     }
 
-    pub fn patient_workout_session_use_case(
-        &self,
-    ) -> Arc<PatientWorkoutSessionUseCase<Api>> {
+    pub fn patient_workout_session_use_case(&self) -> Arc<PatientWorkoutSessionUseCase<Api>> {
         self.patient_workout_session_use_case.clone()
     }
 
@@ -77,5 +79,9 @@ impl AppContext {
         &self,
     ) -> Arc<UncompletePatientWorkoutSessionUseCase<Api>> {
         self.uncomplete_patient_workout_session_use_case.clone()
+    }
+
+    pub fn local_notifications(&self) -> Arc<dyn LocalNotificationService> {
+        self.local_notifications.clone()
     }
 }

@@ -1,8 +1,10 @@
 use std::collections::HashSet;
 
 use dioxus::prelude::*;
+
 use dioxus_free_icons::icons::io_icons::IoInformationCircle;
 use dioxus_free_icons::Icon;
+use dioxus_i18n::t;
 use dioxus_primitives::ContentSide;
 use dioxus_router::Link;
 
@@ -17,7 +19,6 @@ pub fn SpecialistPrograms() -> Element {
     let session_signal = app_context.session();
     let backend = app_context.backend();
 
-    // Pacientes del especialista (para mostrar nombres/emails en la asignación)
     let backend_patients = backend.clone();
     let patients = use_resource(move || {
         let session = session_signal.read().clone();
@@ -88,8 +89,8 @@ pub fn SpecialistPrograms() -> Element {
     if session.is_none() {
         return rsx! {
             div { class: "p-6 text-center",
-                p { "Debes iniciar sesión." }
-                Link { to: Route::LoginView {}, class: "text-primary underline", "Ir a login" }
+                p { { t!("must_login_message") } }
+                Link { to: Route::LoginView {}, class: "text-primary underline", { t!("go_to_login") } }
             }
         };
     }

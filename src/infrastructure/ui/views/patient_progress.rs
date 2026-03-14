@@ -1,4 +1,14 @@
-//! Specialist view: progress of a patient's program(s).
+use dioxus::prelude::*;
+
+use dioxus_i18n::t;
+use dioxus_router::Link;
+
+use crate::domain::entities::{
+    PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession,
+};
+use crate::infrastructure::app_context::AppContext;
+use crate::infrastructure::ui::components::Agenda;
+use crate::Route;
 
 const EMPTY: &str = "";
 
@@ -20,16 +30,6 @@ fn session_avg_feedback(
         (format!("{:.1}", e), format!("{:.1}", p))
     }
 }
-
-use dioxus::prelude::*;
-use dioxus_router::Link;
-
-use crate::domain::entities::{
-    PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession,
-};
-use crate::infrastructure::app_context::AppContext;
-use crate::infrastructure::ui::components::Agenda;
-use crate::Route;
 
 #[derive(Clone, Debug)]
 struct ProgramWithSessions {
@@ -116,8 +116,8 @@ pub fn PatientProgress(id: String) -> Element {
         return rsx! {
             div {
                 class: "p-6 text-center",
-                p { "Debes iniciar sesión." }
-                Link { to: Route::LoginView {}, class: "text-primary underline", "Ir a login" }
+                p { { t!("must_login_message") } }
+                Link { to: Route::LoginView {}, class: "text-primary underline", { t!("go_to_login") } }
             }
         };
     }

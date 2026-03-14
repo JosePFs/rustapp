@@ -1,6 +1,6 @@
-//! Program editor: only programación (schedule). Add blocks from workout library or rest days.
-
 use dioxus::prelude::*;
+
+use dioxus_i18n::t;
 use dioxus_router::Link;
 
 use crate::Route;
@@ -68,7 +68,11 @@ pub fn ProgramEditor(id: String) -> Element {
     let session = session_signal.read().clone();
     if session.is_none() {
         return rsx! {
-            div { "Debes iniciar sesión. " Link { to: Route::LoginView {}, "Ir a login" } }
+            div {
+                { t!("must_login_message") }
+                " "
+                Link { to: Route::LoginView {}, { t!("go_to_login") } }
+            }
         };
     }
 

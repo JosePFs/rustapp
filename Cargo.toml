@@ -44,6 +44,10 @@ reqwest = { version = "0.13", default-features = false, features = [
 ] }
 android_logger = "0.15"
 
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.21"
+ndk-context = "0.1"
+
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 gloo-net = "0.6"
 gloo-utils = "0.2"

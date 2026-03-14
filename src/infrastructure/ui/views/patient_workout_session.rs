@@ -76,7 +76,11 @@ pub fn PatientWorkoutSessionView(patient_program_id: String, day_index: String) 
                 class: "view container mx-auto patient-workout-day",
                 div {
                     class: "content min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
-                    div { "Debes iniciar sesión. " Link { to: Route::LoginView {}, "Ir a login" } }
+                    div {
+                        { t!("must_login_message") }
+                        " "
+                        Link { to: Route::LoginView {}, { t!("go_to_login") } }
+                    }
                 }
             }
         };
@@ -184,7 +188,7 @@ pub fn PatientWorkoutSessionView(patient_program_id: String, day_index: String) 
                     }
                     section {
                         if exercise_row_data.is_empty() {
-                            p { class: "text-sm text-text-muted", "Este entrenamiento no tiene ejercicios configurados." }
+                            p { class: "text-sm text-text-muted", { t!("workout_no_exercises") } }
                         } else {
                             for (ex_id, ex_name, ex_desc, embed_url, sets, reps) in exercise_row_data.iter() {
                                 PatientWorkout {
@@ -203,7 +207,7 @@ pub fn PatientWorkoutSessionView(patient_program_id: String, day_index: String) 
                             Card {
                                 CardContent {
                                     div { class: "flex flex-row items-center justify-start gap-2",
-                                        p { class: "text-medium font-semibold mt-0 mb-0", "Completado el" }
+                                        p { class: "text-medium font-semibold mt-0 mb-0", { t!("completed_on") } }
                                         input {
                                             class: "min-h-11 px-3 border border-border rounded-md bg-surface focus:outline-none focus:border-primary",
                                             r#type: "date",
@@ -228,7 +232,11 @@ pub fn PatientWorkoutSessionView(patient_program_id: String, day_index: String) 
                                     submit_feedback.action.call(());
                                     marked_as_completed.set(true);
                                 },
-                                if marked_as_completed() { "Guardar cambios" } else { "Marcar completada y enviar feedback" }
+                                if marked_as_completed() {
+                                    { t!("save_changes") }
+                                } else {
+                                    { t!("mark_completed_and_send_feedback") }
+                                }
                             }
                             if marked_as_completed() {
                                 Button {
@@ -252,6 +260,14 @@ pub fn PatientWorkoutSessionView(patient_program_id: String, day_index: String) 
                         }
                         if let Some(ref e) = *submit_error.read() {
                             p { class: "text-error text-sm mt-2", "{e}" }
+                        }
+                        button {
+                            class: "mt-4 min-h-9 px-3 rounded-md border border-border text-sm text-text-muted",
+                            onclick: move |_| {
+                                let notifications = app_context.local_notifications();
+                                let _ = notifications.show_now("test-1", "Eixe", &t!("test_notification_body"));
+                            },
+                            { t!("test_notification_button") }
                         }
                     }
                 }

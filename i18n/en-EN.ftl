@@ -20,9 +20,23 @@ progress = Progress
 mark_as_uncompleted = Mark as uncompleted
 
 # Errors
+error_config = Configuration error: { $detail }
+error_unexpected = Oops, we encountered an error: { $detail }
 wrong_credentials = Incorrect email address or password
 error_programs = Error fetching programs
 error_no_active_assignment = Active assignment not found
 error_program_not_found = Program not found
 error_day_not_found = Day not found in schedule
 error_rest_day = This day is a rest day (no workout)
+
+# Auth / navigation
+must_login_message = You must be logged in.
+go_to_login = Go to login
+
+# Patient workout session
+workout_no_exercises = This workout has no exercises configured.
+completed_on = Completed on
+save_changes = Save changes
+mark_completed_and_send_feedback = Mark as completed and send feedback
+test_notification_button = Test notification
+test_notification_body = Local test notification

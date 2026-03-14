@@ -1,6 +1,6 @@
-//! Specialist's exercise library: create, edit, delete, filter. Exercises are reusable in workouts.
-
 use dioxus::prelude::*;
+
+use dioxus_i18n::t;
 use dioxus_router::Link;
 
 use crate::infrastructure::app_context::AppContext;
@@ -52,7 +52,11 @@ pub fn ExerciseLibrary() -> Element {
     let session = session_signal.read().clone();
     if session.is_none() {
         return rsx! {
-            div { "Debes iniciar sesión. " Link { to: Route::LoginView {}, "Ir a login" } }
+            div {
+                { t!("must_login_message") }
+                " "
+                Link { to: Route::LoginView {}, { t!("go_to_login") } }
+            }
         };
     }
 

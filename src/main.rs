@@ -1,6 +1,7 @@
 use dioxus::prelude::*;
 
 use dioxus_i18n::prelude::*;
+use dioxus_i18n::t;
 use dioxus_router::{Routable, Router};
 use unic_langid::langid;
 
@@ -53,9 +54,14 @@ fn App() -> Element {
     init_i18n();
 
     let app_context = match build_app_context() {
-        Some(ctx) => ctx,
-        None => {
-            return rsx! { div { "Configuration error" } };
+        Ok(ctx) => ctx,
+        Err(e) => {
+            return rsx! {
+                div {
+                    class: "p-4 text-destructive bg-destructive/10 rounded",
+                    { t!("error_config", detail: e.clone()) }
+                }
+            };
         }
     };
     use_context_provider(|| app_context);
@@ -70,7 +76,7 @@ fn App() -> Element {
             handle_error: |error: ErrorContext| {
                 let msg = error.error().map(|e| e.to_string()).unwrap_or_else(|| String::new());
                 rsx! {
-                    div { "Oops, we encountered an error: {msg}" }
+                    div { { t!("error_unexpected", detail: msg) } }
                 }
             },
             Router::<Route> {}

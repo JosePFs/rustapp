@@ -40,12 +40,14 @@ impl Api {
 #[async_trait(?Send)]
 impl AuthService for Api {
     async fn sign_in(&self, credentials: &Credentials) -> crate::domain::error::Result<Session> {
-        let auth = self
-            .client
+        self.client
             .sign_in(credentials)
             .await
-            .map_err(|_| DomainError::Login(t!("wrong_credentials")))?;
-        Ok(Session::new(auth.access_token, auth.user.id))
+            .map_err(|e| {
+                log::warn!("Login failed: {}", e);
+                DomainError::Login(t!("wrong_credentials"))
+            })
+            .map(|auth| Session::new(auth.access_token, auth.user.id))
     }
 }
 

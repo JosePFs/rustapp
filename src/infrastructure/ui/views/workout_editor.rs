@@ -1,6 +1,5 @@
-//! Edit a workout from the library: view exercises, add from library, remove from workout.
-
 use dioxus::prelude::*;
+use dioxus_i18n::t;
 use dioxus_router::Link;
 
 use crate::domain::entities::Exercise;
@@ -71,7 +70,11 @@ pub fn WorkoutEditor(id: String) -> Element {
     let session = session_signal.read().clone();
     if session.is_none() {
         return rsx! {
-            div { "Debes iniciar sesión. " Link { to: Route::LoginView {}, "Ir a login" } }
+            div {
+                { t!("must_login_message") }
+                " "
+                Link { to: Route::LoginView {}, { t!("go_to_login") } }
+            }
         };
     }
 

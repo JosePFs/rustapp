@@ -1,6 +1,7 @@
 [application]
 name = "rustapp"
 default_platform = "web"
+android_manifest = "./AndroidManifest.xml"
 
 [application.web]
 title = "Clinica Fisioterapia — MVP"
