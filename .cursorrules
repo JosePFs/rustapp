@@ -1,18 +1,18 @@
 # Project Context
 
-Physiotherapy clinic MVP built with Rust and Dioxus.
+Physiotherapy clinic MVP built with Rust and Dioxus for backoffice and Flutter for frontoffice.
 
 Architecture:
 
 - DDD + Hexagonal
 - Server-client app
 - Mobile-first
-- Domain shared between server and client
+- Domain shared between backoffice and frontoffice
 
 Rules:
 
 - Domain contains business logic
-- Infrastructure contains UI and database
+- Infrastructure contains adapters implementations
 - Ports live in the application layer
 
 Always check docs/\*_/_ before coding.
