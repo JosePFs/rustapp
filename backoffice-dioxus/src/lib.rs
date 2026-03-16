@@ -1,26 +1,20 @@
 use dioxus::prelude::*;
+
 use dioxus_i18n::prelude::*;
 use dioxus_i18n::t;
 use dioxus_router::{Routable, Router};
 use unic_langid::langid;
 
-use crate::context::build_app_context;
-use crate::infrastructure::ui::views::{
+use app_context::build_app_context;
+use views::{
     ExerciseLibrary, LoginView, PatientDashboard, PatientProgress, PatientWorkoutSessionView,
     ProgramEditor, SpecialistPatients, SpecialistPrograms, WorkoutEditor, WorkoutLibrary,
 };
 
-pub mod application {
-    pub use ::application::*;
-}
-
-mod context;
-
-pub mod domain {
-    pub use ::domain::*;
-}
-
-pub mod infrastructure;
+mod app_context;
+mod components;
+mod hooks;
+mod views;
 
 #[derive(Routable, Clone, PartialEq)]
 pub enum Route {
