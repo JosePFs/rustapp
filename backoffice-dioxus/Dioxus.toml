@@ -1,0 +1,18 @@
+[application]
+name = "backoffice-dioxus"
+default_platform = "web"
+
+[application.web]
+title = "Eixe Backoffice"
+
+[build]
+release = false
+
+[bundle]
+identifier = "org.eixe.backoffice"
+publisher = "org.eixe"
+icon = ["assets/favicon.png"]
+category = "health"
+copyright = "2026 Eixe"
+short_description = "Eixe backoffice for specialists"
+resources = ["assets/app.css", "assets/favicon.png", "assets/login.webp"]

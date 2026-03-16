@@ -1,6 +1,6 @@
 # MVP Phase 1 — Physiotherapy Clinic
 
-Physiotherapy clinic application (MVP Phase 1): backoffice in **Dioxus (Rust)**, frontoffice mobile app in **Flutter**, and data in **Supabase** (Auth + PostgreSQL). No dedicated backend in this phase.
+Physiotherapy clinic application (MVP Phase 1): web backoffice frontend in **Dioxus (Rust)**, mobile app frontend in **Flutter**, and data in **Supabase** (Auth + PostgreSQL). No dedicated backend in this phase.
 
 ## Stack
 
@@ -55,7 +55,7 @@ Physiotherapy clinic application (MVP Phase 1): backoffice in **Dioxus (Rust)**,
    - Specialist: `"user_metadata": { "role": "specialist" }`
    - Patient: `"user_metadata": { "role": "patient" }` or omit `role`.
 
-## Running
+## Running Backoffice Dioxus
 
 ```bash
 # Install Dioxus CLI (if you don't have it)
@@ -65,18 +65,36 @@ cargo install dioxus-cli
 rustup target add wasm32-unknown-unknown
 
 # Serve the backoffice web app
-cargo dev-web
+cargo xtask dioxus-run
 ```
 
 Open the URL shown by the CLI (e.g. `http://127.0.0.1:8080`).
 
-## Project structure in virtual workspace
+## Running Flutter
 
+```bash
+# Launch app in linux
+cargo xtask flutter-linux
+
+# Launch app in mobile (-d <ID_DEL_DISPOSITIVO> when several devices available)
+cargo xtask flutter-run
+
+# Open devtools
+flutter devtools
+
+# Also: VS Code: Ctrl+Shift+P -> “Dart: Open DevTools”.
 ```
-application    # Core
-domain         # Core
-infrastructure # Adapters for Supabase, Flutter and Dioxus
-```
+
+## Project layout
+
+- `domain`: business entities and domain logic
+- `application`: use cases and application services, orchestrating domain and ports
+- `infrastructure`: adapters for Supabase, Flutter, Dioxus, and other I/O
+- `backoffice-dioxus`: web backoffice frontend in Dioxus
+- `app-flutter`: mobile app frontend in Flutter
+- `mobile-bridge-frb`: Rust FFI bridge compiled as a native library for Flutter
+- `supabase`: SQL migrations and database schema
+- `xtask`: helper CLI tasks for local development (running frontends, building bridges, etc.)
 
 ## Features (MVP Phase 1)
 

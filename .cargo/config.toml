@@ -1,3 +1,2 @@
 [alias]
-dev-web = "run --bin dev -- web"
-dev-android = "run --bin dev -- android"
+xtask = "run -p xtask --"

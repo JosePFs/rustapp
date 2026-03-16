@@ -1,0 +1,40 @@
+use std::sync::Arc;
+
+use crate::application::use_cases::login::{LoginUseCaseArgs, LoginUseCaseResult, UserProfileType};
+use crate::application::MobileBackend;
+use crate::domain::error::Result;
+use crate::domain::role::Role;
+
+pub struct MobileLoginUseCase<B: MobileBackend> {
+    backend: Arc<B>,
+}
+
+impl<B: MobileBackend> MobileLoginUseCase<B> {
+    pub fn new(backend: Arc<B>) -> Self {
+        Self { backend }
+    }
+
+    pub async fn execute(&self, args: LoginUseCaseArgs) -> Result<LoginUseCaseResult> {
+        let session = self.backend.sign_in(&args.credentials).await?;
+
+        let profiles = self
+            .backend
+            .get_profiles_by_ids(&[session.user_id().to_string()], session.access_token())
+            .await
+            .ok();
+
+        let user_profile_type = profiles
+            .map(|profiles| profiles.into_iter().next().map(|p| p.role().clone()))
+            .flatten()
+            .map(|role| match role {
+                Role::Specialist => UserProfileType::Specialist,
+                Role::Patient => UserProfileType::Patient,
+            })
+            .unwrap_or(UserProfileType::Patient);
+
+        Ok(LoginUseCaseResult {
+            session,
+            user_profile_type,
+        })
+    }
+}
