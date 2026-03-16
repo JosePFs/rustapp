@@ -104,4 +104,7 @@ flutter devtools
 
 ## License
 
-Private / project-specific.
+Dual-licensed under **AGPL-3.0** and a **commercial license**.
+
+- See [LICENSE](LICENSE) for the AGPL-3.0 open-source terms.
+- See [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md) for commercial licensing terms.
