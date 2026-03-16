@@ -107,8 +107,8 @@ fn init_logging() {
 fn init_i18n() {
     use_init_i18n(|| {
         I18nConfig::new(langid!("es-ES"))
-            .with_locale((langid!("es-ES"), include_str!("../../i18n/es-ES.ftl")))
-            .with_locale((langid!("gl-ES"), include_str!("../../i18n/gl-ES.ftl")))
-            .with_locale((langid!("en-EN"), include_str!("../../i18n/en-EN.ftl")))
+            .with_locale((langid!("es-ES"), include_str!("../i18n/es-ES.ftl")))
+            .with_locale((langid!("gl-ES"), include_str!("../i18n/gl-ES.ftl")))
+            .with_locale((langid!("en-EN"), include_str!("../i18n/en-EN.ftl")))
     });
 }
