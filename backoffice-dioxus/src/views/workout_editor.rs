@@ -4,19 +4,25 @@ use dioxus_i18n::t;
 use dioxus_router::Link;
 
 use crate::app_context::AppContext;
-use crate::hooks::{workout_editor::use_workout_editor, AsyncState};
+use crate::hooks::{
+    add_exercise_to_workout::use_add_exercise_to_workout,
+    remove_exercise_from_workout::use_remove_exercise_from_workout,
+    update_workout_exercise::use_update_workout_exercise, workout_editor::use_workout_editor,
+    AsyncState,
+};
 use crate::Route;
 use domain::entities::Exercise;
 
 #[component]
 pub fn WorkoutEditor(id: String) -> Element {
     let app_context = use_context::<AppContext>();
-    let backend = app_context.backend();
     let session_signal = app_context.session();
     let data = use_workout_editor(id.clone());
+    let add_exercise = use_add_exercise_to_workout();
+    let remove_exercise = use_remove_exercise_from_workout();
+    let update_exercise = use_update_workout_exercise();
 
     let mut add_exercise_id = use_signal(|| Option::<String>::None);
-    let mut add_loading = use_signal(|| false);
     let sets_reps = use_signal(|| std::collections::HashMap::<String, (i32, i32)>::new());
 
     let session = session_signal.read().clone();
@@ -54,12 +60,7 @@ pub fn WorkoutEditor(id: String) -> Element {
             let wid = id.clone();
             let ex_refresh = data.resource.clone();
             let mut sets_reps_sig = sets_reps;
-            let backend_sets = backend.clone();
-            let backend_reps = backend.clone();
-            let backend_remove = backend.clone();
-            let backend_up = backend.clone();
-            let backend_down = backend.clone();
-            let sess_sig = session_signal.clone();
+            let remove_ex = remove_exercise.action;
             let eid_sets = eid.clone();
             let eid_reps = eid.clone();
             let eid_remove = eid.clone();
@@ -70,9 +71,9 @@ pub fn WorkoutEditor(id: String) -> Element {
             let wid_down = wid.clone();
             let sets_initial = we.sets;
             let reps_initial = we.reps;
-            let can_subir = idx > 0;
-            let can_bajar = idx < exs.len().saturating_sub(1);
-            let (prev_id, prev_order, prev_sets, prev_reps) = if can_subir {
+            let can_up = idx > 0;
+            let can_down = idx < exs.len().saturating_sub(1);
+            let (prev_id, prev_order, prev_sets, prev_reps) = if can_up {
                 let prev = &exs[idx - 1];
                 (
                     prev.exercise.id.clone(),
@@ -83,7 +84,7 @@ pub fn WorkoutEditor(id: String) -> Element {
             } else {
                 (String::new(), 0, 0, 0)
             };
-            let (next_id, next_order, next_sets, next_reps) = if can_bajar {
+            let (next_id, next_order, next_sets, next_reps) = if can_down {
                 let next = &exs[idx + 1];
                 (
                     next.exercise.id.clone(),
@@ -97,55 +98,55 @@ pub fn WorkoutEditor(id: String) -> Element {
             let my_order = we.order_index;
             let eid_subir = eid.clone();
             let eid_bajar = eid.clone();
+            let update_ex_up = update_exercise.action;
+            let update_ex_down = update_exercise.action;
             rsx! {
                 li { key: "{eid}", class: "flex flex-wrap items-center gap-2 py-1",
-                    if can_subir {
+                    if can_up {
                         button {
                             class: "min-h-9 px-2 text-sm rounded-md border border-border",
-                            title: "Subir",
+                            title: t!("workout_editor_move_up"),
                             onclick: move |_| {
-                                let backend = backend_up.clone();
-                                let sess = sess_sig.read().clone();
-                                let Some(s) = sess else { return };
                                 let wid2 = wid_up.clone();
                                 let eid_cur = eid_subir.clone();
                                 let eid_prev = prev_id.clone();
+                                let mut action_up = update_ex_up.clone();
+                                let mut action_prev = update_exercise.action.clone();
                                 let mut ex_refresh = ex_refresh.clone();
-                                spawn(async move {
-                                    let _ = backend.update_workout_exercise(s.access_token(), &wid2, &eid_cur, sets_initial, reps_initial, Some(prev_order)).await;
-                                    let _ = backend.update_workout_exercise(s.access_token(), &wid2, &eid_prev, prev_sets, prev_reps, Some(my_order)).await;
+                                async move {
+                                    action_up.call((wid2.clone(), eid_cur.clone(), sets_initial, reps_initial, Some(prev_order))).await;
+                                    action_prev.call((wid2, eid_prev, prev_sets, prev_reps, Some(my_order))).await;
                                     ex_refresh.restart();
-                                });
+                                }
                             },
-                            "↑"
+                            {t!("workout_editor_up_arrow")}
                         }
                     }
-                    if can_bajar {
+                    if can_down {
                         button {
                             class: "min-h-9 px-2 text-sm rounded-md border border-border",
-                            title: "Bajar",
+                            title: t!("workout_editor_move_down"),
                             onclick: move |_| {
-                                let backend = backend_down.clone();
-                                let sess = sess_sig.read().clone();
-                                let Some(s) = sess else { return };
                                 let wid2 = wid_down.clone();
                                 let eid_cur = eid_bajar.clone();
                                 let eid_next = next_id.clone();
+                                let mut action_cur = update_ex_down.clone();
+                                let mut action_next = update_exercise.action.clone();
                                 let mut ex_refresh = ex_refresh.clone();
-                                spawn(async move {
-                                    let _ = backend.update_workout_exercise(s.access_token(), &wid2, &eid_cur, sets_initial, reps_initial, Some(next_order)).await;
-                                    let _ = backend.update_workout_exercise(s.access_token(), &wid2, &eid_next, next_sets, next_reps, Some(my_order)).await;
+                                async move {
+                                    action_cur.call((wid2.clone(), eid_cur.clone(), sets_initial, reps_initial, Some(next_order))).await;
+                                    action_next.call((wid2, eid_next, next_sets, next_reps, Some(my_order))).await;
                                     ex_refresh.restart();
-                                });
+                                }
                             },
-                            "↓"
+                            {t!("workout_editor_down_arrow")}
                         }
                     }
                     span { class: "font-medium", "{ename}" }
                     if deleted {
-                        span { class: "text-xs text-text-muted", " (eliminado en biblioteca)" }
+                        span { class: "text-xs text-text-muted", {t!("workout_editor_deleted_in_library")} }
                     }
-                    span { class: "text-sm text-text-muted", "Series:" }
+                    span { class: "text-sm text-text-muted", {t!("workout_editor_series")} }
                     input {
                         class: "w-14 min-h-9 px-2 text-sm border border-border rounded",
                         r#type: "number",
@@ -157,19 +158,17 @@ pub fn WorkoutEditor(id: String) -> Element {
                             let mut m = sets_reps_sig();
                             m.insert(eid_sets.clone(), (v, r));
                             sets_reps_sig.set(m);
-                            let backend = backend_sets.clone();
-                            let sess = sess_sig.read().clone();
-                            let Some(s) = sess else { return };
                             let eid2 = eid_sets.clone();
                             let wid2 = wid_sets.clone();
+                            let mut action = update_exercise.action.clone();
                             let mut ex_refresh = ex_refresh.clone();
-                            spawn(async move {
-                                let _ = backend.update_workout_exercise(s.access_token(), &wid2, &eid2, v, r, None).await;
+                            async move {
+                                action.call((wid2, eid2, v, r, None)).await;
                                 ex_refresh.restart();
-                            });
+                            }
                         },
                     }
-                    span { class: "text-sm text-text-muted", "Reps:" }
+                    span { class: "text-sm text-text-muted", {t!("workout_editor_reps")} }
                     input {
                         class: "w-14 min-h-9 px-2 text-sm border border-border rounded",
                         r#type: "number",
@@ -181,33 +180,29 @@ pub fn WorkoutEditor(id: String) -> Element {
                             let mut m = sets_reps_sig();
                             m.insert(eid_reps.clone(), (s, v));
                             sets_reps_sig.set(m);
-                            let backend = backend_reps.clone();
-                            let sess = sess_sig.read().clone();
-                            let Some(sess) = sess else { return };
                             let eid2 = eid_reps.clone();
                             let wid2 = wid_reps.clone();
+                            let mut action = update_exercise.action.clone();
                             let mut ex_refresh = ex_refresh.clone();
-                            spawn(async move {
-                                let _ = backend.update_workout_exercise(sess.access_token(), &wid2, &eid2, s, v, None).await;
+                            async move {
+                                action.call((wid2, eid2, s, v, None)).await;
                                 ex_refresh.restart();
-                            });
+                            }
                         },
                     }
                     button {
                         class: "min-h-9 px-2 text-sm rounded-md border border-border",
                         onclick: move |_| {
-                            let backend = backend_remove.clone();
-                            let sess = sess_sig.read().clone();
-                            let Some(s) = sess else { return };
                             let exercise_id = eid_remove.clone();
                             let workout_id_for_remove = wid_remove.clone();
+                            let mut action = remove_ex.clone();
                             let mut ex_refresh = ex_refresh.clone();
-                            spawn(async move {
-                                let _ = backend.remove_exercise_from_workout(s.access_token(), &workout_id_for_remove, &exercise_id).await;
+                            async move {
+                                action.call((workout_id_for_remove, exercise_id)).await;
                                 ex_refresh.restart();
-                            });
+                            }
                         },
-                        "Quitar"
+                        {t!("workout_editor_remove")}
                     }
                 }
             }
@@ -220,19 +215,18 @@ pub fn WorkoutEditor(id: String) -> Element {
             div {
                 class: "content min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
                 {
-                    // Navbar desplegable: actúa como título de la página.
                     let mut nav_open = use_signal(|| false);
                     rsx! {
                         nav { class: "relative mb-6",
                             button {
                                 class: "min-h-11 px-0 bg-transparent text-2xl font-semibold inline-flex items-center gap-2 text-text",
                                 onclick: move |_| nav_open.set(!nav_open()),
-                                span { "Entrenamiento" }
+                                span { { t!("workout_editor_title") } }
                                 span { class: "text-xs", if nav_open() { "▲" } else { "▼" } }
                             }
                             if nav_open() {
                                 div { class: "absolute z-10 mt-2 w-56 bg-surface border border-border rounded-md shadow-md flex flex-col py-1",
-                                    Link { to: Route::WorkoutLibrary {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", "Biblioteca de entrenamientos" }
+                                    Link { to: Route::WorkoutLibrary {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", { t!("workout_editor_workout_library_link") } }
                                 }
                             }
                         }
@@ -246,58 +240,54 @@ pub fn WorkoutEditor(id: String) -> Element {
                         }
                     }
                 } else if matches!(&*data.state.read(), AsyncState::Ready(_)) {
-                    p { "Entrenamiento no encontrado." }
+                    p { { t!("workout_editor_not_found") } }
                 } else {
-                    p { "Cargando..." }
+                    p { { t!("workout_editor_loading") } }
                 }
                 if workout_opt.is_some() {
                     section {
-                        h3 { "Ejercicios en este entrenamiento" }
+                        h3 { { t!("workout_editor_exercises_in_workout") } }
                         ul { class: "exercise-list",
                             {exercise_rows.into_iter()}
                         }
                         if exs.is_empty() {
-                            p { class: "text-sm text-text-muted", "Aún no hay ejercicios. Añade desde la biblioteca abajo." }
+                            p { class: "text-sm text-text-muted", { t!("workout_editor_no_exercises") } }
                         }
                     }
                     section { class: "mt-6",
-                        h3 { class: "text-lg font-semibold mb-2", "Añadir desde biblioteca de ejercicios" }
+                        h3 { class: "text-lg font-semibold mb-2", { t!("workout_editor_add_from_library") } }
                         if available_to_add.is_empty() {
-                            p { class: "text-sm text-text-muted", "Todos los ejercicios ya están en este entrenamiento o no hay ejercicios en la biblioteca." }
+                            p { class: "text-sm text-text-muted", { t!("workout_editor_all_added") } }
                         } else {
                             select {
                                 onchange: move |ev| {
                                     let v = ev.value();
                                     add_exercise_id.set(if v.is_empty() { None } else { Some(v) });
                                 },
-                                option { value: "", "Seleccionar ejercicio" }
+                                option { value: "", { t!("workout_editor_select_exercise") } }
                                 for exercise in available_to_add.iter() {
                                     option { value: "{exercise.id}", "{exercise.name}" }
                                 }
                             }
                             button {
-                                disabled: add_loading() || add_exercise_id().is_none(),
+                                disabled: add_exercise.state.read().is_loading() || add_exercise_id().is_none(),
                                 onclick: move |_| {
                                     let eid = match add_exercise_id() {
                                         Some(eid) => eid,
                                         None => return,
                                     };
-                                    let backend = backend.clone();
-                                    let sess = session_signal.read().clone();
-                                    let Some(s) = sess else { return };
                                     let wid = id.clone();
                                     let order_index = exs.len() as i32;
-                                    add_loading.set(true);
+                                    let mut action = add_exercise.action.clone();
                                     let mut resource = data.resource.clone();
                                     let mut add_id_signal = add_exercise_id;
                                     spawn(async move {
-                                        let _ = backend.add_exercise_to_workout(s.access_token(), &wid, &eid, order_index, 3, 10).await;
+                                        action.call((wid, eid, order_index, 3, 10)).await;
                                         resource.restart();
                                         add_id_signal.set(None);
-                                        add_loading.set(false);
                                     });
                                 },
-                                "Añadir al entrenamiento"
+                                { t!("workout_editor_add_to_workout") }
                             }
                         }
                     }

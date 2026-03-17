@@ -270,6 +270,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  double dco_decode_box_autoadd_f_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as double;
+  }
+
+  @protected
   int dco_decode_box_autoadd_i_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
@@ -341,6 +347,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       pain: dco_decode_opt_box_autoadd_i_32(arr[7]),
       comment: dco_decode_opt_String(arr[8]),
     );
+  }
+
+  @protected
+  double dco_decode_f_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as double;
   }
 
   @protected
@@ -423,6 +435,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  double? dco_decode_opt_box_autoadd_f_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_f_32(raw);
+  }
+
+  @protected
   int? dco_decode_opt_box_autoadd_i_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_i_32(raw);
@@ -432,14 +450,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   PatientProgramSummary dco_decode_patient_program_summary(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 5)
-      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return PatientProgramSummary(
       patientProgramId: dco_decode_String(arr[0]),
       programId: dco_decode_String(arr[1]),
       programName: dco_decode_String(arr[2]),
       programDescription: dco_decode_opt_String(arr[3]),
       days: dco_decode_list_program_day_summary(arr[4]),
+      progressPercent: dco_decode_i_32(arr[5]),
+      averageEffort: dco_decode_opt_box_autoadd_f_32(arr[6]),
+      averagePain: dco_decode_opt_box_autoadd_f_32(arr[7]),
     );
   }
 
@@ -525,6 +546,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  double sse_decode_box_autoadd_f_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_f_32(deserializer));
+  }
+
+  @protected
   int sse_decode_box_autoadd_i_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_i_32(deserializer));
@@ -605,6 +632,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       pain: var_pain,
       comment: var_comment,
     );
+  }
+
+  @protected
+  double sse_decode_f_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getFloat32();
   }
 
   @protected
@@ -709,6 +742,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  double? sse_decode_opt_box_autoadd_f_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_f_32(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   int? sse_decode_opt_box_autoadd_i_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -729,12 +773,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_programName = sse_decode_String(deserializer);
     var var_programDescription = sse_decode_opt_String(deserializer);
     var var_days = sse_decode_list_program_day_summary(deserializer);
+    var var_progressPercent = sse_decode_i_32(deserializer);
+    var var_averageEffort = sse_decode_opt_box_autoadd_f_32(deserializer);
+    var var_averagePain = sse_decode_opt_box_autoadd_f_32(deserializer);
     return PatientProgramSummary(
       patientProgramId: var_patientProgramId,
       programId: var_programId,
       programName: var_programName,
       programDescription: var_programDescription,
       days: var_days,
+      progressPercent: var_progressPercent,
+      averageEffort: var_averageEffort,
+      averagePain: var_averagePain,
     );
   }
 
@@ -832,6 +882,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_f_32(double self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_32(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_i_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self, serializer);
@@ -898,6 +954,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_box_autoadd_i_32(self.effort, serializer);
     sse_encode_opt_box_autoadd_i_32(self.pain, serializer);
     sse_encode_opt_String(self.comment, serializer);
+  }
+
+  @protected
+  void sse_encode_f_32(double self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putFloat32(self);
   }
 
   @protected
@@ -990,6 +1052,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_f_32(double? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_f_32(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_i_32(int? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -1010,6 +1082,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.programName, serializer);
     sse_encode_opt_String(self.programDescription, serializer);
     sse_encode_list_program_day_summary(self.days, serializer);
+    sse_encode_i_32(self.progressPercent, serializer);
+    sse_encode_opt_box_autoadd_f_32(self.averageEffort, serializer);
+    sse_encode_opt_box_autoadd_f_32(self.averagePain, serializer);
   }
 
   @protected

@@ -116,8 +116,7 @@ Uri? buildExternalVideoLaunchUri(String url) {
     return null;
   }
 
-  final withScheme =
-      trimmed.contains('://') ? trimmed : 'https://$trimmed';
+  final withScheme = trimmed.contains('://') ? trimmed : 'https://$trimmed';
   final uri = Uri.tryParse(withScheme);
   if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
     return null;
@@ -206,7 +205,10 @@ String buildEmbeddedYouTubeHtml(String embedUrl) {
 ''';
 }
 
-String completionButtonLabel({required bool isCompleted, required bool isBusy}) {
+String completionButtonLabel({
+  required bool isCompleted,
+  required bool isBusy,
+}) {
   if (isBusy) {
     return 'Saving...';
   }
@@ -218,8 +220,10 @@ String completionButtonLabel({required bool isCompleted, required bool isBusy}) 
   return 'Save as completed';
 }
 
-typedef _SelectedTrainingDay =
-    ({rust_api.PatientProgramSummary program, rust_api.ProgramDaySummary day});
+typedef _SelectedTrainingDay = ({
+  rust_api.PatientProgramSummary program,
+  rust_api.ProgramDaySummary day,
+});
 
 _SelectedTrainingDay? _pickSelectedTrainingDay({
   required List<rust_api.PatientProgramSummary> programs,
@@ -251,21 +255,20 @@ rust_api.SubmitDayFeedbackRequest _buildSubmitDayFeedbackRequest({
     patientProgramId: program.patientProgramId,
     dayIndex: day.dayIndex,
     sessionDate: sessionDate,
-    feedback:
-        day.exercises.map((exercise) {
-          final key = exerciseKeyFor(
-            program.patientProgramId,
-            day.dayIndex,
-            exercise.exerciseId,
-          );
-          final draft = feedbackDrafts[key]!;
-          return rust_api.ExerciseFeedbackInput(
-            exerciseId: exercise.exerciseId,
-            effort: draft.effort,
-            pain: draft.pain,
-            comment: draft.comment.isEmpty ? null : draft.comment,
-          );
-        }).toList(),
+    feedback: day.exercises.map((exercise) {
+      final key = exerciseKeyFor(
+        program.patientProgramId,
+        day.dayIndex,
+        exercise.exerciseId,
+      );
+      final draft = feedbackDrafts[key]!;
+      return rust_api.ExerciseFeedbackInput(
+        exerciseId: exercise.exerciseId,
+        effort: draft.effort,
+        pain: draft.pain,
+        comment: draft.comment.isEmpty ? null : draft.comment,
+      );
+    }).toList(),
   );
 }
 
@@ -304,7 +307,30 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Eixe Patient Front',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal)),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF35B339)),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+      ),
       home: PatientAppBootstrapPage(
         bridgeConfig: bridgeConfig,
         autoInitializeBridge: autoInitializeBridge,
@@ -407,16 +433,14 @@ class _PatientHomePageState extends State<PatientHomePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final selectedProgram =
-        widget.patientPrograms
-            .where((program) => program.patientProgramId == _selectedProgramId)
-            .cast<rust_api.PatientProgramSummary?>()
-            .firstOrNull;
-    final selectedDay =
-        selectedProgram?.days
-            .where((day) => day.dayIndex == _selectedDayIndex)
-            .cast<rust_api.ProgramDaySummary?>()
-            .firstOrNull;
+    final selectedProgram = widget.patientPrograms
+        .where((program) => program.patientProgramId == _selectedProgramId)
+        .cast<rust_api.PatientProgramSummary?>()
+        .firstOrNull;
+    final selectedDay = selectedProgram?.days
+        .where((day) => day.dayIndex == _selectedDayIndex)
+        .cast<rust_api.ProgramDaySummary?>()
+        .firstOrNull;
 
     return Scaffold(
       appBar: AppBar(
@@ -464,12 +488,12 @@ class _PatientHomePageState extends State<PatientHomePage> {
           );
 
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(8),
             children: [
               if (widget.patientPrograms.isEmpty)
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -524,10 +548,9 @@ class _PatientHomePageState extends State<PatientHomePage> {
       (program) => program.patientProgramId == _selectedProgramId,
     );
     if (!selectedProgramExists) {
-      _selectedProgramId =
-          widget.patientPrograms.isNotEmpty
-              ? widget.patientPrograms.first.patientProgramId
-              : null;
+      _selectedProgramId = widget.patientPrograms.isNotEmpty
+          ? widget.patientPrograms.first.patientProgramId
+          : null;
     }
 
     final selectedProgram = widget.patientPrograms.firstWhere(
@@ -538,7 +561,9 @@ class _PatientHomePageState extends State<PatientHomePage> {
     final selectedDay = selectedProgram.days
         .where((day) => day.dayIndex == _selectedDayIndex)
         .firstOrNull;
-    final preferredDayIndex = choosePreferredTrainingDayIndex(selectedProgram.days);
+    final preferredDayIndex = choosePreferredTrainingDayIndex(
+      selectedProgram.days,
+    );
     final selectedDayExists = selectedDay != null && !selectedDay.isRestDay;
     if (!selectedDayExists ||
         (selectedDay.completedAt != null &&
@@ -712,7 +737,10 @@ class _PatientHomePageState extends State<PatientHomePage> {
     rust_api.ProgramDaySummary day,
   ) {
     final key = _completionDateKey(programId, day.dayIndex);
-    return _completionDateDrafts.putIfAbsent(key, () => _sessionDateForDay(day));
+    return _completionDateDrafts.putIfAbsent(
+      key,
+      () => _sessionDateForDay(day),
+    );
   }
 
   void _syncCompletionDateControllerForCurrentSelection() {
@@ -768,7 +796,10 @@ class _PatientHomePageState extends State<PatientHomePage> {
     }
 
     final currentDate = DateTime.tryParse(
-      _selectedCompletionDateForDay(selectedProgram.patientProgramId, selectedDay),
+      _selectedCompletionDateForDay(
+        selectedProgram.patientProgramId,
+        selectedDay,
+      ),
     );
     final initialDate = currentDate ?? DateTime.now();
     final pickedDate = await showDatePicker(
@@ -784,9 +815,10 @@ class _PatientHomePageState extends State<PatientHomePage> {
     final formattedDate = pickedDate.toIso8601String().split('T').first;
     setState(() {
       _completionDateDrafts[_completionDateKey(
-        selectedProgram.patientProgramId,
-        selectedDay.dayIndex,
-      )] = formattedDate;
+            selectedProgram.patientProgramId,
+            selectedDay.dayIndex,
+          )] =
+          formattedDate;
       _completionDateController.text = formattedDate;
     });
   }
@@ -808,6 +840,7 @@ class _ProgramListPanel extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
+      color: theme.colorScheme.surfaceVariant,
       child: Padding(
         padding: const EdgeInsets.all(8),
         child: Column(
@@ -828,15 +861,46 @@ class _ProgramListPanel extends StatelessWidget {
             ),
             for (final program in programs)
               Card(
-                color:
-                    program.patientProgramId == selectedProgramId
-                        ? Theme.of(context).colorScheme.secondaryContainer
-                        : null,
+                elevation: program.patientProgramId == selectedProgramId
+                    ? 2
+                    : 0,
+                color: theme.colorScheme.surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(
+                    color: program.patientProgramId == selectedProgramId
+                        ? theme.colorScheme.primary.withOpacity(0.4)
+                        : theme.dividerColor.withOpacity(0.2),
+                  ),
+                ),
                 child: ListTile(
                   selected: program.patientProgramId == selectedProgramId,
                   title: Text(program.programName),
-                  subtitle: Text(
-                    program.programDescription ?? 'No description available.',
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        program.programDescription ??
+                            'No description available.',
+                      ),
+                      const SizedBox(height: 8),
+                      LinearProgressIndicator(
+                        value: (program.progressPercent.clamp(0, 100) / 100)
+                            .toDouble(),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Progress: ${program.progressPercent.clamp(0, 100)}%',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      if (program.averageEffort != null ||
+                          program.averagePain != null)
+                        Text(
+                          'Effort: ${program.averageEffort?.toStringAsFixed(1) ?? '-'} / 10 · '
+                          'Pain: ${program.averagePain?.toStringAsFixed(1) ?? '-'} / 10',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                    ],
                   ),
                   onTap: () => onProgramSelected(program.patientProgramId),
                 ),
@@ -894,133 +958,225 @@ class _ProgramDetailPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final isCompleted = selectedDay?.completedAt != null;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (selectedProgram == null)
-              const Text('Select a program to see its details.')
-            else ...[
-              Text(
-                selectedProgram!.programName,
-                style: theme.textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                selectedProgram!.programDescription ??
-                    'No description available.',
-              ),
-              const SizedBox(height: 24),
-              Text('Days', style: theme.textTheme.titleMedium),
-              const SizedBox(height: 8),
-              if (selectedProgram!.days.isEmpty)
-                const Text('No training days available.')
-              else
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children:
-                      selectedProgram!.days.map((day) {
-                        if (day.isRestDay) {
-                          return Chip(label: Text('Day ${day.dayNumber} • Rest'));
-                        }
-                        return ChoiceChip(
-                          label: Text('Day ${day.dayNumber}'),
-                          selected: selectedDay?.dayIndex == day.dayIndex,
-                          onSelected: (_) => onDaySelected(day.dayIndex),
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (selectedProgram == null)
+            const Text('Select a program to see its details.')
+          else ...[
+            Text(
+              selectedProgram!.programName,
+              style: theme.textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              selectedProgram!.programDescription ??
+                  'No description available.',
+            ),
+            const SizedBox(height: 24),
+            if (selectedProgram!.days.isEmpty)
+              const Text('No training days available.')
+            else
+              Builder(
+                builder: (context) {
+                  final days = selectedProgram!.days;
+
+                  return GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 4,
+                          crossAxisSpacing: 4,
+                          childAspectRatio: 6,
+                        ),
+                    itemCount: days.length,
+                    itemBuilder: (context, index) {
+                      final day = days[index];
+                      final isSelected = selectedDay?.dayIndex == day.dayIndex;
+                      if (day.isRestDay) {
+                        return Container(
+                          alignment: Alignment.centerLeft,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            'Day ${day.dayNumber} • Rest',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.textTheme.bodySmall?.color
+                                  ?.withOpacity(0.6),
+                            ),
+                          ),
                         );
-                      }).toList(),
-                ),
-              if (selectedDay != null) ...[
-                const SizedBox(height: 24),
-                Text(
-                  'Day ${selectedDay!.dayNumber}',
-                  style: theme.textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${selectedDay!.sessionDate ?? 'No session yet'} • ${selectedDay!.completedAt == null ? 'Planned' : 'Completed'}',
-                ),
-                const SizedBox(height: 16),
-                if (selectedDay!.isRestDay)
-                  const Text('Rest day. No feedback needed.')
-                else ...[
-                  Text(
-                    selectedDay!.workoutName ?? 'Workout',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  if (selectedDay!.workoutDescription != null) ...[
-                    const SizedBox(height: 4),
-                    Text(selectedDay!.workoutDescription!),
-                  ],
-                  const SizedBox(height: 16),
-                  if (selectedDay!.exercises.isEmpty)
-                    const Text('No exercises available.')
-                  else
-                    ...selectedDay!.exercises.map(
-                      (exercise) => _ExerciseFeedbackCard(
-                        programId: selectedProgram!.patientProgramId,
-                        dayIndex: selectedDay!.dayIndex,
-                        exercise: exercise,
-                        draft: feedbackDraftForExercise(
-                          selectedProgram!.patientProgramId,
-                          selectedDay!.dayIndex,
-                          exercise,
-                        ),
-                        commentController: commentControllerForExercise(
-                          selectedProgram!.patientProgramId,
-                          selectedDay!.dayIndex,
-                          exercise,
-                        ),
-                        onEffortChanged: onEffortChanged,
-                        onPainChanged: onPainChanged,
-                        onCommentChanged: onCommentChanged,
-                      ),
-                    ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    key: const Key('completion-date-field'),
-                    controller: completionDateController,
-                    readOnly: true,
-                    decoration: InputDecoration(
-                      labelText: 'Completion date',
-                      border: const OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        onPressed: submittingFeedback ? null : onPickCompletionDate,
-                        icon: const Icon(Icons.calendar_today),
-                      ),
-                    ),
-                    onTap: submittingFeedback ? null : onPickCompletionDate,
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      FilledButton(
-                        onPressed: submittingFeedback ? null : onSaveDay,
-                        child: Text(
-                          completionButtonLabel(
-                            isCompleted: isCompleted,
-                            isBusy: submittingFeedback,
+                      }
+
+                      return InkWell(
+                        onTap: () => onDaySelected(day.dayIndex),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: isSelected
+                                ? theme.colorScheme.primary.withOpacity(0.08)
+                                : Colors.transparent,
+                            border: Border.all(
+                              color: isSelected
+                                  ? theme.colorScheme.primary.withOpacity(0.6)
+                                  : theme.dividerColor.withOpacity(0.3),
+                            ),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            children: [
+                              if (day.completedAt != null)
+                                Icon(
+                                  Icons.check,
+                                  size: 16,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              if (day.completedAt != null)
+                                const SizedBox(width: 4),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Day ${day.dayNumber}',
+                                      style: theme.textTheme.bodyMedium,
+                                    ),
+                                    if (day.workoutName != null)
+                                      Text(
+                                        day.workoutName!,
+                                        style: theme.textTheme.bodySmall,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      if (isCompleted)
-                        OutlinedButton(
-                          onPressed:
-                              submittingFeedback ? null : onMarkNotCompleted,
-                          child: const Text('Mark as not completed'),
-                        ),
-                    ],
-                  ),
+                      );
+                    },
+                  );
+                },
+              ),
+            if (selectedDay != null) ...[
+              const SizedBox(height: 24),
+              Text(
+                'Day ${selectedDay!.dayNumber}',
+                style: theme.textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Builder(
+                builder: (_) {
+                  final isCompleted = selectedDay!.completedAt != null;
+                  final statusText = isCompleted ? 'Completed' : 'Planned';
+                  final date = isCompleted ? selectedDay!.sessionDate : null;
+                  final text = date != null
+                      ? '$date • $statusText'
+                      : statusText;
+                  return Text(text);
+                },
+              ),
+              const SizedBox(height: 16),
+              if (selectedDay!.isRestDay)
+                const Text('Rest day. No feedback needed.')
+              else ...[
+                Text(
+                  selectedDay!.workoutName ?? 'Workout',
+                  style: theme.textTheme.titleMedium,
+                ),
+                if (selectedDay!.workoutDescription != null) ...[
+                  const SizedBox(height: 4),
+                  Text(selectedDay!.workoutDescription!),
                 ],
+                const SizedBox(height: 16),
+                if (selectedDay!.exercises.isEmpty)
+                  const Text('No exercises available.')
+                else
+                  ...selectedDay!.exercises.map(
+                    (exercise) => _ExerciseFeedbackCard(
+                      programId: selectedProgram!.patientProgramId,
+                      dayIndex: selectedDay!.dayIndex,
+                      exercise: exercise,
+                      draft: feedbackDraftForExercise(
+                        selectedProgram!.patientProgramId,
+                        selectedDay!.dayIndex,
+                        exercise,
+                      ),
+                      commentController: commentControllerForExercise(
+                        selectedProgram!.patientProgramId,
+                        selectedDay!.dayIndex,
+                        exercise,
+                      ),
+                      onEffortChanged: onEffortChanged,
+                      onPainChanged: onPainChanged,
+                      onCommentChanged: onCommentChanged,
+                    ),
+                  ),
+                const SizedBox(height: 24),
+                TextFormField(
+                  key: const Key('completion-date-field'),
+                  controller: completionDateController,
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: 'Completion date',
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      onPressed: submittingFeedback
+                          ? null
+                          : onPickCompletionDate,
+                      icon: const Icon(Icons.calendar_today),
+                    ),
+                  ),
+                  onTap: submittingFeedback ? null : onPickCompletionDate,
+                ),
+                const SizedBox(height: 24),
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: [
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 20,
+                        ),
+                      ),
+                      onPressed: submittingFeedback ? null : onSaveDay,
+                      child: Text(
+                        completionButtonLabel(
+                          isCompleted: isCompleted,
+                          isBusy: submittingFeedback,
+                        ),
+                      ),
+                    ),
+                    if (isCompleted)
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 20,
+                          ),
+                        ),
+                        onPressed: submittingFeedback
+                            ? null
+                            : onMarkNotCompleted,
+                        child: const Text('Mark as not completed'),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 36),
               ],
             ],
           ],
-        ),
+        ],
       ),
     );
   }
@@ -1053,28 +1209,49 @@ class _ExerciseFeedbackCard extends StatelessWidget {
     final exerciseKey = '$programId::$dayIndex::${exercise.exerciseId}';
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      color: Colors.transparent,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: theme.dividerColor.withOpacity(0.4)),
+      ),
+      margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(exercise.name, style: theme.textTheme.titleSmall),
+            Text(
+              exercise.name,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             if (exercise.description != null) ...[
-              const SizedBox(height: 4),
-              Text(exercise.description!),
+              const SizedBox(height: 8),
+              Text(
+                exercise.description!,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.textTheme.bodySmall?.color,
+                ),
+              ),
             ],
-            const SizedBox(height: 8),
-            Text('${exercise.sets} sets • ${exercise.reps} reps'),
+            const SizedBox(height: 16),
+            Text(
+              '${exercise.sets} sets • ${exercise.reps} reps',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
             if (exercise.videoUrl != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               _ExerciseVideoPanel(
                 key: Key('exercise-video-${exercise.exerciseId}'),
                 exerciseId: exercise.exerciseId,
                 videoUrl: exercise.videoUrl!,
               ),
             ],
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Text('Effort: ${draft.effort}/10'),
             Slider(
               value: draft.effort.toDouble(),
@@ -1097,15 +1274,30 @@ class _ExerciseFeedbackCard extends StatelessWidget {
                 onPainChanged(exerciseKey, value.round());
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TextField(
               controller: commentController,
-              decoration: const InputDecoration(
+              minLines: 2,
+              maxLines: 5,
+              decoration: InputDecoration(
                 labelText: 'Comment (optional)',
-                border: OutlineInputBorder(),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: const BorderRadius.all(Radius.circular(8)),
+                  borderSide: BorderSide(
+                    color: theme.dividerColor.withOpacity(0.4),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: const BorderRadius.all(Radius.circular(8)),
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.primary,
+                    width: 1.4,
+                  ),
+                ),
               ),
               onChanged: (value) => onCommentChanged(exerciseKey, value),
             ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -1142,7 +1334,8 @@ class _ExerciseVideoPanelState extends State<_ExerciseVideoPanel> {
       isIos: Platform.isIOS,
       isLinux: Platform.isLinux,
     );
-    if (_renderMode == ExerciseVideoRenderMode.youtubeIframe && _embedUrl != null) {
+    if (_renderMode == ExerciseVideoRenderMode.youtubeIframe &&
+        _embedUrl != null) {
       PlatformWebViewControllerCreationParams controllerParams =
           const PlatformWebViewControllerCreationParams();
       if (!kIsWeb && Platform.isAndroid) {
@@ -1262,7 +1455,8 @@ class PatientAppBootstrapPage extends StatefulWidget {
   final bool autoInitializeBridge;
 
   @override
-  State<PatientAppBootstrapPage> createState() => _PatientAppBootstrapPageState();
+  State<PatientAppBootstrapPage> createState() =>
+      _PatientAppBootstrapPageState();
 }
 
 class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
@@ -1399,7 +1593,9 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
         ),
         config: widget.bridgeConfig.toBridgeConfig(),
       );
-      final patientPrograms = await _loadPatientPrograms(loginResponse.accessToken);
+      final patientPrograms = await _loadPatientPrograms(
+        loginResponse.accessToken,
+      );
       setState(() {
         _stage = _BootstrapStage.readyForLogin;
         _loginResponse = loginResponse;
@@ -1449,7 +1645,9 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
         request: request,
         config: widget.bridgeConfig.toBridgeConfig(),
       );
-      final patientPrograms = await _loadPatientPrograms(loginResponse.accessToken);
+      final patientPrograms = await _loadPatientPrograms(
+        loginResponse.accessToken,
+      );
       if (mounted) {
         setState(() {
           _patientPrograms = patientPrograms;
@@ -1484,14 +1682,15 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
         request: request,
         config: widget.bridgeConfig.toBridgeConfig(),
       );
-      final patientPrograms = await _loadPatientPrograms(loginResponse.accessToken);
+      final patientPrograms = await _loadPatientPrograms(
+        loginResponse.accessToken,
+      );
       if (mounted) {
         setState(() {
           _patientPrograms = patientPrograms;
-          _status =
-              request.completed
-                  ? 'Session marked as completed.'
-                  : 'Session marked as not completed.';
+          _status = request.completed
+              ? 'Session marked as completed.'
+              : 'Session marked as not completed.';
         });
       }
     } finally {
@@ -1536,10 +1735,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
-            'Welcome back',
-            style: theme.textTheme.titleMedium,
-          ),
+          Text('Welcome back', style: theme.textTheme.titleMedium),
           const SizedBox(height: 16),
           Text(
             widget.bridgeConfig.isConfigured
@@ -1636,7 +1832,10 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Unable to start the app', style: theme.textTheme.headlineSmall),
+              Text(
+                'Unable to start the app',
+                style: theme.textTheme.headlineSmall,
+              ),
               const SizedBox(height: 12),
               Text(_status),
               const SizedBox(height: 24),

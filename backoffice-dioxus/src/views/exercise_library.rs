@@ -4,23 +4,28 @@ use dioxus_i18n::t;
 use dioxus_router::Link;
 
 use crate::app_context::AppContext;
+use crate::hooks::create_exercise::use_create_exercise;
 use crate::hooks::exercise_library::use_exercise_library;
+use crate::hooks::restore_exercise::use_restore_exercise;
+use crate::hooks::soft_delete_exercise::use_soft_delete_exercise;
+use crate::hooks::update_exercise::use_update_exercise;
 use crate::hooks::AsyncState;
 use crate::Route;
 
 #[component]
 pub fn ExerciseLibrary() -> Element {
     let app_context = use_context::<AppContext>();
-    let backend = app_context.backend();
     let session_signal = app_context.session();
     let mut filter = use_signal(|| String::new());
     let exercises = use_exercise_library(filter);
+    let create_exercise = use_create_exercise();
+    let update_exercise = use_update_exercise();
+    let soft_delete_exercise = use_soft_delete_exercise();
+    let restore_exercise = use_restore_exercise();
 
     let mut new_name = use_signal(|| String::new());
     let mut new_desc = use_signal(|| String::new());
     let mut new_video_url = use_signal(|| String::new());
-    let mut create_loading = use_signal(|| false);
-    let mut create_error = use_signal(|| Option::<String>::None);
     let mut editing_id = use_signal(|| Option::<String>::None);
     let mut edit_name = use_signal(|| String::new());
     let mut edit_desc = use_signal(|| String::new());
@@ -42,14 +47,9 @@ pub fn ExerciseLibrary() -> Element {
         AsyncState::Error(_) => (Vec::new(), 0, false),
         AsyncState::Ready(data) => (data.clone(), data.len(), true),
     };
-    let backend_for_rows = backend.clone();
-    let backend_for_create = backend.clone();
-    let session_for_create = session_signal.read().clone();
     let rows: Vec<Element> = list
         .into_iter()
         .map(|ex| {
-            let backend_row = backend_for_rows.clone();
-            let session_row = session_for_create.clone();
             let ex_id = ex.id.clone();
             let ex_id_edit = ex_id.clone();
             let ex_id_del = ex_id.clone();
@@ -81,18 +81,17 @@ pub fn ExerciseLibrary() -> Element {
                             button {
                                 class: "min-h-9 px-2 text-sm rounded-md bg-primary text-white",
                                 onclick: move |_| {
-                                    let backend = backend_row.clone();
-                                    let token = session_row.as_ref().map(|s| s.access_token().to_string()).unwrap_or_default();
                                     let eid = ex_id_edit.clone();
                                     let n = edit_name().clone();
                                     let d = edit_desc().clone();
                                     let v = edit_video_url().clone();
-                                    editing_id.set(None);
+                                    let mut action = update_exercise.action.clone();
                                     let mut resource = exercises.resource.clone();
-                                    spawn(async move {
-                                        let _ = backend.update_exercise(&token, &eid, Some(&n), Some(if d.is_empty() { "" } else { &d }), None, Some(if v.is_empty() { None } else { Some(v.as_str()) })).await;
+                                    editing_id.set(None);
+                                    async move {
+                                        action.call((eid, n, d, v)).await;
                                         resource.restart();
-                                    });
+                                    }
                                 },
                                 { t!("exercise_library_save") }
                             }
@@ -120,14 +119,13 @@ pub fn ExerciseLibrary() -> Element {
                             button {
                                 class: "min-h-9 px-2 text-sm rounded-md bg-error text-white mt-2 mr-2",
                                 onclick: move |_| {
-                                    let backend = backend_row.clone();
-                                    let token = session_row.as_ref().map(|s| s.access_token().to_string()).unwrap_or_default();
                                     let eid = ex_id_del.clone();
+                                    let mut action = soft_delete_exercise.action.clone();
                                     let mut resource = exercises.resource.clone();
-                                    spawn(async move {
-                                        let _ = backend.soft_delete_exercise(token.as_str(), &eid).await;
+                                    async move {
+                                        action.call((eid,)).await;
                                         resource.restart();
-                                    });
+                                    }
                                 },
                                 { t!("exercise_library_delete") }
                             }
@@ -135,14 +133,13 @@ pub fn ExerciseLibrary() -> Element {
                             button {
                                 class: "min-h-9 px-2 text-sm rounded-md border border-border mt-2",
                                 onclick: move |_| {
-                                    let backend = backend_row.clone();
-                                    let token = session_row.as_ref().map(|s| s.access_token().to_string()).unwrap_or_default();
                                     let eid = ex_id_restore.clone();
+                                    let mut action = restore_exercise.action.clone();
                                     let mut resource = exercises.resource.clone();
-                                    spawn(async move {
-                                        let _ = backend.restore_exercise(token.as_str(), &eid).await;
+                                    async move {
+                                        action.call((eid,)).await;
                                         resource.restart();
-                                    });
+                                    }
                                 },
                                 { t!("exercise_library_restore") }
                             }
@@ -208,42 +205,25 @@ pub fn ExerciseLibrary() -> Element {
                         }
                         button {
                             class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60",
-                            disabled: create_loading() || new_name().trim().is_empty(),
+                            disabled: create_exercise.state.read().is_loading() || new_name().trim().is_empty(),
                             onclick: move |_| {
                                 let name = new_name().trim().to_string();
                                 if name.is_empty() { return; }
-                                let backend = backend_for_create.clone();
-                                let session = session_for_create.clone();
-                                let token = session.as_ref().map(|s| s.access_token().to_string()).unwrap_or_default();
-                                let specialist_id = session.as_ref().map(|s| s.user_id().to_string()).unwrap_or_default();
                                 let desc = new_desc().clone();
-                                let video = new_video_url().clone();
-                                create_loading.set(true);
-                                create_error.set(None);
+                                let video = if new_video_url().is_empty() { None } else { Some(new_video_url().clone()) };
+                                let mut action = create_exercise.action.clone();
                                 let mut resource = exercises.resource.clone();
                                 spawn(async move {
-                                    match backend.create_exercise(
-                                        &token,
-                                        &specialist_id,
-                                        &name,
-                                        if desc.is_empty() { None } else { Some(desc.as_str()) },
-                                        0,
-                                        if video.is_empty() { None } else { Some(video.as_str()) },
-                                    ).await {
-                                        Ok(_) => {
-                                            new_name.set(String::new());
-                                            new_desc.set(String::new());
-                                            new_video_url.set(String::new());
-                                            resource.restart();
-                                        }
-                                        Err(e) => create_error.set(Some(e.to_string())),
-                                    }
-                                    create_loading.set(false);
+                                    action.call((name, desc, 0, video)).await;
+                                    new_name.set(String::new());
+                                    new_desc.set(String::new());
+                                    new_video_url.set(String::new());
+                                    resource.restart();
                                 });
                             },
                             { t!("exercise_library_create_btn") }
                         }
-                        if let Some(ref e) = *create_error.read() {
+                        if let Some(e) = create_exercise.state.read().error() {
                             p { class: "text-error text-sm mt-2", "{e}" }
                         }
                     }

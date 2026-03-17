@@ -6,65 +6,26 @@ use dioxus_i18n::t;
 use dioxus_router::Link;
 
 use crate::app_context::AppContext;
+use crate::hooks::create_program_schedule_item::use_create_program_schedule_item;
+use crate::hooks::delete_program_schedule_item::use_delete_program_schedule_item;
+use crate::hooks::list_program_schedule::use_program_schedule_data;
+use crate::hooks::workout_library_data::use_workout_library_data;
 use crate::Route;
-use domain::error::DomainError;
 
 #[component]
 pub fn ProgramEditor(id: String) -> Element {
     let app_context = use_context::<AppContext>();
-    let backend = app_context.backend();
     let session_signal = app_context.session();
     let program_id = id.clone();
 
-    let program_id_sched = program_id.clone();
-    let backend_schedule = backend.clone();
-    let schedule_data = use_resource(move || {
-        let pid = program_id_sched.clone();
-        let backend = backend_schedule.clone();
-        let session = session_signal.read().clone();
-        async move {
-            let sess = match session {
-                Some(s) => s,
-                None => return Err(DomainError::Api("No session".to_string())),
-            };
-            let schedule = backend
-                .list_program_schedule(sess.access_token(), &pid)
-                .await?;
-            let ids: Vec<String> = schedule
-                .iter()
-                .filter_map(|s| s.workout_id.clone())
-                .collect::<std::collections::HashSet<String>>()
-                .into_iter()
-                .collect();
-            let workouts = backend
-                .get_workouts_by_ids(sess.access_token(), &ids)
-                .await
-                .unwrap_or_default();
-            Ok((schedule, workouts))
-        }
-    });
-
-    let backend_library = backend.clone();
-    let library_workouts = use_resource(move || {
-        let backend = backend_library.clone();
-        let session = session_signal.read().clone();
-        async move {
-            let sess = match session {
-                Some(s) => s,
-                None => return Err(DomainError::Api("No session".to_string())),
-            };
-            let specialist_id = sess.user_id().to_string();
-            backend
-                .list_workout_library(sess.access_token(), &specialist_id, None)
-                .await
-        }
-    });
+    let create_schedule_item = use_create_program_schedule_item();
+    let delete_schedule_item = use_delete_program_schedule_item();
+    let schedule_data = use_program_schedule_data(program_id.clone());
+    let library_workouts = use_workout_library_data();
 
     let mut schedule_block_rest = use_signal(|| true);
     let mut schedule_workout_id = use_signal(|| Option::<String>::None);
     let mut schedule_days = use_signal(|| 1i32);
-    let mut schedule_add_loading = use_signal(|| false);
-    let mut schedule_error = use_signal(|| Option::<String>::None);
 
     let session = session_signal.read().clone();
     if session.is_none() {
@@ -77,16 +38,21 @@ pub fn ProgramEditor(id: String) -> Element {
         };
     }
 
-    let (schedule_items, schedule_workouts) = schedule_data
+    let schedule_data_value = schedule_data
+        .resource
         .read()
         .as_ref()
-        .and_then(|r| r.as_ref().ok().cloned())
+        .and_then(|r| r.as_ref().ok().cloned());
+
+    let (schedule_items, schedule_workouts) = schedule_data_value
+        .map(|d| (d.schedule, d.workouts))
         .unwrap_or((vec![], vec![]));
     let workout_names: HashMap<String, String> = schedule_workouts
         .iter()
         .map(|w| (w.id.clone(), w.name.clone()))
         .collect();
     let library_list = library_workouts
+        .resource
         .read()
         .as_ref()
         .and_then(|r| r.as_ref().ok().cloned())
@@ -103,9 +69,7 @@ pub fn ProgramEditor(id: String) -> Element {
                     .unwrap_or_else(|| "Descanso".to_string());
                 let days = item.days_count;
                 let item_id = item.id.clone();
-                let backend_row = backend.clone();
-                let session_signal_row = session_signal.clone();
-                let mut sched_refresh = schedule_data;
+                let mut delete_action = delete_schedule_item.action.clone();
                 rsx! {
                     li { key: "{item_id}", class: "flex items-center gap-2 py-1 border-b border-border",
                         span { class: "font-medium", "{label}" }
@@ -113,14 +77,10 @@ pub fn ProgramEditor(id: String) -> Element {
                         button {
                             class: "min-h-9 px-2 text-sm rounded-md border border-border bg-error text-white ml-auto",
                             onclick: move |_| {
-                                let backend = backend_row.clone();
-                                let sess = session_signal_row.read().clone();
-                                let Some(s) = sess else { return };
                                 let id = item_id.clone();
-                                spawn(async move {
-                                    let _ = backend.delete_program_schedule_item(s.access_token(), &id).await;
-                                    sched_refresh.restart();
-                                });
+                                async move {
+                                    delete_action.call((id,)).await;
+                                }   
                             },
                             "Eliminar"
                         }
@@ -177,38 +137,29 @@ pub fn ProgramEditor(id: String) -> Element {
                 }
                 button {
                     class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60",
-                    disabled: schedule_add_loading() || (!is_rest && schedule_workout_id().is_none()),
+                    disabled: create_schedule_item.state.read().is_loading() || (!is_rest && schedule_workout_id().is_none()),
                     onclick: move |_| {
-                        let backend = backend.clone();
-                        let sess = session_signal.read().clone();
-                        let Some(s) = sess else { return };
-                        let token = s.access_token().to_string();
                         let pid = program_id.clone();
                         let rest = schedule_block_rest();
                         let wid = schedule_workout_id();
                         let days = schedule_days().max(1);
                         let order = schedule_items.len() as i32;
-                        schedule_add_loading.set(true);
-                        schedule_error.set(None);
-                        let mut sched_refresh = schedule_data;
-                        spawn(async move {
-                            let w = if rest { None } else { wid.as_deref() };
-                            match backend.create_program_schedule_item(&token, &pid, order, w, days).await {
-                                Ok(_) => {
-                                    schedule_block_rest.set(true);
-                                    schedule_workout_id.set(None);
-                                    schedule_days.set(1);
-                                    sched_refresh.restart();
-                                }
-                                Err(e) => schedule_error.set(Some(e.to_string())),
-                            }
-                            schedule_add_loading.set(false);
-                        });
+                        let mut action = create_schedule_item.action.clone();
+                        let mut schedule_block_rest = schedule_block_rest;
+                        let mut schedule_workout_id = schedule_workout_id;
+                        let mut schedule_days = schedule_days;
+                        async move {
+                            let w = if rest { None } else { wid };
+                            action.call((pid, order, w, days)).await;
+                            schedule_block_rest.set(true);
+                            schedule_workout_id.set(None);
+                            schedule_days.set(1);
+                        }
                     },
                     "Añadir bloque"
                 }
             }
-            if let Some(ref e) = *schedule_error.read() {
+            if let Some(e) = create_schedule_item.state.read().error() {
                 p { class: "text-error text-sm mt-2", "{e}" }
             }
         }
@@ -219,7 +170,6 @@ pub fn ProgramEditor(id: String) -> Element {
             div {
                 class: "content min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
                 {
-                    // Navbar desplegable: actúa como título de la página.
                     let mut nav_open = use_signal(|| false);
                     rsx! {
                         nav { class: "relative mb-6",

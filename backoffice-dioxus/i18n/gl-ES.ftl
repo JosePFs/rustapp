@@ -87,6 +87,10 @@ workout_library_delete = Eliminar
 workout_library_create_btn = Crear adestramento
 workout_library_list_title = Adestramentos ({ $count })
 workout_library_empty = Aínda non hai adestramentos. Crea un enriba.
+workout_editor_move_up = Subir
+workout_editor_move_down = Baixar
+workout_editor_up_arrow = ↑
+workout_editor_down_arrow = ↓
 
 # Exercise library
 exercise_library_title = Biblioteca de exercicios

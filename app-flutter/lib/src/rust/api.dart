@@ -188,6 +188,9 @@ class PatientProgramSummary {
   final String programName;
   final String? programDescription;
   final List<ProgramDaySummary> days;
+  final int progressPercent;
+  final double? averageEffort;
+  final double? averagePain;
 
   const PatientProgramSummary({
     required this.patientProgramId,
@@ -195,6 +198,9 @@ class PatientProgramSummary {
     required this.programName,
     this.programDescription,
     required this.days,
+    required this.progressPercent,
+    this.averageEffort,
+    this.averagePain,
   });
 
   @override
@@ -203,7 +209,10 @@ class PatientProgramSummary {
       programId.hashCode ^
       programName.hashCode ^
       programDescription.hashCode ^
-      days.hashCode;
+      days.hashCode ^
+      progressPercent.hashCode ^
+      averageEffort.hashCode ^
+      averagePain.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -214,7 +223,10 @@ class PatientProgramSummary {
           programId == other.programId &&
           programName == other.programName &&
           programDescription == other.programDescription &&
-          days == other.days;
+          days == other.days &&
+          progressPercent == other.progressPercent &&
+          averageEffort == other.averageEffort &&
+          averagePain == other.averagePain;
 }
 
 class ProgramDaySummary {

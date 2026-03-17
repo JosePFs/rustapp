@@ -273,6 +273,13 @@ impl SseDecode for crate::api::ExerciseInstructionSummary {
     }
 }
 
+impl SseDecode for f32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        deserializer.cursor.read_f32::<NativeEndian>().unwrap()
+    }
+}
+
 impl SseDecode for i32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -383,6 +390,17 @@ impl SseDecode for Option<String> {
     }
 }
 
+impl SseDecode for Option<f32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<f32>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for Option<i32> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -402,12 +420,18 @@ impl SseDecode for crate::api::PatientProgramSummary {
         let mut var_programName = <String>::sse_decode(deserializer);
         let mut var_programDescription = <Option<String>>::sse_decode(deserializer);
         let mut var_days = <Vec<crate::api::ProgramDaySummary>>::sse_decode(deserializer);
+        let mut var_progressPercent = <i32>::sse_decode(deserializer);
+        let mut var_averageEffort = <Option<f32>>::sse_decode(deserializer);
+        let mut var_averagePain = <Option<f32>>::sse_decode(deserializer);
         return crate::api::PatientProgramSummary {
             patient_program_id: var_patientProgramId,
             program_id: var_programId,
             program_name: var_programName,
             program_description: var_programDescription,
             days: var_days,
+            progress_percent: var_progressPercent,
+            average_effort: var_averageEffort,
+            average_pain: var_averagePain,
         };
     }
 }
@@ -621,6 +645,9 @@ impl flutter_rust_bridge::IntoDart for crate::api::PatientProgramSummary {
             self.program_name.into_into_dart().into_dart(),
             self.program_description.into_into_dart().into_dart(),
             self.days.into_into_dart().into_dart(),
+            self.progress_percent.into_into_dart().into_dart(),
+            self.average_effort.into_into_dart().into_dart(),
+            self.average_pain.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -754,6 +781,13 @@ impl SseEncode for crate::api::ExerciseInstructionSummary {
     }
 }
 
+impl SseEncode for f32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        serializer.cursor.write_f32::<NativeEndian>(self).unwrap();
+    }
+}
+
 impl SseEncode for i32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -838,6 +872,16 @@ impl SseEncode for Option<String> {
     }
 }
 
+impl SseEncode for Option<f32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <f32>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for Option<i32> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -856,6 +900,9 @@ impl SseEncode for crate::api::PatientProgramSummary {
         <String>::sse_encode(self.program_name, serializer);
         <Option<String>>::sse_encode(self.program_description, serializer);
         <Vec<crate::api::ProgramDaySummary>>::sse_encode(self.days, serializer);
+        <i32>::sse_encode(self.progress_percent, serializer);
+        <Option<f32>>::sse_encode(self.average_effort, serializer);
+        <Option<f32>>::sse_encode(self.average_pain, serializer);
     }
 }
 

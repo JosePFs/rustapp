@@ -89,6 +89,9 @@ pub struct PatientProgramSummary {
     pub program_name: String,
     pub program_description: Option<String>,
     pub days: Vec<ProgramDaySummary>,
+    pub progress_percent: i32,
+    pub average_effort: Option<f32>,
+    pub average_pain: Option<f32>,
 }
 
 fn backend(config: BridgeConfig) -> Arc<NativeApi> {
@@ -136,6 +139,9 @@ pub async fn get_patient_programs(
             program_id: program.program_id,
             program_name: program.program_name,
             program_description: program.program_description,
+            progress_percent: program.progress_percent,
+            average_effort: program.average_effort,
+            average_pain: program.average_pain,
             days: program
                 .days
                 .into_iter()

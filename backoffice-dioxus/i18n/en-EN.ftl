@@ -87,6 +87,10 @@ workout_library_delete = Delete
 workout_library_create_btn = Create workout
 workout_library_list_title = Workouts ({ $count })
 workout_library_empty = No workouts yet. Create one above.
+workout_editor_move_up = Move up
+workout_editor_move_down = Move down
+workout_editor_up_arrow = ↑
+workout_editor_down_arrow = ↓
 
 # Exercise library
 exercise_library_title = Exercise library

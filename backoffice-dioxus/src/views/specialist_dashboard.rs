@@ -8,7 +8,10 @@ use dioxus_router::Link;
 
 use crate::app_context::AppContext;
 use crate::components::{Tooltip, TooltipContent, TooltipTrigger};
-use crate::hooks::{specialist_patients::use_specialist_patients, AsyncState};
+use crate::hooks::{
+    add_specialist_patient::use_add_specialist_patient,
+    specialist_patients::use_specialist_patients, AsyncState,
+};
 use crate::Route;
 use domain::profile::Profile;
 
@@ -16,12 +19,16 @@ use domain::profile::Profile;
 pub fn SpecialistPatients() -> Element {
     let app_context = use_context::<AppContext>();
     let session_signal = app_context.session();
-    let backend = app_context.backend();
     let patients = use_specialist_patients();
+    let add_patient = use_add_specialist_patient();
 
     let mut add_patient_email = use_signal(|| String::new());
-    let mut add_patient_loading = use_signal(|| false);
-    let mut add_patient_error = use_signal(|| Option::<String>::None);
+
+    use_effect(move || {
+        if add_patient.state.read().is_ready() {
+            add_patient_email.set(String::new());
+        }
+    });
 
     let session = session_signal.read().clone();
 
@@ -36,7 +43,7 @@ pub fn SpecialistPatients() -> Element {
 
     let _sess = session.as_ref().unwrap();
 
-    let backend_add_patient = backend.clone();
+    let resource = patients.resource.clone();
 
     rsx! {
         div {
@@ -125,39 +132,21 @@ pub fn SpecialistPatients() -> Element {
                                         }
                                         button {
                                             class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed",
-                                            disabled: add_patient_loading() || add_patient_email().trim().is_empty(),
+                                            disabled: add_patient.state.read().is_loading() || add_patient_email().trim().is_empty(),
                                             onclick: move |_| {
                                                 let email_val = add_patient_email().trim().to_string();
                                                 if email_val.is_empty() { return; }
-                                                let backend = backend_add_patient.clone();
-                                                let session = session_signal.read().clone();
-                                                let Some(sess) = session else { return };
-                                                let token = sess.access_token().to_string();
-                                                let specialist_id = sess.user_id().to_string();
-                                                add_patient_loading.set(true);
-                                                add_patient_error.set(None);
-                                                let mut resource = patients.resource.clone();
+                                                let mut action = add_patient.action.clone();
+                                                let mut resource_clone = resource.clone();
                                                 spawn(async move {
-                                                    match backend.get_patient_id_by_email(&token, &email_val).await {
-                                                        Ok(Some(patient_id)) => {
-                                                            match backend.add_specialist_patient(&token, &specialist_id, &patient_id).await {
-                                                                Ok(_) => {
-                                                                    add_patient_email.set(String::new());
-                                                                    resource.restart();
-                                                                }
-                                                                Err(e) => add_patient_error.set(Some(e.to_string())),
-                                                            }
-                                                        }
-                                                        Ok(None) => add_patient_error.set(Some(t!("patient_not_found_by_email").to_string())),
-                                                        Err(e) => add_patient_error.set(Some(e.to_string())),
-                                                    }
-                                                    add_patient_loading.set(false);
+                                                    action.call(email_val).await;
+                                                    resource_clone.restart();
                                                 });
                                             },
                                             { t!("add_patient_link") }
                                         }
                                     }
-                                    if let Some(ref e) = *add_patient_error.read() {
+                                    if let Some(e) = add_patient.state.read().error() {
                                         p { class: "text-error text-sm mt-2", "{e}" }
                                     }
                                 }

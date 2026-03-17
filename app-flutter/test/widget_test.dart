@@ -35,8 +35,9 @@ void main() {
 
   test('builds external launch URI from schemeless YouTube URL', () {
     expect(
-      buildExternalVideoLaunchUri('www.youtube.com/watch?v=dQw4w9WgXcQ')
-          ?.toString(),
+      buildExternalVideoLaunchUri(
+        'www.youtube.com/watch?v=dQw4w9WgXcQ',
+      )?.toString(),
       'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     );
   });
@@ -160,9 +161,7 @@ void main() {
     );
   });
 
-  testWidgets('renders splash then login shell', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('renders splash then login shell', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MyApp(
         bridgeConfig: BridgeRuntimeConfig(
@@ -203,6 +202,9 @@ void main() {
               programId: 'program-1',
               programName: 'Recovery Basics',
               programDescription: 'Mobility and breathing work.',
+              progressPercent: 50,
+              averageEffort: 4.0,
+              averagePain: 2.0,
               days: [
                 rust_api.ProgramDaySummary(
                   dayIndex: 0,
@@ -243,6 +245,9 @@ void main() {
               programId: 'program-2',
               programName: 'Strength Builder',
               programDescription: 'Progressive lower-body exercises.',
+              progressPercent: 0,
+              averageEffort: null,
+              averagePain: null,
               days: [
                 rust_api.ProgramDaySummary(
                   dayIndex: 0,
@@ -296,8 +301,7 @@ void main() {
     expect(find.text('Completion date'), findsOneWidget);
     expect(find.byKey(const Key('completion-date-field')), findsOneWidget);
     expect(find.byType(Slider), findsNWidgets(2));
-    expect(find.byType(ChoiceChip), findsNWidgets(1));
-    expect(find.textContaining('Rest'), findsOneWidget);
+    expect(find.byType(ChoiceChip), findsNothing);
     expect(find.text('Program details'), findsNothing);
     expect(find.textContaining('Assignment ID:'), findsNothing);
     expect(find.textContaining('Program ID:'), findsNothing);
@@ -310,7 +314,7 @@ void main() {
     expect(find.text('Keep your chest up.'), findsOneWidget);
     expect(find.text('4 sets • 12 reps'), findsOneWidget);
     expect(find.byKey(const Key('exercise-video-exercise-2')), findsNothing);
-    expect(find.text('2026-03-17 • Planned'), findsOneWidget);
+    expect(find.text('Planned'), findsOneWidget);
     expect(find.text('Completion date'), findsOneWidget);
     expect(find.byKey(const Key('completion-date-field')), findsOneWidget);
     expect(find.text('Save'), findsNothing);

@@ -10,27 +10,27 @@ use dioxus_router::Link;
 
 use crate::app_context::AppContext;
 use crate::components::{Tooltip, TooltipContent, TooltipTrigger};
-use crate::hooks::{specialist_programs::use_specialist_programs, AsyncState};
+use crate::hooks::{
+    assign_program_to_patient::use_assign_program_to_patient, create_program::use_create_program,
+    specialist_programs::use_specialist_programs, AsyncState,
+};
 use crate::Route;
 
 #[component]
 pub fn SpecialistPrograms() -> Element {
     let app_context = use_context::<AppContext>();
     let session_signal = app_context.session();
-    let backend = app_context.backend();
     let data = use_specialist_programs();
+    let create_program = use_create_program();
+    let assign_program = use_assign_program_to_patient();
 
     let mut new_program_name = use_signal(|| String::new());
     let mut new_program_desc = use_signal(|| String::new());
-    let mut create_program_error = use_signal(|| Option::<String>::None);
-    let mut create_program_loading = use_signal(|| false);
 
     let mut program_filter = use_signal(|| String::new());
     let mut patient_filter = use_signal(|| String::new());
     let mut selected_program_ids = use_signal(|| HashSet::<String>::new());
     let mut selected_patient_ids = use_signal(|| HashSet::<String>::new());
-    let mut assign_error = use_signal(|| Option::<String>::None);
-    let mut assign_loading = use_signal(|| false);
 
     let session = session_signal.read().clone();
 
@@ -44,9 +44,6 @@ pub fn SpecialistPrograms() -> Element {
     }
 
     let _sess = session.as_ref().unwrap();
-
-    let backend_create_program = backend.clone();
-    let backend_assign = backend.clone();
 
     rsx! {
         div {
@@ -63,15 +60,15 @@ pub fn SpecialistPrograms() -> Element {
                                 onclick: move |_| {
                                     nav_open.set(!nav_open());
                                 },
-                                span { "Programas" }
+                                span { { t!("specialist_programs_title") } }
                                 span { class: "text-xs", if nav_open() { "▲" } else { "▼" } }
                             }
                             if nav_open() {
                                 div { class: "absolute z-10 mt-2 w-56 bg-surface border border-border rounded-md shadow-md flex flex-col py-1",
-                                    Link { to: Route::SpecialistPatients {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", "Pacientes" }
-                                    Link { to: Route::ExerciseLibrary {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", "Biblioteca de ejercicios" }
-                                    Link { to: Route::WorkoutLibrary {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", "Biblioteca de entrenamientos" }
-                                    Link { to: Route::LoginView {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", "Cerrar sesión" }
+                                    Link { to: Route::SpecialistPatients {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", { t!("specialist_programs_nav_patients") } }
+                                    Link { to: Route::ExerciseLibrary {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", { t!("specialist_programs_nav_exercises") } }
+                                    Link { to: Route::WorkoutLibrary {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", { t!("specialist_programs_nav_workouts") } }
+                                    Link { to: Route::LoginView {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", { t!("specialist_programs_logout") } }
                                 }
                             }
                         }
@@ -80,7 +77,7 @@ pub fn SpecialistPrograms() -> Element {
 
                 section { class: "bg-surface rounded-lg p-4 mb-6 shadow-sm border border-border",
                     div { class: "flex items-center gap-2 mt-0 mb-2",
-                        h2 { class: "text-xl font-semibold m-0", "Programas" }
+                        h2 { class: "text-xl font-semibold m-0", { t!("specialist_programs_title") } }
                         Tooltip {
                             TooltipTrigger {
                                 style: "vertical-align: bottom;",
@@ -91,9 +88,9 @@ pub fn SpecialistPrograms() -> Element {
                                 }
                             }
                             TooltipContent { side: ContentSide::Bottom, style: "width: 300px;",
-                                h4 { style: "margin-top: 0; margin-bottom: 8px;", "Programas" }
-                                p { style: "margin: 0; margin-bottom: 4px;", "Crea programas y edítalos." }
-                                p { style: "margin: 0;", "Después podrás asignarlos a tus pacientes." }
+                                h4 { style: "margin-top: 0; margin-bottom: 8px;", { t!("specialist_programs_title") } }
+                                p { style: "margin: 0; margin-bottom: 4px;", { t!("specialist_programs_create_tooltip_1") } }
+                                p { style: "margin: 0;", { t!("specialist_programs_create_tooltip_2") } }
                             }
                         }
                     }
@@ -131,37 +128,30 @@ pub fn SpecialistPrograms() -> Element {
                         }
                         button {
                             class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60",
-                            disabled: create_program_loading(),
+                            disabled: create_program.state.read().is_loading() || new_program_name().trim().is_empty(),
                             onclick: move |_| {
-                                let name = new_program_name().clone();
+                                let name = new_program_name().trim().to_string();
                                 if name.is_empty() { return; }
                                 let desc = new_program_desc().clone();
-                                let backend = backend_create_program.clone();
-                                let session = session_signal.read().clone();
-                                let Some(sess) = session else { return };
-                                let token = sess.access_token().to_string();
-                                let specialist_id = sess.user_id().to_string();
-                                create_program_loading.set(true);
-                                create_program_error.set(None);
+                                let mut action = create_program.action.clone();
                                 let mut resource = data.resource.clone();
                                 spawn(async move {
-                                    match backend.create_program(&token, &specialist_id, &name, if desc.is_empty() { None } else { Some(&desc) }).await {
-                                        Ok(_) => { new_program_name.set(String::new()); new_program_desc.set(String::new()); resource.restart(); }
-                                        Err(e) => create_program_error.set(Some(e.to_string())),
-                                    }
-                                    create_program_loading.set(false);
+                                    action.call((name, desc)).await;
+                                    new_program_name.set(String::new());
+                                    new_program_desc.set(String::new());
+                                    resource.restart();
                                 });
                             },
-                            "Crear programa"
+                            { t!("specialist_programs_create_btn") }
                         }
-                        if let Some(ref e) = *create_program_error.read() {
+                        if let Some(e) = create_program.state.read().error() {
                             p { class: "text-error text-sm mt-2", "{e}" }
                         }
                     }
                 }
 
                 section { class: "bg-surface rounded-lg p-4 mb-6 shadow-sm border border-border",
-                    h2 { class: "text-xl font-semibold mt-0 mb-2", "Asignar programas a pacientes" }
+                    h2 { class: "text-xl font-semibold mt-0 mb-2", { t!("specialist_programs_assign_section") } }
                     {
                         match &*data.state.read() {
                             AsyncState::Idle | AsyncState::Loading => rsx! {
@@ -177,11 +167,11 @@ pub fn SpecialistPrograms() -> Element {
                                 let profiles = d.profiles.clone();
                                 rsx! {
                         p { class: "text-sm text-text-muted mb-4",
-                            "1) Selecciona uno o varios programas. 2) Selecciona pacientes que aún no tengan ninguno de esos programas. 3) Pulsa Asignar."
+                            { t!("specialist_programs_assign_instructions") }
                         }
 
                         div { class: "mb-6",
-                            h3 { class: "text-lg font-semibold mb-2", "Programas" }
+                            h3 { class: "text-lg font-semibold mb-2", { t!("specialist_programs_programs_section") } }
                             input {
                                 class: "w-full min-h-11 px-4 border border-border rounded-md bg-surface mb-4 focus:outline-none focus:border-primary",
                                 r#type: "text",
@@ -241,12 +231,12 @@ pub fn SpecialistPrograms() -> Element {
                                                         .collect();
                                                     selected_program_ids.set(ids);
                                                 },
-                                                "Todos (filtrados)"
+                                                { t!("specialist_programs_all_filtered") }
                                             }
                                             button {
                                                 class: "bg-transparent text-primary underline min-h-0 py-1 text-sm",
                                                 onclick: move |_| selected_program_ids.set(HashSet::new()),
-                                                "Ninguno"
+                                                { t!("specialist_programs_none") }
                                             }
                                         }
                                         div { class: "max-h-48 overflow-y-auto border border-border rounded-md p-1",
@@ -258,9 +248,9 @@ pub fn SpecialistPrograms() -> Element {
                         }
 
                         div { class: "mb-6",
-                            h3 { class: "text-lg font-semibold mb-2", "Pacientes elegibles" }
+                            h3 { class: "text-lg font-semibold mb-2", { t!("specialist_programs_eligible_patients") } }
                             if selected_program_ids().is_empty() {
-                                p { class: "text-sm text-text-muted", "Selecciona primero uno o más programas para ver los pacientes disponibles." }
+                                p { class: "text-sm text-text-muted", { t!("specialist_programs_select_programs_first") } }
                             } else {
                                 input {
                                     class: "w-full min-h-11 px-4 border border-border rounded-md bg-surface mb-4 focus:outline-none focus:border-primary",
@@ -376,46 +366,20 @@ pub fn SpecialistPrograms() -> Element {
                         div { class: "flex flex-wrap items-center gap-3 mt-4",
                             button {
                                 class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed",
-                                disabled: assign_loading() || selected_program_ids().is_empty() || selected_patient_ids().is_empty(),
+                                disabled: assign_program.state.read().is_loading() || selected_program_ids().is_empty() || selected_patient_ids().is_empty(),
                                 onclick: move |_| {
-                                    let backend = backend_assign.clone();
-                                    let session = session_signal.read().clone();
-                                    let Some(sess) = session else { return };
-                                    let token = sess.access_token().to_string();
                                     let prog_ids: Vec<String> = selected_program_ids().into_iter().collect();
                                     let patient_ids: Vec<String> = selected_patient_ids().into_iter().collect();
-
-                                    assign_loading.set(true);
-                                    assign_error.set(None);
-
-                                    let mut resource = data.resource.clone();
+                                    let mut action = assign_program.action.clone();
                                     let mut selected_program_ids_ref = selected_program_ids;
                                     let mut selected_patient_ids_ref = selected_patient_ids;
-
-                                    spawn(async move {
-                                        let mut any_error = None;
-                                        for pid in patient_ids.iter() {
-                                            for prog_id in prog_ids.iter() {
-                                                if let Err(e) = backend.assign_program_to_patient(&token, prog_id, pid).await {
-                                                    any_error = Some(e);
-                                                    break;
-                                                }
-                                            }
-                                            if any_error.is_some() {
-                                                break;
-                                            }
-                                        }
-
-                                        if let Some(e) = any_error {
-                                            assign_error.set(Some(e.to_string()));
-                                        } else {
-                                            selected_program_ids_ref.set(HashSet::new());
-                                            selected_patient_ids_ref.set(HashSet::new());
-                                            resource.restart();
-                                        }
-
-                                        assign_loading.set(false);
-                                    });
+                                    let mut resource = data.resource.clone();
+                                    async move {
+                                        action.call((patient_ids, prog_ids)).await;
+                                        selected_program_ids_ref.set(HashSet::new());
+                                        selected_patient_ids_ref.set(HashSet::new());
+                                        resource.restart();
+                                    }
                                 },
                                 { t!("assign_programs") }
                             }
@@ -430,7 +394,7 @@ pub fn SpecialistPrograms() -> Element {
                             }
                         }
 
-                        if let Some(ref e) = *assign_error.read() {
+                        if let Some(e) = assign_program.state.read().error() {
                             p { class: "text-error text-sm mt-2", "{e}" }
                         }
                                 }

@@ -4,21 +4,25 @@ use dioxus_i18n::t;
 use dioxus_router::Link;
 
 use crate::app_context::AppContext;
-use crate::hooks::{workout_library::use_workout_library, AsyncState};
+use crate::hooks::{
+    create_workout::use_create_workout, delete_workout::use_delete_workout,
+    update_workout::use_update_workout, workout_library::use_workout_library, AsyncState,
+};
 use crate::Route;
+use application::use_cases::update_workout::UpdateWorkoutInput;
 
 #[component]
 pub fn WorkoutLibrary() -> Element {
     let app_context = use_context::<AppContext>();
-    let backend = app_context.backend();
     let session_signal = app_context.session();
     let mut filter = use_signal(|| String::new());
     let workouts = use_workout_library(filter);
+    let update_workout = use_update_workout();
+    let create_workout = use_create_workout();
+    let delete_workout = use_delete_workout();
 
     let mut new_name = use_signal(|| String::new());
     let mut new_desc = use_signal(|| String::new());
-    let mut create_loading = use_signal(|| false);
-    let mut create_error = use_signal(|| Option::<String>::None);
     let mut editing_id = use_signal(|| Option::<String>::None);
     let mut edit_name = use_signal(|| String::new());
     let mut edit_desc = use_signal(|| String::new());
@@ -39,7 +43,6 @@ pub fn WorkoutLibrary() -> Element {
         AsyncState::Error(_) => (Vec::new(), 0, false),
         AsyncState::Ready(data) => (data.clone(), data.len(), true),
     };
-    let backend_for_rows = backend.clone();
     let rows: Vec<Element> = list
         .into_iter()
         .map(|wo| {
@@ -48,7 +51,6 @@ pub fn WorkoutLibrary() -> Element {
             let wid_del = wo.id.clone();
             let name = wo.name.clone();
             let desc = wo.description.clone().unwrap_or_default();
-            let backend_row = backend_for_rows.clone();
             rsx! {
                 li { key: "{wid}", class: "p-4 bg-surface border border-border rounded-md mb-2",
                     if editing_id().as_ref() == Some(&wid_edit) {
@@ -68,19 +70,20 @@ pub fn WorkoutLibrary() -> Element {
                             button {
                                 class: "min-h-9 px-2 text-sm rounded-md bg-primary text-white",
                                 onclick: move |_| {
-                                    let backend = backend_row.clone();
-                                    let sess = session_signal.read().clone();
-                                    let Some(s) = sess else { return };
-                                    let token = s.access_token().to_string();
                                     let id = wid_edit.clone();
                                     let n = edit_name().clone();
                                     let d = edit_desc().clone();
-                                    editing_id.set(None);
+                                    let mut action = update_workout.action.clone();
                                     let mut resource = workouts.resource.clone();
-                                    spawn(async move {
-                                        let _ = backend.update_workout(&token, &id, Some(&n), Some(if d.is_empty() { None } else { Some(d.as_str()) }), None).await;
+                                    editing_id.set(None);
+                                    async move {
+                                        action.call(UpdateWorkoutInput {
+                                            workout_id: id,
+                                            name: n,
+                                            description: d,
+                                        }).await;
                                         resource.restart();
-                                    });
+                                    }
                                 },
                                 { t!("workout_library_save") }
                             }
@@ -108,15 +111,13 @@ pub fn WorkoutLibrary() -> Element {
                         button {
                             class: "min-h-9 px-2 text-sm rounded-md bg-error text-white mt-2",
                             onclick: move |_| {
-                                let backend = backend_row.clone();
-                                let sess = session_signal.read().clone();
-                                let Some(s) = sess else { return };
                                 let id = wid_del.clone();
+                                let mut action = delete_workout.action.clone();
                                 let mut resource = workouts.resource.clone();
-                                spawn(async move {
-                                    let _ = backend.delete_workout(s.access_token(), &id).await;
+                                async move {
+                                    action.call((id,)).await;
                                     resource.restart();
-                                });
+                                }
                             },
                             { t!("workout_library_delete") }
                         }
@@ -174,39 +175,23 @@ pub fn WorkoutLibrary() -> Element {
                         }
                         button {
                             class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60",
-                            disabled: create_loading() || new_name().trim().is_empty(),
+                            disabled: create_workout.state.read().is_loading() || new_name().trim().is_empty(),
                             onclick: move |_| {
                                 let name = new_name().trim().to_string();
                                 if name.is_empty() { return; }
-                                let backend = backend.clone();
-                                let session = session_signal.read().clone();
-                                let Some(s) = session else { return };
-                                let token = s.access_token().to_string();
-                                let specialist_id = s.user_id().to_string();
                                 let desc = new_desc().clone();
-                                create_loading.set(true);
-                                create_error.set(None);
+                                let mut action = create_workout.action.clone();
                                 let mut resource = workouts.resource.clone();
                                 spawn(async move {
-                                    match backend.create_workout(
-                                        &token,
-                                        &specialist_id,
-                                        &name,
-                                        if desc.is_empty() { None } else { Some(&desc) },
-                                    ).await {
-                                        Ok(_) => {
-                                            new_name.set(String::new());
-                                            new_desc.set(String::new());
-                                            resource.restart();
-                                        }
-                                        Err(e) => create_error.set(Some(e.to_string())),
-                                    }
-                                    create_loading.set(false);
+                                    action.call((name, desc)).await;
+                                    new_name.set(String::new());
+                                    new_desc.set(String::new());
+                                    resource.restart();
                                 });
                             },
                             { t!("workout_library_create_btn") }
                         }
-                        if let Some(ref e) = *create_error.read() {
+                        if let Some(e) = create_workout.state.read().error() {
                             p { class: "text-error text-sm mt-2", "{e}" }
                         }
                     }
