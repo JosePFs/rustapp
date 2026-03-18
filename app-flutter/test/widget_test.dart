@@ -137,7 +137,7 @@ void main() {
   testWidgets('renders splash then login shell', (WidgetTester tester) async {
     await tester.pumpWidget(
       wrapWithL10n(
-        const MyApp(
+        const EixeApp(
           bridgeConfig: BridgeRuntimeConfig(
             supabaseUrl: 'https://example.supabase.co',
             supabaseAnonKey: 'anon-key',

@@ -10,11 +10,11 @@ import 'core/theme/eixe_colors.dart';
 import 'l10n/app_localizations.dart';
 
 void main() {
-  runApp(MyApp(bridgeConfig: BridgeRuntimeConfig.fromEnvironment()));
+  runApp(EixeApp(bridgeConfig: BridgeRuntimeConfig.fromEnvironment()));
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({
+class EixeApp extends StatefulWidget {
+  const EixeApp({
     required this.bridgeConfig,
     this.autoInitializeBridge = true,
     super.key,
@@ -24,10 +24,10 @@ class MyApp extends StatefulWidget {
   final bool autoInitializeBridge;
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<EixeApp> createState() => _EixeAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _EixeAppState extends State<EixeApp> {
   final _localeController = LocaleController();
   bool _localeLoaded = false;
 
