@@ -37,7 +37,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.11.1";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -174768471;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 478630217;
 
 // Section: executor
 
@@ -112,6 +112,44 @@ fn wire__crate__api__login_impl(
                 transform_result_sse::<_, String>(
                     (move || async move {
                         let output_ok = crate::api::login(api_request, api_config).await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__refresh_session_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "refresh_session",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_refresh_token = <String>::sse_decode(&mut deserializer);
+            let api_config = <crate::api::BridgeConfig>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, String>(
+                    (move || async move {
+                        let output_ok =
+                            crate::api::refresh_session(api_refresh_token, api_config).await?;
                         Ok(output_ok)
                     })()
                     .await,
@@ -369,10 +407,12 @@ impl SseDecode for crate::api::LoginResponse {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_accessToken = <String>::sse_decode(deserializer);
+        let mut var_refreshToken = <Option<String>>::sse_decode(deserializer);
         let mut var_userId = <String>::sse_decode(deserializer);
         let mut var_userProfileType = <String>::sse_decode(deserializer);
         return crate::api::LoginResponse {
             access_token: var_accessToken,
+            refresh_token: var_refreshToken,
             user_id: var_userId,
             user_profile_type: var_userProfileType,
         };
@@ -516,8 +556,9 @@ fn pde_ffi_dispatcher_primary_impl(
     match func_id {
         1 => wire__crate__api__get_patient_programs_impl(port, ptr, rust_vec_len, data_len),
         2 => wire__crate__api__login_impl(port, ptr, rust_vec_len, data_len),
-        3 => wire__crate__api__submit_day_feedback_impl(port, ptr, rust_vec_len, data_len),
-        4 => wire__crate__api__update_day_completion_impl(port, ptr, rust_vec_len, data_len),
+        3 => wire__crate__api__refresh_session_impl(port, ptr, rust_vec_len, data_len),
+        4 => wire__crate__api__submit_day_feedback_impl(port, ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__update_day_completion_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -624,6 +665,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::LoginResponse {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.access_token.into_into_dart().into_dart(),
+            self.refresh_token.into_into_dart().into_dart(),
             self.user_id.into_into_dart().into_dart(),
             self.user_profile_type.into_into_dart().into_dart(),
         ]
@@ -857,6 +899,7 @@ impl SseEncode for crate::api::LoginResponse {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.access_token, serializer);
+        <Option<String>>::sse_encode(self.refresh_token, serializer);
         <String>::sse_encode(self.user_id, serializer);
         <String>::sse_encode(self.user_profile_type, serializer);
     }

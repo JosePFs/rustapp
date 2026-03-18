@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:app_flutter/l10n/app_localizations_ext.dart';
+
 class AppBrandTitle extends StatelessWidget {
   const AppBrandTitle({super.key});
 
@@ -19,7 +21,7 @@ class AppBrandTitle extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Text(
-          'Eixe',
+          context.l10n.appTitle,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w800,
           ),
@@ -28,4 +30,3 @@ class AppBrandTitle extends StatelessWidget {
     );
   }
 }
-

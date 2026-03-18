@@ -13,6 +13,8 @@ use crate::application::use_cases::mobile_submit_patient_workout_feedback::{
     MobileSubmitPatientWorkoutFeedbackArgs, MobileSubmitPatientWorkoutFeedbackUseCase,
 };
 use crate::domain::credentials::Credentials;
+use crate::domain::role::Role;
+use crate::application::ports::DataProviderSend;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BridgeConfig {
@@ -29,6 +31,7 @@ pub struct LoginRequest {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LoginResponse {
     pub access_token: String,
+    pub refresh_token: Option<String>,
     pub user_id: String,
     pub user_profile_type: String,
 }
@@ -113,8 +116,46 @@ pub async fn login(request: LoginRequest, config: BridgeConfig) -> Result<LoginR
 
     Ok(LoginResponse {
         access_token: result.session.access_token().to_string(),
+        refresh_token: result.session.refresh_token().map(|t| t.to_string()),
         user_id: result.session.user_id().to_string(),
         user_profile_type: match result.user_profile_type {
+            UserProfileType::Specialist => "specialist".to_string(),
+            UserProfileType::Patient => "patient".to_string(),
+        },
+    })
+}
+
+pub async fn refresh_session(
+    refresh_token: String,
+    config: BridgeConfig,
+) -> Result<LoginResponse, String> {
+    let api = backend(config.clone());
+    let client = SupabaseClient::new(SupabaseConfig {
+        url: config.url,
+        anon_key: config.anon_key,
+    });
+    let session = client
+        .refresh_session(&refresh_token)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let profiles = api
+        .get_profiles_by_ids(&[session.user.id.to_string()], &session.access_token)
+        .await
+        .ok();
+    let user_profile_type = profiles
+        .and_then(|profiles| profiles.into_iter().next().map(|p| p.role().clone()))
+        .map(|role| match role {
+            Role::Specialist => UserProfileType::Specialist,
+            Role::Patient => UserProfileType::Patient,
+        })
+        .unwrap_or(UserProfileType::Patient);
+
+    Ok(LoginResponse {
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+        user_id: session.user.id,
+        user_profile_type: match user_profile_type {
             UserProfileType::Specialist => "specialist".to_string(),
             UserProfileType::Patient => "patient".to_string(),
         },

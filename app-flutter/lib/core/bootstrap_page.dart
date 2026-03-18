@@ -6,20 +6,34 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 import 'package:app_flutter/features/patient_home/patient_home_page.dart';
 import 'package:app_flutter/shared/widgets/app_brand_title.dart';
+import 'package:app_flutter/core/locale_controller.dart';
+import 'package:app_flutter/core/session_store.dart';
+import 'package:app_flutter/l10n/app_localizations_ext.dart';
 import 'package:app_flutter/src/rust/api.dart' as rust_api;
 import 'package:app_flutter/src/rust/frb_generated.dart';
 import 'bridge_runtime_config.dart';
 
 enum BootstrapStage { starting, readyForLogin, error }
 
+class _SessionBound<T> {
+  const _SessionBound({required this.session, required this.value});
+
+  final rust_api.LoginResponse session;
+  final T value;
+}
+
 class PatientAppBootstrapPage extends StatefulWidget {
   const PatientAppBootstrapPage({
     required this.bridgeConfig,
+    required this.localeController,
+    required this.localeLoaded,
     this.autoInitializeBridge = true,
     super.key,
   });
 
   final BridgeRuntimeConfig bridgeConfig;
+  final LocaleController localeController;
+  final bool localeLoaded;
   final bool autoInitializeBridge;
 
   @override
@@ -30,11 +44,14 @@ class PatientAppBootstrapPage extends StatefulWidget {
 class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _sessionStore = SessionStore();
 
   bool _bridgeInitialized = false;
   bool _bridgeRuntimeInitialized = false;
   bool _busy = false;
+  bool _restoringSession = false;
   String _status = 'Starting app...';
+  String? _loginErrorMessage;
   BootstrapStage _stage = BootstrapStage.starting;
   rust_api.LoginResponse? _loginResponse;
   List<rust_api.PatientProgramSummary> _patientPrograms = const [];
@@ -75,8 +92,92 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
     super.initState();
     if (widget.autoInitializeBridge) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _initializeBridge();
+        _initializeBridge().then((_) {
+          _tryRestoreSession();
+        });
       });
+    }
+  }
+
+  Future<void> _promoteSession(rust_api.LoginResponse session) async {
+    await _sessionStore.save(session);
+    if (!mounted) {
+      _loginResponse = session;
+      return;
+    }
+    setState(() {
+      _loginResponse = session;
+    });
+  }
+
+  bool _shouldClearStoredSession(Object error) {
+    final text = error.toString();
+    if (text.contains('Missing refresh token')) return true;
+    // Refresh grant is rejected (token revoked/expired/etc).
+    if (text.contains('Auth refresh failed: status 400')) return true;
+    if (text.contains('Auth refresh failed: status 401')) return true;
+    if (text.contains('Auth refresh failed: status 403')) return true;
+    return false;
+  }
+
+  Future<void> _tryRestoreSession() async {
+    if (_busy || !_bridgeInitialized || !widget.bridgeConfig.isConfigured) {
+      return;
+    }
+    setState(() {
+      _restoringSession = true;
+    });
+    final stored = await _sessionStore.read();
+    if (!mounted || stored == null) {
+      if (mounted) {
+        setState(() {
+          _restoringSession = false;
+        });
+      }
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+      _status = context.l10n.statusCallingLogin;
+    });
+
+    try {
+      final result = await _loadPatientProgramsWithRefresh(stored);
+      if (!mounted) return;
+      if (result.session.accessToken != stored.accessToken ||
+          result.session.refreshToken != stored.refreshToken) {
+        await _promoteSession(result.session);
+      } else {
+        _loginResponse = stored;
+      }
+      setState(() {
+        _patientPrograms = result.value;
+        _stage = BootstrapStage.readyForLogin;
+        _status = context.l10n.statusSignedInLoadedPrograms(
+          result.session.userProfileType,
+          result.value.length,
+        );
+      });
+    } catch (error) {
+      if (_shouldClearStoredSession(error)) {
+        await _sessionStore.clear();
+      }
+      if (!mounted) return;
+      setState(() {
+        _loginResponse = null;
+        _patientPrograms = const [];
+        // Keep the app usable even if restore fails.
+        _stage = BootstrapStage.readyForLogin;
+        _status = context.l10n.errorRustCallFailed(error);
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _restoringSession = false;
+        });
+      }
     }
   }
 
@@ -88,8 +189,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
     if (!widget.bridgeConfig.isConfigured) {
       setState(() {
         _stage = BootstrapStage.error;
-        _status =
-            'Missing Supabase configuration. Pass SUPABASE_URL and SUPABASE_ANON_KEY with --dart-define.';
+        _status = context.l10n.errorMissingSupabaseConfig;
       });
       return;
     }
@@ -98,14 +198,14 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
       setState(() {
         _bridgeInitialized = true;
         _stage = BootstrapStage.readyForLogin;
-        _status = 'Bridge ready. You can sign in now.';
+        _status = context.l10n.statusBridgeReady;
       });
       return;
     }
 
     setState(() {
       _busy = true;
-      _status = 'Initializing Rust bridge...';
+      _status = context.l10n.statusInitializingBridge;
     });
 
     try {
@@ -114,12 +214,12 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
         _bridgeInitialized = true;
         _bridgeRuntimeInitialized = true;
         _stage = BootstrapStage.readyForLogin;
-        _status = 'Bridge ready. You can sign in now.';
+        _status = context.l10n.statusBridgeReady;
       });
     } catch (error) {
       setState(() {
         _stage = BootstrapStage.error;
-        _status = 'Bridge initialization failed: $error';
+        _status = context.l10n.errorBridgeInitFailed(error);
       });
     } finally {
       if (mounted) {
@@ -134,8 +234,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
     if (!widget.bridgeConfig.isConfigured) {
       setState(() {
         _stage = BootstrapStage.error;
-        _status =
-            'Missing Supabase configuration. Pass SUPABASE_URL and SUPABASE_ANON_KEY with --dart-define.';
+        _status = context.l10n.errorMissingSupabaseConfig;
       });
       return;
     }
@@ -149,8 +248,9 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
 
     setState(() {
       _busy = true;
-      _status = 'Calling Rust login...';
+      _status = context.l10n.statusCallingLogin;
       _patientPrograms = const [];
+      _loginErrorMessage = null;
     });
 
     try {
@@ -161,20 +261,29 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
         ),
         config: widget.bridgeConfig.toBridgeConfig(),
       );
-      final patientPrograms = await _loadPatientPrograms(
-        loginResponse.accessToken,
-      );
+      final result = await _loadPatientProgramsWithRefresh(loginResponse);
+      await _promoteSession(result.session);
       setState(() {
         _stage = BootstrapStage.readyForLogin;
-        _loginResponse = loginResponse;
-        _patientPrograms = patientPrograms;
-        _status =
-            'Signed in as ${loginResponse.userProfileType}. Loaded ${patientPrograms.length} program(s).';
+        _patientPrograms = result.value;
+        _status = context.l10n.statusSignedInLoadedPrograms(
+          result.session.userProfileType,
+          result.value.length,
+        );
       });
     } catch (error) {
+      final errorText = error.toString();
+      final isWrongCredentials =
+          errorText.contains('wrong_credentials') ||
+          errorText.contains('wrong credentials') ||
+          errorText.contains('Auth failed: status 400');
       setState(() {
-        _stage = BootstrapStage.error;
-        _status = 'Rust call failed: $error';
+        _stage = BootstrapStage.readyForLogin;
+        _loginResponse = null;
+        _loginErrorMessage = isWrongCredentials
+            ? context.l10n.authLoginFailedWrongCredentials
+            : context.l10n.authLoginFailedGeneric;
+        _status = context.l10n.errorRustCallFailed(error);
       });
     } finally {
       if (mounted) {
@@ -185,12 +294,50 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
     }
   }
 
-  Future<List<rust_api.PatientProgramSummary>> _loadPatientPrograms(
-    String token,
-  ) {
-    return rust_api.getPatientPrograms(
-      token: token,
+  bool _isAuthFailure(Object error) {
+    final text = error.toString();
+    return text.contains('status 401') ||
+        text.contains('status 403') ||
+        text.contains('Auth failed: status 401') ||
+        text.contains('Auth failed: status 403');
+  }
+
+  Future<rust_api.LoginResponse> _refreshSessionOrThrow(
+    rust_api.LoginResponse current,
+  ) async {
+    final refreshToken = current.refreshToken;
+    if (refreshToken == null || refreshToken.trim().isEmpty) {
+      throw StateError('Missing refresh token.');
+    }
+    return rust_api.refreshSession(
+      refreshToken: refreshToken,
       config: widget.bridgeConfig.toBridgeConfig(),
+    );
+  }
+
+  Future<_SessionBound<T>> _withAuthRetry<T>(
+    rust_api.LoginResponse session,
+    Future<T> Function(String accessToken) operation,
+  ) async {
+    try {
+      final value = await operation(session.accessToken);
+      return _SessionBound(session: session, value: value);
+    } catch (error) {
+      if (!_isAuthFailure(error)) rethrow;
+      final refreshed = await _refreshSessionOrThrow(session);
+      final value = await operation(refreshed.accessToken);
+      return _SessionBound(session: refreshed, value: value);
+    }
+  }
+
+  Future<_SessionBound<List<rust_api.PatientProgramSummary>>>
+  _loadPatientProgramsWithRefresh(rust_api.LoginResponse session) {
+    return _withAuthRetry(
+      session,
+      (token) => rust_api.getPatientPrograms(
+        token: token,
+        config: widget.bridgeConfig.toBridgeConfig(),
+      ),
     );
   }
 
@@ -204,22 +351,39 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
 
     setState(() {
       _busy = true;
-      _status = 'Saving feedback...';
+      _status = context.l10n.statusSavingFeedback;
     });
 
     try {
-      await rust_api.submitDayFeedback(
-        token: loginResponse.accessToken,
-        request: request,
-        config: widget.bridgeConfig.toBridgeConfig(),
+      final submitResult = await _withAuthRetry(
+        loginResponse,
+        (token) => rust_api.submitDayFeedback(
+          token: token,
+          request: request,
+          config: widget.bridgeConfig.toBridgeConfig(),
+        ),
       );
-      final patientPrograms = await _loadPatientPrograms(
-        loginResponse.accessToken,
+      if (submitResult.session.accessToken != loginResponse.accessToken ||
+          submitResult.session.refreshToken != loginResponse.refreshToken) {
+        await _promoteSession(submitResult.session);
+      }
+      final programsResult = await _withAuthRetry(
+        submitResult.session,
+        (token) => rust_api.getPatientPrograms(
+          token: token,
+          config: widget.bridgeConfig.toBridgeConfig(),
+        ),
       );
+      if (programsResult.session.accessToken !=
+              submitResult.session.accessToken ||
+          programsResult.session.refreshToken !=
+              submitResult.session.refreshToken) {
+        await _promoteSession(programsResult.session);
+      }
       if (mounted) {
         setState(() {
-          _patientPrograms = patientPrograms;
-          _status = 'Feedback saved.';
+          _patientPrograms = programsResult.value;
+          _status = context.l10n.statusSavingFeedback;
         });
       }
     } finally {
@@ -241,24 +405,41 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
 
     setState(() {
       _busy = true;
-      _status = 'Updating session state...';
+      _status = context.l10n.statusUpdatingSessionState;
     });
 
     try {
-      await rust_api.updateDayCompletion(
-        token: loginResponse.accessToken,
-        request: request,
-        config: widget.bridgeConfig.toBridgeConfig(),
+      final updateResult = await _withAuthRetry(
+        loginResponse,
+        (token) => rust_api.updateDayCompletion(
+          token: token,
+          request: request,
+          config: widget.bridgeConfig.toBridgeConfig(),
+        ),
       );
-      final patientPrograms = await _loadPatientPrograms(
-        loginResponse.accessToken,
+      if (updateResult.session.accessToken != loginResponse.accessToken ||
+          updateResult.session.refreshToken != loginResponse.refreshToken) {
+        await _promoteSession(updateResult.session);
+      }
+      final programsResult = await _withAuthRetry(
+        updateResult.session,
+        (token) => rust_api.getPatientPrograms(
+          token: token,
+          config: widget.bridgeConfig.toBridgeConfig(),
+        ),
       );
+      if (programsResult.session.accessToken !=
+              updateResult.session.accessToken ||
+          programsResult.session.refreshToken !=
+              updateResult.session.refreshToken) {
+        await _promoteSession(programsResult.session);
+      }
       if (mounted) {
         setState(() {
-          _patientPrograms = patientPrograms;
+          _patientPrograms = programsResult.value;
           _status = request.completed
-              ? 'Session marked as completed.'
-              : 'Session marked as not completed.';
+              ? context.l10n.statusSessionMarkedCompleted
+              : context.l10n.statusSessionMarkedNotCompleted;
         });
       }
     } finally {
@@ -295,6 +476,31 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
         onSignOut: _signOut,
         onSubmitDayFeedback: _submitDayFeedback,
         onUpdateDayCompletion: _updateDayCompletion,
+        localeController: widget.localeController,
+        localeLoaded: widget.localeLoaded,
+      );
+    }
+
+    if (_restoringSession) {
+      return Scaffold(
+        appBar: AppBar(title: const AppBrandTitle()),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  context.l10n.statusStartingApp,
+                  style: theme.textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
 
@@ -303,7 +509,10 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('Welcome back', style: theme.textTheme.titleMedium),
+          Text(
+            context.l10n.bootstrapWelcomeBack,
+            style: theme.textTheme.titleMedium,
+          ),
           const SizedBox(height: 16),
           if (kDebugMode)
             Text(
@@ -314,20 +523,64 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
           const SizedBox(height: 12),
           TextField(
             controller: _emailController,
-            decoration: const InputDecoration(
-              labelText: 'Patient email',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: context.l10n.authEmailLabel,
+              hintText: context.l10n.authEmailHint,
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _passwordController,
-            decoration: const InputDecoration(
-              labelText: 'Password',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: context.l10n.authPasswordLabel,
+              hintText: context.l10n.authPasswordHint,
+              border: const OutlineInputBorder(),
             ),
             obscureText: true,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) {
+              if (_busy) return;
+              _loginAndLoadPrograms();
+            },
           ),
+          if (_loginErrorMessage != null) ...[
+            const SizedBox(height: 12),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.errorContainer.withValues(alpha: 0.55),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: theme.colorScheme.error.withValues(alpha: 0.35),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 18,
+                      color: theme.colorScheme.error,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '${context.l10n.authLoginFailedTitle}\n$_loginErrorMessage',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           Wrap(
             spacing: 12,
@@ -335,7 +588,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
             children: [
               FilledButton(
                 onPressed: _busy ? null : _loginAndLoadPrograms,
-                child: const Text('Sign in'),
+                child: Text(context.l10n.authSignIn),
               ),
             ],
           ),
@@ -352,8 +605,9 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
       _patientPrograms = const [];
       _emailController.clear();
       _passwordController.clear();
-      _status = 'Signed out. You can sign in again.';
+      _status = context.l10n.statusSignedOut;
     });
+    _sessionStore.clear();
   }
 
   Widget? _buildBootstrapBody(ThemeData theme) {
@@ -367,14 +621,14 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Starting Eixe Patient Front...',
+                context.l10n.statusStartingApp,
                 style: theme.textTheme.headlineSmall,
               ),
               const SizedBox(height: 12),
               Text(
                 widget.bridgeConfig.isConfigured
-                    ? 'Preparing the app and connecting the Rust core.'
-                    : 'Missing runtime configuration. Add SUPABASE_URL and SUPABASE_ANON_KEY with --dart-define.',
+                    ? context.l10n.statusInitializingBridge
+                    : context.l10n.errorMissingSupabaseConfig,
               ),
               const SizedBox(height: 24),
               if (_busy) const CircularProgressIndicator(),
@@ -383,7 +637,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
                   onPressed: () async {
                     await _initializeBridge();
                   },
-                  child: const Text('Continue'),
+                  child: Text(context.l10n.bootstrapContinue),
                 ),
               ],
             ],
@@ -402,7 +656,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Unable to start the app',
+                context.l10n.bootstrapUnableToStartTitle,
                 style: theme.textTheme.headlineSmall,
               ),
               const SizedBox(height: 12),
@@ -417,7 +671,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
                         });
                         await _initializeBridge();
                       },
-                child: const Text('Retry'),
+                child: Text(context.l10n.bootstrapRetry),
               ),
             ],
           ),

@@ -14,6 +14,14 @@ Future<LoginResponse> login({
   required BridgeConfig config,
 }) => RustLib.instance.api.crateApiLogin(request: request, config: config);
 
+Future<LoginResponse> refreshSession({
+  required String refreshToken,
+  required BridgeConfig config,
+}) => RustLib.instance.api.crateApiRefreshSession(
+  refreshToken: refreshToken,
+  config: config,
+);
+
 Future<List<PatientProgramSummary>> getPatientPrograms({
   required String token,
   required BridgeConfig config,
@@ -159,18 +167,23 @@ class LoginRequest {
 
 class LoginResponse {
   final String accessToken;
+  final String? refreshToken;
   final String userId;
   final String userProfileType;
 
   const LoginResponse({
     required this.accessToken,
+    this.refreshToken,
     required this.userId,
     required this.userProfileType,
   });
 
   @override
   int get hashCode =>
-      accessToken.hashCode ^ userId.hashCode ^ userProfileType.hashCode;
+      accessToken.hashCode ^
+      refreshToken.hashCode ^
+      userId.hashCode ^
+      userProfileType.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -178,6 +191,7 @@ class LoginResponse {
       other is LoginResponse &&
           runtimeType == other.runtimeType &&
           accessToken == other.accessToken &&
+          refreshToken == other.refreshToken &&
           userId == other.userId &&
           userProfileType == other.userProfileType;
 }

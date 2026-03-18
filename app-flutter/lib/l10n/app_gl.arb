@@ -1,0 +1,110 @@
+{
+  "@@locale": "gl",
+  "appTitle": "Eixe",
+  "commonFollowDevice": "Usar o idioma do dispositivo",
+  "commonLanguage": "Idioma",
+  "commonEnglish": "Inglés",
+  "commonSpanish": "Castelán",
+  "commonGalician": "Galego",
+
+  "authSignIn": "Iniciar sesión",
+  "authEmailLabel": "Correo",
+  "authPasswordLabel": "Contrasinal",
+  "authEmailHint": "nome@exemplo.com",
+  "authPasswordHint": "O teu contrasinal",
+  "authLoginFailedTitle": "Non se puido iniciar sesión",
+  "authLoginFailedWrongCredentials": "Correo ou contrasinal incorrectos.",
+  "authLoginFailedGeneric": "Inténtao de novo.",
+
+  "statusStartingApp": "Iniciando a aplicación…",
+  "statusInitializingBridge": "Inicializando a ponte de Rust…",
+  "statusBridgeReady": "Ponte lista. Xa podes iniciar sesión.",
+  "statusCallingLogin": "Iniciando sesión…",
+  "statusSavingFeedback": "Gardando feedback…",
+  "statusFeedbackSaved": "Feedback gardado.",
+  "statusUpdatingSessionState": "Actualizando o estado da sesión…",
+  "statusSessionMarkedCompleted": "Sesión marcada como completada.",
+  "statusSessionSavedAsCompleted": "Sesión gardada como completada.",
+  "statusSessionMarkedNotCompleted": "Sesión marcada como non completada.",
+  "statusSignedOut": "Sesión pechada. Podes iniciar sesión de novo.",
+
+  "bootstrapWelcomeBack": "Benvido/a",
+  "bootstrapContinue": "Continuar",
+  "bootstrapRetry": "Reintentar",
+  "bootstrapUnableToStartTitle": "Non se pode iniciar a aplicación",
+
+  "errorMissingSupabaseConfig": "Falta a configuración de Supabase. Pasa SUPABASE_URL e SUPABASE_ANON_KEY con --dart-define.",
+  "errorBridgeInitFailed": "Erro ao inicializar a ponte: {error}",
+  "@errorBridgeInitFailed": {
+    "placeholders": {
+      "error": { "type": "Object" }
+    }
+  },
+  "errorRustCallFailed": "A chamada a Rust fallou: {error}",
+  "@errorRustCallFailed": {
+    "placeholders": {
+      "error": { "type": "Object" }
+    }
+  },
+  "statusSignedInLoadedPrograms": "Sesión iniciada como {profileType}. {count} programa(s) cargado(s).",
+  "@statusSignedInLoadedPrograms": {
+    "placeholders": {
+      "profileType": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+
+  "patientHomeSignOut": "Pechar sesión",
+  "patientHomeNoProgramsTitle": "Non hai programas asignados",
+  "patientHomeNoProgramsSubtitle": "O teu especialista aínda non che asignou programas.",
+  "patientHomeNoProgramsBody": "Se cres que é un erro, contacta co teu especialista.",
+
+  "programsYourProgramsTitle": "Os teus programas",
+  "programsAssignedCount": "{count} asignado(s)",
+  "@programsAssignedCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "programsNoDescription": "Sen descrición.",
+  "programsProgressLabel": "Progreso",
+  "programsProgressPercent": "{percent}%",
+  "@programsProgressPercent": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "programsEffortPainSummary": "Esforzo: {effort} / 10 · Dor: {pain} / 10",
+  "@programsEffortPainSummary": {
+    "placeholders": {
+      "effort": { "type": "String" },
+      "pain": { "type": "String" }
+    }
+  },
+
+  "programDetailSelectProgram": "Selecciona un programa para ver os detalles.",
+  "programDetailSelectDay": "Selecciona un día",
+  "programDetailRestDayLabel": "Día {dayNumber} • Descanso",
+  "@programDetailRestDayLabel": {
+    "placeholders": { "dayNumber": { "type": "int" } }
+  },
+  "programDetailDayLabel": "Día {dayNumber}",
+  "@programDetailDayLabel": {
+    "placeholders": { "dayNumber": { "type": "int" } }
+  },
+
+  "programDetailCompletionDateLabel": "Data de realización",
+
+  "programDetailSave": "Gardar",
+  "programDetailSaveAsCompleted": "Gardar como completado",
+  "programDetailMarkAsNotCompleted": "Marcar como non completado",
+
+  "exerciseSetsReps": "{sets} series · {reps} repeticións",
+  "@exerciseSetsReps": {
+    "placeholders": {
+      "sets": { "type": "int" },
+      "reps": { "type": "int" }
+    }
+  },
+  "exerciseEffortLabel": "Esforzo",
+  "exercisePainLabel": "Dor",
+  "exerciseCommentLabel": "Comentario (opcional)",
+  "exerciseCommentHint": "Engade notas sobre dor, dificultade ou calquera outra cousa…",
+  "exerciseVideoPlaceholder": "Vídeo do exercicio"
+}

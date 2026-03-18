@@ -1,0 +1,110 @@
+{
+  "@@locale": "es",
+  "appTitle": "Eixe",
+  "commonFollowDevice": "Usar el idioma del dispositivo",
+  "commonLanguage": "Idioma",
+  "commonEnglish": "Inglés",
+  "commonSpanish": "Español",
+  "commonGalician": "Gallego",
+
+  "authSignIn": "Iniciar sesión",
+  "authEmailLabel": "Correo",
+  "authPasswordLabel": "Contraseña",
+  "authEmailHint": "nombre@ejemplo.com",
+  "authPasswordHint": "Tu contraseña",
+  "authLoginFailedTitle": "No se ha podido iniciar sesión",
+  "authLoginFailedWrongCredentials": "Correo o contraseña incorrectos.",
+  "authLoginFailedGeneric": "Inténtalo de nuevo.",
+
+  "statusStartingApp": "Iniciando la aplicación…",
+  "statusInitializingBridge": "Inicializando el bridge de Rust…",
+  "statusBridgeReady": "Bridge listo. Ya puedes iniciar sesión.",
+  "statusCallingLogin": "Iniciando sesión…",
+  "statusSavingFeedback": "Guardando feedback…",
+  "statusFeedbackSaved": "Feedback guardado.",
+  "statusUpdatingSessionState": "Actualizando estado de la sesión…",
+  "statusSessionMarkedCompleted": "Sesión marcada como completada.",
+  "statusSessionSavedAsCompleted": "Sesión guardada como completada.",
+  "statusSessionMarkedNotCompleted": "Sesión marcada como no completada.",
+  "statusSignedOut": "Sesión cerrada. Puedes iniciar sesión de nuevo.",
+
+  "bootstrapWelcomeBack": "Bienvenido/a",
+  "bootstrapContinue": "Continuar",
+  "bootstrapRetry": "Reintentar",
+  "bootstrapUnableToStartTitle": "No se puede iniciar la aplicación",
+
+  "errorMissingSupabaseConfig": "Falta la configuración de Supabase. Pasa SUPABASE_URL y SUPABASE_ANON_KEY con --dart-define.",
+  "errorBridgeInitFailed": "Error al inicializar el bridge: {error}",
+  "@errorBridgeInitFailed": {
+    "placeholders": {
+      "error": { "type": "Object" }
+    }
+  },
+  "errorRustCallFailed": "La llamada a Rust falló: {error}",
+  "@errorRustCallFailed": {
+    "placeholders": {
+      "error": { "type": "Object" }
+    }
+  },
+  "statusSignedInLoadedPrograms": "Sesión iniciada como {profileType}. {count} programa(s) cargado(s).",
+  "@statusSignedInLoadedPrograms": {
+    "placeholders": {
+      "profileType": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+
+  "patientHomeSignOut": "Cerrar sesión",
+  "patientHomeNoProgramsTitle": "No hay programas asignados",
+  "patientHomeNoProgramsSubtitle": "Tu especialista todavía no te ha asignado programas.",
+  "patientHomeNoProgramsBody": "Si crees que es un error, contacta con tu especialista.",
+
+  "programsYourProgramsTitle": "Tus programas",
+  "programsAssignedCount": "{count} asignado(s)",
+  "@programsAssignedCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "programsNoDescription": "Sin descripción.",
+  "programsProgressLabel": "Progreso",
+  "programsProgressPercent": "{percent}%",
+  "@programsProgressPercent": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "programsEffortPainSummary": "Esfuerzo: {effort} / 10 · Dolor: {pain} / 10",
+  "@programsEffortPainSummary": {
+    "placeholders": {
+      "effort": { "type": "String" },
+      "pain": { "type": "String" }
+    }
+  },
+
+  "programDetailSelectProgram": "Selecciona un programa para ver los detalles.",
+  "programDetailSelectDay": "Selecciona un día",
+  "programDetailRestDayLabel": "Día {dayNumber} • Descanso",
+  "@programDetailRestDayLabel": {
+    "placeholders": { "dayNumber": { "type": "int" } }
+  },
+  "programDetailDayLabel": "Día {dayNumber}",
+  "@programDetailDayLabel": {
+    "placeholders": { "dayNumber": { "type": "int" } }
+  },
+
+  "programDetailCompletionDateLabel": "Fecha de realización",
+
+  "programDetailSave": "Guardar",
+  "programDetailSaveAsCompleted": "Guardar como completado",
+  "programDetailMarkAsNotCompleted": "Marcar como no completado",
+
+  "exerciseSetsReps": "{sets} series · {reps} repeticiones",
+  "@exerciseSetsReps": {
+    "placeholders": {
+      "sets": { "type": "int" },
+      "reps": { "type": "int" }
+    }
+  },
+  "exerciseEffortLabel": "Esfuerzo",
+  "exercisePainLabel": "Dolor",
+  "exerciseCommentLabel": "Comentario (opcional)",
+  "exerciseCommentHint": "Añade notas sobre dolor, dificultad o cualquier otra cosa…",
+  "exerciseVideoPlaceholder": "Vídeo del ejercicio"
+}

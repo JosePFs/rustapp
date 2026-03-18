@@ -4,6 +4,8 @@ import 'package:app_flutter/shared/widgets/app_brand_title.dart';
 import 'package:app_flutter/shared/widgets/section.dart';
 import 'package:app_flutter/shared/utils/iterable_ext.dart';
 import 'package:app_flutter/src/rust/api.dart' as rust_api;
+import 'package:app_flutter/core/locale_controller.dart';
+import 'package:app_flutter/l10n/app_localizations_ext.dart';
 
 import 'patient_home_models.dart';
 import 'program_selection.dart';
@@ -14,6 +16,8 @@ class PatientHomePage extends StatefulWidget {
   const PatientHomePage({
     required this.loginResponse,
     required this.patientPrograms,
+    required this.localeController,
+    required this.localeLoaded,
     this.onSignOut,
     this.onSubmitDayFeedback,
     this.onUpdateDayCompletion,
@@ -22,6 +26,8 @@ class PatientHomePage extends StatefulWidget {
 
   final rust_api.LoginResponse loginResponse;
   final List<rust_api.PatientProgramSummary> patientPrograms;
+  final LocaleController localeController;
+  final bool localeLoaded;
   final VoidCallback? onSignOut;
   final SubmitDayFeedbackCallback? onSubmitDayFeedback;
   final UpdateDayCompletionCallback? onUpdateDayCompletion;
@@ -76,10 +82,52 @@ class _PatientHomePageState extends State<PatientHomePage> {
       appBar: AppBar(
         title: const AppBrandTitle(),
         actions: [
+          PopupMenuButton<String>(
+            tooltip: context.l10n.commonLanguage,
+            icon: const Icon(Icons.language),
+            onSelected: (value) async {
+              switch (value) {
+                case LocaleController.deviceKey:
+                  await widget.localeController.setLocale(null);
+                  break;
+                case 'en':
+                case 'es':
+                case 'gl':
+                  await widget.localeController.setLocale(Locale(value));
+                  break;
+              }
+            },
+            itemBuilder: (context) {
+              final selected = widget.localeController.locale?.languageCode;
+              return [
+                CheckedPopupMenuItem<String>(
+                  value: LocaleController.deviceKey,
+                  checked: selected == null && widget.localeLoaded,
+                  child: Text(context.l10n.commonFollowDevice),
+                ),
+                const PopupMenuDivider(),
+                CheckedPopupMenuItem<String>(
+                  value: 'en',
+                  checked: selected == 'en',
+                  child: Text(context.l10n.commonEnglish),
+                ),
+                CheckedPopupMenuItem<String>(
+                  value: 'es',
+                  checked: selected == 'es',
+                  child: Text(context.l10n.commonSpanish),
+                ),
+                CheckedPopupMenuItem<String>(
+                  value: 'gl',
+                  checked: selected == 'gl',
+                  child: Text(context.l10n.commonGalician),
+                ),
+              ];
+            },
+          ),
           if (widget.onSignOut != null)
             TextButton(
               onPressed: widget.onSignOut,
-              child: const Text('Sign out'),
+              child: Text(context.l10n.patientHomeSignOut),
             ),
         ],
       ),
@@ -125,14 +173,13 @@ class _PatientHomePageState extends State<PatientHomePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SectionHeader(
-                        title: 'No programs assigned',
-                        subtitle:
-                            'Your specialist has not assigned any programs yet.',
+                      SectionHeader(
+                        title: context.l10n.patientHomeNoProgramsTitle,
+                        subtitle: context.l10n.patientHomeNoProgramsSubtitle,
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'If you think this is an error, contact your specialist.',
+                        context.l10n.patientHomeNoProgramsBody,
                         style: theme.textTheme.bodyMedium,
                       ),
                     ],
@@ -263,13 +310,22 @@ class _PatientHomePageState extends State<PatientHomePage> {
       return;
     }
 
-    final key = _completionDateKey(selectedProgram.patientProgramId, selectedDay.dayIndex);
-    final completionDate = _completionDateDrafts[key] ??
-        (selectedDay.completedAt != null ? (selectedDay.sessionDate ?? '') : '');
+    final key = _completionDateKey(
+      selectedProgram.patientProgramId,
+      selectedDay.dayIndex,
+    );
+    final completionDate =
+        _completionDateDrafts[key] ??
+        (selectedDay.completedAt != null
+            ? (selectedDay.sessionDate ?? '')
+            : '');
     if (completionDate.isNotEmpty) {
       _completionDateController.text = completionDate;
     } else {
-      _completionDateController.text = DateTime.now().toIso8601String().split('T').first;
+      _completionDateController.text = DateTime.now()
+          .toIso8601String()
+          .split('T')
+          .first;
     }
   }
 
@@ -318,7 +374,8 @@ class _PatientHomePageState extends State<PatientHomePage> {
       return;
     }
 
-    if (widget.onSubmitDayFeedback == null || widget.onUpdateDayCompletion == null) {
+    if (widget.onSubmitDayFeedback == null ||
+        widget.onUpdateDayCompletion == null) {
       return;
     }
 
@@ -328,8 +385,13 @@ class _PatientHomePageState extends State<PatientHomePage> {
 
     try {
       final feedback = selectedDay.exercises.map((exercise) {
-        final key = _exerciseKey(selectedProgram.patientProgramId, selectedDay.dayIndex, exercise.exerciseId);
-        final draft = _feedbackDrafts[key] ??
+        final key = _exerciseKey(
+          selectedProgram.patientProgramId,
+          selectedDay.dayIndex,
+          exercise.exerciseId,
+        );
+        final draft =
+            _feedbackDrafts[key] ??
             ExerciseFeedbackDraft(
               effort: (exercise.effort ?? 1).clamp(1, 10),
               pain: (exercise.pain ?? 0).clamp(0, 10),
@@ -352,16 +414,23 @@ class _PatientHomePageState extends State<PatientHomePage> {
         ),
       );
 
-      final completed = selectedDay.completedAt != null;
       final sessionDate = _completionDateController.text.trim();
       await widget.onUpdateDayCompletion!(
         rust_api.UpdateDayCompletionRequest(
           patientProgramId: selectedProgram.patientProgramId,
           dayIndex: selectedDay.dayIndex,
           sessionDate: sessionDate,
-          completed: completed,
+          completed: true,
         ),
       );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.statusSessionSavedAsCompleted),
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -398,6 +467,17 @@ class _PatientHomePageState extends State<PatientHomePage> {
           completed: completed,
         ),
       );
+
+      if (mounted) {
+        final message = completed
+            ? context.l10n.statusSessionMarkedCompleted
+            : context.l10n.statusSessionMarkedNotCompleted;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -407,4 +487,3 @@ class _PatientHomePageState extends State<PatientHomePage> {
     }
   }
 }
-

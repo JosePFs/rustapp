@@ -1,0 +1,110 @@
+{
+  "@@locale": "en",
+  "appTitle": "Eixe",
+  "commonFollowDevice": "Follow device",
+  "commonLanguage": "Language",
+  "commonEnglish": "English",
+  "commonSpanish": "Spanish",
+  "commonGalician": "Galician",
+
+  "authSignIn": "Sign in",
+  "authEmailLabel": "Email",
+  "authPasswordLabel": "Password",
+  "authEmailHint": "name@example.com",
+  "authPasswordHint": "Your password",
+  "authLoginFailedTitle": "Could not sign in",
+  "authLoginFailedWrongCredentials": "Incorrect email or password.",
+  "authLoginFailedGeneric": "Please try again.",
+
+  "statusStartingApp": "Starting app…",
+  "statusInitializingBridge": "Initializing Rust bridge…",
+  "statusBridgeReady": "Bridge ready. You can sign in now.",
+  "statusCallingLogin": "Calling Rust login…",
+  "statusSavingFeedback": "Saving feedback…",
+  "statusFeedbackSaved": "Feedback saved.",
+  "statusUpdatingSessionState": "Updating session state…",
+  "statusSessionMarkedCompleted": "Session marked as completed.",
+  "statusSessionSavedAsCompleted": "Session saved as completed.",
+  "statusSessionMarkedNotCompleted": "Session marked as not completed.",
+  "statusSignedOut": "Signed out. You can sign in again.",
+
+  "bootstrapWelcomeBack": "Welcome back",
+  "bootstrapContinue": "Continue",
+  "bootstrapRetry": "Retry",
+  "bootstrapUnableToStartTitle": "Unable to start the app",
+
+  "errorMissingSupabaseConfig": "Missing Supabase configuration. Pass SUPABASE_URL and SUPABASE_ANON_KEY with --dart-define.",
+  "errorBridgeInitFailed": "Bridge initialization failed: {error}",
+  "@errorBridgeInitFailed": {
+    "placeholders": {
+      "error": { "type": "Object" }
+    }
+  },
+  "errorRustCallFailed": "Rust call failed: {error}",
+  "@errorRustCallFailed": {
+    "placeholders": {
+      "error": { "type": "Object" }
+    }
+  },
+  "statusSignedInLoadedPrograms": "Signed in as {profileType}. Loaded {count} program(s).",
+  "@statusSignedInLoadedPrograms": {
+    "placeholders": {
+      "profileType": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+
+  "patientHomeSignOut": "Sign out",
+  "patientHomeNoProgramsTitle": "No programs assigned",
+  "patientHomeNoProgramsSubtitle": "Your specialist has not assigned any programs yet.",
+  "patientHomeNoProgramsBody": "If you think this is an error, contact your specialist.",
+
+  "programsYourProgramsTitle": "Your programs",
+  "programsAssignedCount": "{count} assigned",
+  "@programsAssignedCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "programsNoDescription": "No description available.",
+  "programsProgressLabel": "Progress",
+  "programsProgressPercent": "{percent}%",
+  "@programsProgressPercent": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "programsEffortPainSummary": "Effort: {effort} / 10 · Pain: {pain} / 10",
+  "@programsEffortPainSummary": {
+    "placeholders": {
+      "effort": { "type": "String" },
+      "pain": { "type": "String" }
+    }
+  },
+
+  "programDetailSelectProgram": "Select a program to see its details.",
+  "programDetailSelectDay": "Select a day",
+  "programDetailRestDayLabel": "Day {dayNumber} • Rest day",
+  "@programDetailRestDayLabel": {
+    "placeholders": { "dayNumber": { "type": "int" } }
+  },
+  "programDetailDayLabel": "Day {dayNumber}",
+  "@programDetailDayLabel": {
+    "placeholders": { "dayNumber": { "type": "int" } }
+  },
+
+  "programDetailCompletionDateLabel": "Completion date",
+
+  "programDetailSave": "Save",
+  "programDetailSaveAsCompleted": "Save as completed",
+  "programDetailMarkAsNotCompleted": "Mark as not completed",
+
+  "exerciseSetsReps": "{sets} sets · {reps} reps",
+  "@exerciseSetsReps": {
+    "placeholders": {
+      "sets": { "type": "int" },
+      "reps": { "type": "int" }
+    }
+  },
+  "exerciseEffortLabel": "Effort",
+  "exercisePainLabel": "Pain",
+  "exerciseCommentLabel": "Comment (optional)",
+  "exerciseCommentHint": "Add notes about pain, difficulty, or anything else…",
+  "exerciseVideoPlaceholder": "Exercise video"
+}

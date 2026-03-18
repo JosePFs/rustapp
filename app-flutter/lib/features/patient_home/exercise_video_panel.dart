@@ -8,6 +8,7 @@ import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 import 'package:app_flutter/shared/utils/youtube.dart';
+import 'package:app_flutter/l10n/app_localizations_ext.dart';
 
 enum ExerciseVideoRenderMode { placeholder, youtubeIframe }
 
@@ -91,7 +92,8 @@ class _ExerciseVideoPanelState extends State<ExerciseVideoPanel> {
             },
           ),
         )
-        ..setJavaScriptMode(JavaScriptMode.unrestricted);
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setBackgroundColor(const Color(0x00000000));
 
       if (!kIsWeb && Platform.isAndroid) {
         final androidController = controller.platform as AndroidWebViewController;
@@ -124,8 +126,8 @@ class _ExerciseVideoPanelState extends State<ExerciseVideoPanel> {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <style>
-    html, body { margin: 0; padding: 0; background: transparent; }
-    iframe { border: 0; width: 100%; height: 100%; }
+    html, body { margin: 0; padding: 0; background: transparent; width: 100%; height: 100%; overflow: hidden; }
+    iframe { border: 0; width: 100%; height: 100%; display: block; }
   </style>
 </head>
 <body>
@@ -141,27 +143,35 @@ class _ExerciseVideoPanelState extends State<ExerciseVideoPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final borderRadius = BorderRadius.circular(12);
+    final backgroundColor = Theme.of(context).colorScheme.surfaceContainerHighest;
+
     switch (_renderMode) {
       case ExerciseVideoRenderMode.placeholder:
-        return Container(
-          height: 220,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(12),
+        return AspectRatio(
+          aspectRatio: 16 / 9,
+          child: ClipRRect(
+            borderRadius: borderRadius,
+            child: ColoredBox(
+              color: backgroundColor,
+              child: Center(
+                child: Text(context.l10n.exerciseVideoPlaceholder),
+              ),
+            ),
           ),
-          alignment: Alignment.center,
-          child: const Text('Exercise video'),
         );
       case ExerciseVideoRenderMode.youtubeIframe:
         if (_webViewWidget == null) {
           return const SizedBox.shrink();
         }
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: SizedBox(
-            height: 220,
-            width: double.infinity,
-            child: _webViewWidget,
+        return AspectRatio(
+          aspectRatio: 16 / 9,
+          child: ClipRRect(
+            borderRadius: borderRadius,
+            child: ColoredBox(
+              color: backgroundColor,
+              child: _webViewWidget,
+            ),
           ),
         );
     }

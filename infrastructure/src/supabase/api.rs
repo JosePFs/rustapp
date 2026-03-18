@@ -50,7 +50,7 @@ impl AuthService for Api {
                 log::warn!("Login failed: {}", e);
                 DomainError::Login("wrong_credentials".to_string())
             })
-            .map(|auth| Session::new(auth.access_token, auth.user.id))
+            .map(|auth| Session::new(auth.access_token, auth.refresh_token, auth.user.id))
     }
 }
 

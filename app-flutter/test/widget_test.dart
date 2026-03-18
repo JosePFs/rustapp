@@ -3,13 +3,24 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:app_flutter/main.dart';
 import 'package:app_flutter/core/bridge_runtime_config.dart';
+import 'package:app_flutter/core/locale_controller.dart';
 import 'package:app_flutter/features/patient_home/exercise_video_panel.dart';
 import 'package:app_flutter/features/patient_home/patient_home_page.dart';
 import 'package:app_flutter/features/patient_home/program_selection.dart';
+import 'package:app_flutter/l10n/app_localizations.dart';
 import 'package:app_flutter/shared/utils/youtube.dart';
 import 'package:app_flutter/src/rust/api.dart' as rust_api;
 
 void main() {
+  Widget wrapWithL10n(Widget home) {
+    return MaterialApp(
+      locale: const Locale('en'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      home: home,
+    );
+  }
+
   test('builds YouTube embed URL from watch URL', () {
     expect(
       buildYouTubeEmbedUrl('www.youtube.com/watch?v=dQw4w9WgXcQ'),
@@ -125,17 +136,19 @@ void main() {
 
   testWidgets('renders splash then login shell', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const MyApp(
-        bridgeConfig: BridgeRuntimeConfig(
-          supabaseUrl: 'https://example.supabase.co',
-          supabaseAnonKey: 'anon-key',
+      wrapWithL10n(
+        const MyApp(
+          bridgeConfig: BridgeRuntimeConfig(
+            supabaseUrl: 'https://example.supabase.co',
+            supabaseAnonKey: 'anon-key',
+          ),
+          autoInitializeBridge: false,
         ),
-        autoInitializeBridge: false,
       ),
     );
 
     expect(find.text('Eixe'), findsWidgets);
-    expect(find.text('Starting Eixe Patient Front...'), findsOneWidget);
+    expect(find.text('Starting app…'), findsOneWidget);
     expect(find.text('Sign in'), findsNothing);
 
     await tester.tap(find.text('Continue'));
@@ -143,7 +156,7 @@ void main() {
 
     expect(find.text('Welcome back'), findsOneWidget);
     expect(find.text('Sign in'), findsOneWidget);
-    expect(find.text('Patient email'), findsOneWidget);
+    expect(find.text('Email'), findsOneWidget);
     expect(find.text('Password'), findsOneWidget);
   });
 
@@ -151,8 +164,8 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: PatientHomePage(
+      wrapWithL10n(
+        PatientHomePage(
           loginResponse: rust_api.LoginResponse(
             accessToken: 'token',
             userId: 'patient-1',
@@ -236,6 +249,8 @@ void main() {
               ],
             ),
           ],
+          localeController: LocaleController(),
+          localeLoaded: true,
         ),
       ),
     );

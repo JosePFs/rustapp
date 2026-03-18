@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:app_flutter/shared/widgets/section.dart';
 import 'package:app_flutter/src/rust/api.dart' as rust_api;
+import 'package:app_flutter/l10n/app_localizations_ext.dart';
 
 class ProgramListPanel extends StatelessWidget {
   const ProgramListPanel({
@@ -24,8 +25,8 @@ class ProgramListPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SectionHeader(
-            title: 'Your programs',
-            subtitle: '${programs.length} assigned',
+            title: context.l10n.programsYourProgramsTitle,
+            subtitle: context.l10n.programsAssignedCount(programs.length),
           ),
           const SizedBox(height: 8),
           for (final program in programs)
@@ -37,7 +38,7 @@ class ProgramListPanel extends StatelessWidget {
                 border: Border.all(
                   color: program.patientProgramId == selectedProgramId
                       ? theme.colorScheme.primary.withValues(alpha: 0.45)
-                      : theme.dividerColor.withValues(alpha: 0.18),
+                      : theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
                 ),
               ),
               child: ListTile(
@@ -56,7 +57,7 @@ class ProgramListPanel extends StatelessWidget {
                     children: [
                       Text(
                         program.programDescription ??
-                            'No description available.',
+                            context.l10n.programsNoDescription,
                         style: theme.textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 10),
@@ -71,10 +72,15 @@ class ProgramListPanel extends StatelessWidget {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Text('Progress', style: theme.textTheme.bodySmall),
+                          Text(
+                            context.l10n.programsProgressLabel,
+                            style: theme.textTheme.bodySmall,
+                          ),
                           const Spacer(),
                           Text(
-                            '${program.progressPercent.clamp(0, 100)}%',
+                            context.l10n.programsProgressPercent(
+                              program.progressPercent.clamp(0, 100),
+                            ),
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
@@ -85,8 +91,10 @@ class ProgramListPanel extends StatelessWidget {
                           program.averagePain != null) ...[
                         const SizedBox(height: 6),
                         Text(
-                          'Effort: ${program.averageEffort?.toStringAsFixed(1) ?? '-'} / 10 · '
-                          'Pain: ${program.averagePain?.toStringAsFixed(1) ?? '-'} / 10',
+                          context.l10n.programsEffortPainSummary(
+                            program.averageEffort?.toStringAsFixed(1) ?? '-',
+                            program.averagePain?.toStringAsFixed(1) ?? '-',
+                          ),
                           style: theme.textTheme.bodySmall,
                         ),
                       ],

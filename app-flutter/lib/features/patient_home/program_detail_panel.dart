@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:app_flutter/shared/widgets/section.dart';
 import 'package:app_flutter/src/rust/api.dart' as rust_api;
+import 'package:app_flutter/l10n/app_localizations_ext.dart';
 import 'exercise_feedback_card.dart';
 import 'patient_home_models.dart';
 
@@ -60,6 +61,10 @@ class ProgramDetailPanel extends StatelessWidget {
       builder: (context) {
         final width = MediaQuery.sizeOf(context).width;
         final isNarrow = width < 420;
+        final textScale = MediaQuery.textScalerOf(
+          context,
+        ).scale(1.0).clamp(1.0, 1.4);
+        final baseAspectRatio = isNarrow ? 4.4 : 3.9;
 
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -67,7 +72,10 @@ class ProgramDetailPanel extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Select a day', style: theme.textTheme.titleLarge),
+              Text(
+                context.l10n.programDetailSelectDay,
+                style: theme.textTheme.titleLarge,
+              ),
               const SizedBox(height: 12),
               Flexible(
                 child: GridView.builder(
@@ -76,7 +84,7 @@ class ProgramDetailPanel extends StatelessWidget {
                     crossAxisCount: isNarrow ? 1 : 2,
                     mainAxisSpacing: 10,
                     crossAxisSpacing: 10,
-                    childAspectRatio: isNarrow ? 4.4 : 3.9,
+                    childAspectRatio: baseAspectRatio / textScale,
                   ),
                   itemCount: days.length,
                   itemBuilder: (context, index) {
@@ -90,13 +98,15 @@ class ProgramDetailPanel extends StatelessWidget {
                           ),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: theme.dividerColor.withValues(alpha: 0.18),
+                            color: theme.colorScheme.outlineVariant.withValues(
+                              alpha: 0.55,
+                            ),
                           ),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
-                            vertical: 8,
+                            vertical: 6,
                           ),
                           child: Row(
                             children: [
@@ -109,7 +119,9 @@ class ProgramDetailPanel extends StatelessWidget {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Day ${day.dayNumber} • Rest day',
+                                  context.l10n.programDetailRestDayLabel(
+                                    day.dayNumber,
+                                  ),
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: theme.textTheme.bodySmall?.color
                                         ?.withValues(alpha: 0.8),
@@ -127,6 +139,7 @@ class ProgramDetailPanel extends StatelessWidget {
                     return InkWell(
                       onTap: () {
                         onDaySelected(day.dayIndex);
+                        FocusScope.of(context).unfocus();
                         Navigator.of(context).pop();
                       },
                       borderRadius: BorderRadius.circular(12),
@@ -145,12 +158,14 @@ class ProgramDetailPanel extends StatelessWidget {
                                 ? theme.colorScheme.primary.withValues(
                                     alpha: 0.85,
                                   )
-                                : theme.dividerColor.withValues(alpha: 0.18),
+                                : theme.colorScheme.outlineVariant.withValues(
+                                    alpha: 0.55,
+                                  ),
                           ),
                         ),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
-                          vertical: 8,
+                          vertical: 6,
                         ),
                         alignment: Alignment.centerLeft,
                         child: Row(
@@ -169,7 +184,9 @@ class ProgramDetailPanel extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'Day ${day.dayNumber}',
+                                    context.l10n.programDetailDayLabel(
+                                      day.dayNumber,
+                                    ),
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -217,7 +234,7 @@ class ProgramDetailPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (selectedProgram == null)
-            const Text('Select a program to see its details.')
+            Text(context.l10n.programDetailSelectProgram)
           else ...[
             Text(
               selectedProgram!.programName,
@@ -404,7 +421,7 @@ class ProgramDetailPanel extends StatelessWidget {
                   controller: completionDateController,
                   readOnly: true,
                   decoration: InputDecoration(
-                    labelText: 'Completion date',
+                    labelText: context.l10n.programDetailCompletionDateLabel,
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       onPressed: submittingFeedback
@@ -428,7 +445,11 @@ class ProgramDetailPanel extends StatelessWidget {
                         ),
                       ),
                       onPressed: submittingFeedback ? null : onSaveDay,
-                      child: Text(isCompleted ? 'Save' : 'Save as completed'),
+                      child: Text(
+                        isCompleted
+                            ? context.l10n.programDetailSave
+                            : context.l10n.programDetailSaveAsCompleted,
+                      ),
                     ),
                     if (isCompleted)
                       OutlinedButton(
@@ -441,7 +462,7 @@ class ProgramDetailPanel extends StatelessWidget {
                         onPressed: submittingFeedback
                             ? null
                             : onMarkNotCompleted,
-                        child: const Text('Mark as not completed'),
+                        child: Text(context.l10n.programDetailMarkAsNotCompleted),
                       ),
                   ],
                 ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:app_flutter/src/rust/api.dart' as rust_api;
+import 'package:app_flutter/l10n/app_localizations_ext.dart';
 import 'exercise_video_panel.dart';
 import 'patient_home_models.dart';
 
@@ -54,7 +55,9 @@ class ExerciseFeedbackCard extends StatelessWidget {
               Text(
                 exercise.description!,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.85),
+                  color: theme.textTheme.bodySmall?.color?.withValues(
+                    alpha: 0.85,
+                  ),
                 ),
               ),
             ],
@@ -64,11 +67,13 @@ class ExerciseFeedbackCard extends StatelessWidget {
                 Icon(
                   Icons.fitness_center,
                   size: 18,
-                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.8),
+                  color: theme.textTheme.bodySmall?.color?.withValues(
+                    alpha: 0.8,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '${exercise.sets} sets · ${exercise.reps} reps',
+                  context.l10n.exerciseSetsReps(exercise.sets, exercise.reps),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -86,12 +91,17 @@ class ExerciseFeedbackCard extends StatelessWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-                Text('Effort', style: theme.textTheme.titleMedium),
+                Text(
+                  context.l10n.exerciseEffortLabel,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const Spacer(),
                 Text(
                   '${draft.effort}/10',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ],
@@ -108,12 +118,17 @@ class ExerciseFeedbackCard extends StatelessWidget {
             ),
             Row(
               children: [
-                Text('Pain', style: theme.textTheme.titleMedium),
+                Text(
+                  context.l10n.exercisePainLabel,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const Spacer(),
                 Text(
                   '${draft.pain}/10',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ],
@@ -131,12 +146,12 @@ class ExerciseFeedbackCard extends StatelessWidget {
             const SizedBox(height: 16),
             TextField(
               controller: commentController,
-              minLines: 3,
+              minLines: 2,
               maxLines: 6,
               keyboardType: TextInputType.multiline,
-              decoration: const InputDecoration(
-                labelText: 'Comment (optional)',
-                hintText: 'Add notes about pain, difficulty, or anything else…',
+              decoration: InputDecoration(
+                labelText: context.l10n.exerciseCommentLabel,
+                hintText: context.l10n.exerciseCommentHint,
               ),
               onChanged: (value) => onCommentChanged(exerciseKey, value),
             ),
@@ -147,4 +162,3 @@ class ExerciseFeedbackCard extends StatelessWidget {
     );
   }
 }
-

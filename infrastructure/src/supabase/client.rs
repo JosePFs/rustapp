@@ -38,6 +38,31 @@ impl SupabaseClient {
         Ok(session)
     }
 
+    pub async fn refresh_session(&self, refresh_token: &str) -> Result<AuthSession, String> {
+        let url = format!("{}/token?grant_type=refresh_token", self.config.auth_url());
+        let body = RefreshBody {
+            grant_type: "refresh_token".to_string(),
+            refresh_token: refresh_token.to_string(),
+        };
+        let body_bytes = serde_json::to_vec(&body).map_err(|e| e.to_string())?;
+        let response = http_request(
+            "POST",
+            &url,
+            &[
+                ("apikey", self.config.anon_key.as_str()),
+                ("Content-Type", "application/json"),
+            ],
+            Some(&body_bytes),
+        )
+        .await?;
+        if response.status < 200 || response.status >= 300 {
+            return Err(format!("Auth refresh failed: status {}", response.status));
+        }
+        let session: AuthSession =
+            serde_json::from_slice(&response.body).map_err(|e| format!("Parse auth: {}", e))?;
+        Ok(session)
+    }
+
     pub async fn rest_request(
         &self,
         access_token: Option<&str>,
@@ -113,6 +138,12 @@ struct SignInBody {
     grant_type: String,
     email: String,
     password: String,
+}
+
+#[derive(Serialize)]
+struct RefreshBody {
+    grant_type: String,
+    refresh_token: String,
 }
 
 #[derive(Deserialize)]

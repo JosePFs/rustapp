@@ -64,7 +64,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => -174768471;
+  int get rustContentHash => 478630217;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -82,6 +82,11 @@ abstract class RustLibApi extends BaseApi {
 
   Future<LoginResponse> crateApiLogin({
     required LoginRequest request,
+    required BridgeConfig config,
+  });
+
+  Future<LoginResponse> crateApiRefreshSession({
+    required String refreshToken,
     required BridgeConfig config,
   });
 
@@ -173,6 +178,40 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "login", argNames: ["request", "config"]);
 
   @override
+  Future<LoginResponse> crateApiRefreshSession({
+    required String refreshToken,
+    required BridgeConfig config,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(refreshToken, serializer);
+          sse_encode_box_autoadd_bridge_config(config, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 3,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_login_response,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiRefreshSessionConstMeta,
+        argValues: [refreshToken, config],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiRefreshSessionConstMeta => const TaskConstMeta(
+    debugName: "refresh_session",
+    argNames: ["refreshToken", "config"],
+  );
+
+  @override
   Future<void> crateApiSubmitDayFeedback({
     required String token,
     required SubmitDayFeedbackRequest request,
@@ -191,7 +230,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 3,
+            funcId: 4,
             port: port_,
           );
         },
@@ -230,7 +269,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 4,
+            funcId: 5,
             port: port_,
           );
         },
@@ -419,12 +458,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   LoginResponse dco_decode_login_response(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
     return LoginResponse(
       accessToken: dco_decode_String(arr[0]),
-      userId: dco_decode_String(arr[1]),
-      userProfileType: dco_decode_String(arr[2]),
+      refreshToken: dco_decode_opt_String(arr[1]),
+      userId: dco_decode_String(arr[2]),
+      userProfileType: dco_decode_String(arr[3]),
     );
   }
 
@@ -721,10 +761,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   LoginResponse sse_decode_login_response(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_accessToken = sse_decode_String(deserializer);
+    var var_refreshToken = sse_decode_opt_String(deserializer);
     var var_userId = sse_decode_String(deserializer);
     var var_userProfileType = sse_decode_String(deserializer);
     return LoginResponse(
       accessToken: var_accessToken,
+      refreshToken: var_refreshToken,
       userId: var_userId,
       userProfileType: var_userProfileType,
     );
@@ -1037,6 +1079,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_login_response(LoginResponse self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.accessToken, serializer);
+    sse_encode_opt_String(self.refreshToken, serializer);
     sse_encode_String(self.userId, serializer);
     sse_encode_String(self.userProfileType, serializer);
   }
