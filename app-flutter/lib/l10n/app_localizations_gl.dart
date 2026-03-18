@@ -73,14 +73,14 @@ class AppLocalizationsGl extends AppLocalizations {
   String get statusUpdatingSessionState => 'Actualizando o estado da sesión…';
 
   @override
-  String get statusSessionMarkedCompleted => 'Sesión marcada como completada.';
+  String get statusSessionMarkedCompleted => 'Rutina marcada como completada.';
 
   @override
-  String get statusSessionSavedAsCompleted => 'Sesión gardada como completada.';
+  String get statusSessionSavedAsCompleted => 'Rutina gardada como completada.';
 
   @override
   String get statusSessionMarkedNotCompleted =>
-      'Sesión marcada como non completada.';
+      'Rutina marcada como non completada.';
 
   @override
   String get statusSignedOut => 'Sesión pechada. Podes iniciar sesión de novo.';

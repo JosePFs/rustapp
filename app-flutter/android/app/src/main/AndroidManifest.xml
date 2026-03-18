@@ -2,7 +2,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
-        android:label="Eixe Patient Front"
+        android:label="Eixe"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

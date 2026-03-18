@@ -11,6 +11,8 @@ class ProgramDetailPanel extends StatelessWidget {
     required this.selectedProgram,
     required this.selectedDay,
     required this.submittingFeedback,
+    required this.submittingSave,
+    required this.submittingMarkNotCompleted,
     required this.completionDateController,
     required this.onDaySelected,
     required this.onPickCompletionDate,
@@ -27,6 +29,8 @@ class ProgramDetailPanel extends StatelessWidget {
   final rust_api.PatientProgramSummary? selectedProgram;
   final rust_api.ProgramDaySummary? selectedDay;
   final bool submittingFeedback;
+  final bool submittingSave;
+  final bool submittingMarkNotCompleted;
   final TextEditingController completionDateController;
   final ValueChanged<int> onDaySelected;
   final Future<void> Function() onPickCompletionDate;
@@ -228,6 +232,53 @@ class ProgramDetailPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isCompleted = selectedDay?.completedAt != null;
+    final filledSpinner = SizedBox(
+      width: 18,
+      height: 18,
+      child: CircularProgressIndicator(
+        strokeWidth: 2,
+        valueColor: AlwaysStoppedAnimation(
+          theme.colorScheme.onPrimary,
+        ),
+      ),
+    );
+    final outlinedSpinner = SizedBox(
+      width: 18,
+      height: 18,
+      child: CircularProgressIndicator(
+        strokeWidth: 2,
+        valueColor: AlwaysStoppedAnimation(
+          theme.colorScheme.primary,
+        ),
+      ),
+    );
+
+    final filledLabel = isCompleted
+        ? context.l10n.programDetailSave
+        : context.l10n.programDetailSaveAsCompleted;
+    final outlinedLabel = context.l10n.programDetailMarkAsNotCompleted;
+
+    final filledButtonChild = Stack(
+      alignment: Alignment.center,
+      children: [
+        Opacity(
+          opacity: submittingSave ? 0 : 1,
+          child: Text(filledLabel),
+        ),
+        if (submittingSave) filledSpinner,
+      ],
+    );
+
+    final outlinedButtonChild = Stack(
+      alignment: Alignment.center,
+      children: [
+        Opacity(
+          opacity: submittingMarkNotCompleted ? 0 : 1,
+          child: Text(outlinedLabel),
+        ),
+        if (submittingMarkNotCompleted) outlinedSpinner,
+      ],
+    );
 
     return SectionCard(
       child: Column(
@@ -266,11 +317,13 @@ class ProgramDetailPanel extends StatelessWidget {
                           button: true,
                           label: 'Change day',
                           child: InkWell(
-                            onTap: () => _showDayPickerBottomSheet(
-                              context,
-                              theme: theme,
-                              days: days,
-                            ),
+                          onTap: submittingFeedback
+                              ? null
+                              : () => _showDayPickerBottomSheet(
+                                    context,
+                                    theme: theme,
+                                    days: days,
+                                  ),
                             borderRadius: BorderRadius.circular(16),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
@@ -440,29 +493,25 @@ class ProgramDetailPanel extends StatelessWidget {
                     FilledButton(
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 20,
+                          horizontal: 16,
+                          vertical: 16,
                         ),
                       ),
                       onPressed: submittingFeedback ? null : onSaveDay,
-                      child: Text(
-                        isCompleted
-                            ? context.l10n.programDetailSave
-                            : context.l10n.programDetailSaveAsCompleted,
-                      ),
+                      child: filledButtonChild,
                     ),
                     if (isCompleted)
                       OutlinedButton(
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 20,
+                            horizontal: 16,
+                            vertical: 16,
                           ),
                         ),
                         onPressed: submittingFeedback
                             ? null
                             : onMarkNotCompleted,
-                        child: Text(context.l10n.programDetailMarkAsNotCompleted),
+                        child: outlinedButtonChild,
                       ),
                   ],
                 ),

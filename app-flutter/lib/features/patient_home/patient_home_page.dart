@@ -39,11 +39,16 @@ class PatientHomePage extends StatefulWidget {
 class _PatientHomePageState extends State<PatientHomePage> {
   String? _selectedProgramId;
   int? _selectedDayIndex;
-  bool _submittingFeedback = false;
+  SubmittingDayAction _submittingAction = SubmittingDayAction.none;
   final Map<String, ExerciseFeedbackDraft> _feedbackDrafts = {};
   final Map<String, String> _completionDateDrafts = {};
   final Map<String, TextEditingController> _commentControllers = {};
   final _completionDateController = TextEditingController();
+
+  bool get _submittingFeedback => _submittingAction != SubmittingDayAction.none;
+  bool get _submittingSave => _submittingAction == SubmittingDayAction.save;
+  bool get _submittingMarkNotCompleted =>
+      _submittingAction == SubmittingDayAction.markNotCompleted;
 
   @override
   void initState() {
@@ -143,6 +148,8 @@ class _PatientHomePageState extends State<PatientHomePage> {
             selectedProgram: selectedProgram,
             selectedDay: selectedDay,
             submittingFeedback: _submittingFeedback,
+            submittingSave: _submittingSave,
+            submittingMarkNotCompleted: _submittingMarkNotCompleted,
             completionDateController: _completionDateController,
             onDaySelected: _selectDay,
             onPickCompletionDate: _pickCompletionDate,
@@ -380,7 +387,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
     }
 
     setState(() {
-      _submittingFeedback = true;
+      _submittingAction = SubmittingDayAction.save;
     });
 
     try {
@@ -415,6 +422,8 @@ class _PatientHomePageState extends State<PatientHomePage> {
       );
 
       final sessionDate = _completionDateController.text.trim();
+      // Inside the save flow we keep the same "save" action spinner state until
+      // the whole operation completes.
       await widget.onUpdateDayCompletion!(
         rust_api.UpdateDayCompletionRequest(
           patientProgramId: selectedProgram.patientProgramId,
@@ -434,7 +443,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
     } finally {
       if (mounted) {
         setState(() {
-          _submittingFeedback = false;
+          _submittingAction = SubmittingDayAction.none;
         });
       }
     }
@@ -455,7 +464,9 @@ class _PatientHomePageState extends State<PatientHomePage> {
     }
 
     setState(() {
-      _submittingFeedback = true;
+      _submittingAction = completed
+          ? SubmittingDayAction.save
+          : SubmittingDayAction.markNotCompleted;
     });
     try {
       final sessionDate = _completionDateController.text.trim();
@@ -481,9 +492,11 @@ class _PatientHomePageState extends State<PatientHomePage> {
     } finally {
       if (mounted) {
         setState(() {
-          _submittingFeedback = false;
+          _submittingAction = SubmittingDayAction.none;
         });
       }
     }
   }
 }
+
+enum SubmittingDayAction { none, save, markNotCompleted }

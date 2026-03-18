@@ -23,9 +23,9 @@
   "statusSavingFeedback": "Guardando feedback…",
   "statusFeedbackSaved": "Feedback guardado.",
   "statusUpdatingSessionState": "Actualizando estado de la sesión…",
-  "statusSessionMarkedCompleted": "Sesión marcada como completada.",
-  "statusSessionSavedAsCompleted": "Sesión guardada como completada.",
-  "statusSessionMarkedNotCompleted": "Sesión marcada como no completada.",
+  "statusSessionMarkedCompleted": "Rutina marcada como completada.",
+  "statusSessionSavedAsCompleted": "Rutina guardada como completada.",
+  "statusSessionMarkedNotCompleted": "Rutina marcada como no completada.",
   "statusSignedOut": "Sesión cerrada. Puedes iniciar sesión de nuevo.",
 
   "bootstrapWelcomeBack": "Bienvenido/a",
