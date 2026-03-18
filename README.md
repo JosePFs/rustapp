@@ -95,6 +95,7 @@ flutter devtools
 - `mobile-bridge-frb`: Rust FFI bridge compiled as a native library for Flutter
 - `supabase`: SQL migrations and database schema
 - `xtask`: helper CLI tasks for local development (running frontends, building bridges, etc.)
+- [ARCHITECTURE.md](ARCHITECTURE.md): architecture overview with component and sequence diagrams
 
 ## Features (MVP Phase 1)
 
