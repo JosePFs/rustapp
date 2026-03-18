@@ -6,6 +6,26 @@
       "sourceType": "github",
       "computedHash": "bf0b065f87e6571add9fce708e3ef86aa0c8ac01c240256868fda14e519601a0"
     },
+    "flutter-architecting-apps": {
+      "source": "flutter/skills",
+      "sourceType": "github",
+      "computedHash": "ac8212aa825c75d468c216ffada34302d0ab6e8ffc8e99d789848aba4acd30ed"
+    },
+    "flutter-building-layouts": {
+      "source": "flutter/skills",
+      "sourceType": "github",
+      "computedHash": "f25c57e933fa78f5e26057be20b8a2edbd9783c654be03198a7cb6c5c2432d12"
+    },
+    "flutter-localizing-apps": {
+      "source": "flutter/skills",
+      "sourceType": "github",
+      "computedHash": "624ad6e13012fda0f9e7f35a12b22d0c637b68b8924c064bd81f2f4428da31c9"
+    },
+    "flutter-theming-apps": {
+      "source": "flutter/skills",
+      "sourceType": "github",
+      "computedHash": "df83d4bcd1e98b684eff8fc6ed30c40f6165a377e9733f42a42e496da58bacd4"
+    },
     "rust-async-patterns": {
       "source": "wshobson/agents",
       "sourceType": "github",

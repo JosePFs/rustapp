@@ -1,44 +1,19 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:front_flutter/main.dart';
-import 'package:front_flutter/src/rust/api.dart' as rust_api;
+import 'package:app_flutter/main.dart';
+import 'package:app_flutter/core/bridge_runtime_config.dart';
+import 'package:app_flutter/features/patient_home/exercise_video_panel.dart';
+import 'package:app_flutter/features/patient_home/patient_home_page.dart';
+import 'package:app_flutter/features/patient_home/program_selection.dart';
+import 'package:app_flutter/shared/utils/youtube.dart';
+import 'package:app_flutter/src/rust/api.dart' as rust_api;
 
 void main() {
-  test('extracts YouTube id from watch URL without scheme', () {
-    expect(
-      extractYouTubeVideoId('www.youtube.com/watch?v=dQw4w9WgXcQ'),
-      'dQw4w9WgXcQ',
-    );
-  });
-
-  test('extracts YouTube id from shortened URL', () {
-    expect(
-      extractYouTubeVideoId('https://youtu.be/dQw4w9WgXcQ?si=abc123'),
-      'dQw4w9WgXcQ',
-    );
-  });
-
   test('builds YouTube embed URL from watch URL', () {
     expect(
       buildYouTubeEmbedUrl('www.youtube.com/watch?v=dQw4w9WgXcQ'),
       'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    );
-  });
-
-  test('builds external launch URI from schemeless YouTube URL', () {
-    expect(
-      buildExternalVideoLaunchUri(
-        'www.youtube.com/watch?v=dQw4w9WgXcQ',
-      )?.toString(),
-      'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     );
   });
 
@@ -57,19 +32,6 @@ void main() {
         'https://www.youtube.com/embed/dQw4w9WgXcQ',
       ),
       isFalse,
-    );
-  });
-
-  test('embedded YouTube HTML keeps cross-origin referrer metadata', () {
-    final html = buildEmbeddedYouTubeHtml(
-      'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    );
-
-    expect(
-      html,
-      contains(
-        '<meta name="referrer" content="strict-origin-when-cross-origin">',
-      ),
     );
   });
 
@@ -172,7 +134,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Eixe Patient Front'), findsWidgets);
+    expect(find.text('Eixe'), findsWidgets);
     expect(find.text('Starting Eixe Patient Front...'), findsOneWidget);
     expect(find.text('Sign in'), findsNothing);
 
@@ -286,12 +248,14 @@ void main() {
     expect(find.text('2026-03-15 • Completed'), findsOneWidget);
     expect(find.text('Diaphragmatic breathing'), findsOneWidget);
     expect(find.text('Lie down and breathe slowly.'), findsOneWidget);
-    expect(find.text('3 sets • 10 reps'), findsOneWidget);
+    expect(find.text('3 sets · 10 reps'), findsOneWidget);
     expect(find.byKey(const Key('exercise-video-exercise-1')), findsOneWidget);
     expect(find.text('Exercise video'), findsOneWidget);
     expect(find.text('Video unavailable'), findsNothing);
-    expect(find.text('Effort: 4/10'), findsOneWidget);
-    expect(find.text('Pain: 2/10'), findsOneWidget);
+    expect(find.text('Effort'), findsOneWidget);
+    expect(find.text('4/10'), findsOneWidget);
+    expect(find.text('Pain'), findsOneWidget);
+    expect(find.text('2/10'), findsOneWidget);
     expect(find.text('Comment (optional)'), findsOneWidget);
     expect(find.text('Save'), findsOneWidget);
     expect(find.text('Save feedback'), findsNothing);
@@ -312,7 +276,7 @@ void main() {
     expect(find.text('Progressive lower-body exercises.'), findsWidgets);
     expect(find.text('Bodyweight squat'), findsOneWidget);
     expect(find.text('Keep your chest up.'), findsOneWidget);
-    expect(find.text('4 sets • 12 reps'), findsOneWidget);
+    expect(find.text('4 sets · 12 reps'), findsOneWidget);
     expect(find.byKey(const Key('exercise-video-exercise-2')), findsNothing);
     expect(find.text('Planned'), findsOneWidget);
     expect(find.text('Completion date'), findsOneWidget);

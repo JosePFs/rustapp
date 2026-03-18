@@ -71,8 +71,8 @@ impl<B: MobileBackend> MobileGetPatientProgramsUseCase<B> {
             .list_active_patient_programs(&args.token)
             .await?;
 
-        let patient_programs_data = stream::iter(patient_programs.into_iter())
-            .map(|ass| {
+        let patient_programs_data = stream::iter(patient_programs.into_iter().enumerate())
+            .map(|(order_index, ass)| {
                 let backend = self.backend.clone();
                 let token = args.token.clone();
 
@@ -236,30 +236,40 @@ impl<B: MobileBackend> MobileGetPatientProgramsUseCase<B> {
                         None
                     };
 
-                    Ok(Some(MobilePatientProgram {
-                        patient_program_id: ass.id.clone(),
-                        program_id: ass.program_id.clone(),
-                        program_name: prog.name,
-                        program_description: prog.description,
-                        days,
-                        progress_percent,
-                        average_effort,
-                        average_pain,
-                    }))
+                    Ok::<Option<(usize, MobilePatientProgram)>, crate::domain::error::DomainError>(
+                        Some((
+                            order_index,
+                            MobilePatientProgram {
+                                patient_program_id: ass.id.clone(),
+                                program_id: ass.program_id.clone(),
+                                program_name: prog.name,
+                                program_description: prog.description,
+                                days,
+                                progress_percent,
+                                average_effort,
+                                average_pain,
+                            },
+                        )),
+                    )
                 }
             })
             .buffer_unordered(Self::MAX_CONCURRENT_PROGRAM_REQUESTS)
-            .collect::<Vec<Result<Option<MobilePatientProgram>>>>()
+            .collect::<Vec<Result<Option<(usize, MobilePatientProgram)>>>>()
             .await;
 
         Ok(MobileGetPatientProgramsUseCaseResult {
-            patient_programs: patient_programs_data
-                .into_iter()
-                .filter_map(|result| match result {
-                    Ok(Some(value)) => Some(value),
-                    _ => None,
-                })
-                .collect(),
+            patient_programs: {
+                let mut programs: Vec<(usize, MobilePatientProgram)> = patient_programs_data
+                    .into_iter()
+                    .filter_map(|result| match result {
+                        Ok(Some(value)) => Some(value),
+                        _ => None,
+                    })
+                    .collect();
+
+                programs.sort_by_key(|(order, _)| *order);
+                programs.into_iter().map(|(_, program)| program).collect()
+            },
         })
     }
 }
