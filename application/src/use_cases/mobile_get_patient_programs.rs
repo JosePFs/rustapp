@@ -3,11 +3,11 @@ use std::sync::Arc;
 use futures::stream::{self, StreamExt};
 use futures::try_join;
 
-use crate::application::use_cases::agenda_schedule::build_agenda_schedule;
-use crate::application::use_cases::get_patient_programs::GetPatientProgramsUseCaseArgs;
-use crate::application::MobileBackend;
-use crate::domain::entities::{SessionExerciseFeedback, WorkoutExercise};
-use crate::domain::error::Result;
+use crate::ports::MobileBackend;
+use crate::use_cases::agenda_schedule::build_agenda_schedule;
+use crate::use_cases::get_patient_programs::GetPatientProgramsUseCaseArgs;
+use domain::entities::{SessionExerciseFeedback, WorkoutExercise};
+use domain::error::Result;
 
 #[derive(Clone, PartialEq)]
 pub struct MobileExerciseInstruction {
@@ -99,10 +99,7 @@ impl<B: MobileBackend> MobileGetPatientProgramsUseCase<B> {
                                 let exercises = backend
                                     .list_exercises_for_workout(&token, &workout.id)
                                     .await?;
-                                Ok::<
-                                    (String, Vec<WorkoutExercise>),
-                                    crate::domain::error::DomainError,
-                                >((workout.id, exercises))
+                                Ok((workout.id, exercises))
                             }
                         })
                         .buffer_unordered(Self::MAX_CONCURRENT_PROGRAM_REQUESTS)
@@ -236,21 +233,19 @@ impl<B: MobileBackend> MobileGetPatientProgramsUseCase<B> {
                         None
                     };
 
-                    Ok::<Option<(usize, MobilePatientProgram)>, crate::domain::error::DomainError>(
-                        Some((
-                            order_index,
-                            MobilePatientProgram {
-                                patient_program_id: ass.id.clone(),
-                                program_id: ass.program_id.clone(),
-                                program_name: prog.name,
-                                program_description: prog.description,
-                                days,
-                                progress_percent,
-                                average_effort,
-                                average_pain,
-                            },
-                        )),
-                    )
+                    Result::Ok(Some((
+                        order_index,
+                        MobilePatientProgram {
+                            patient_program_id: ass.id.clone(),
+                            program_id: ass.program_id.clone(),
+                            program_name: prog.name,
+                            program_description: prog.description,
+                            days,
+                            progress_percent,
+                            average_effort,
+                            average_pain,
+                        },
+                    )))
                 }
             })
             .buffer_unordered(Self::MAX_CONCURRENT_PROGRAM_REQUESTS)

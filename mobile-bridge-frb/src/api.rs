@@ -5,6 +5,7 @@ use ::infrastructure::supabase::{
 };
 use serde::{Deserialize, Serialize};
 
+use crate::application::ports::DataProviderSend;
 use crate::application::use_cases::get_patient_programs::GetPatientProgramsUseCaseArgs;
 use crate::application::use_cases::login::{LoginUseCaseArgs, UserProfileType};
 use crate::application::use_cases::mobile_get_patient_programs::MobileGetPatientProgramsUseCase;
@@ -12,9 +13,8 @@ use crate::application::use_cases::mobile_login::MobileLoginUseCase;
 use crate::application::use_cases::mobile_submit_patient_workout_feedback::{
     MobileSubmitPatientWorkoutFeedbackArgs, MobileSubmitPatientWorkoutFeedbackUseCase,
 };
-use crate::domain::credentials::Credentials;
-use crate::domain::role::Role;
-use crate::application::ports::DataProviderSend;
+use domain::credentials::Credentials;
+use domain::role::Role;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BridgeConfig {

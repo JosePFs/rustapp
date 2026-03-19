@@ -2,10 +2,10 @@ use std::sync::Arc;
 
 use futures::try_join;
 
-use crate::application::use_cases::agenda_schedule::build_agenda_schedule;
-use crate::application::Backend;
-use crate::domain::entities::{SessionExerciseFeedback, WorkoutExercise, WorkoutSession};
-use crate::domain::error::{DomainError, Result};
+use crate::ports::Backend;
+use crate::use_cases::agenda_schedule::build_agenda_schedule;
+use domain::entities::{SessionExerciseFeedback, WorkoutExercise, WorkoutSession};
+use domain::error::{DomainError, Result};
 
 #[derive(Clone, PartialEq)]
 pub struct PatientWorkoutSessionArgs {

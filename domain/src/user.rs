@@ -1,4 +1,4 @@
-use crate::domain::{email::Email, fullname::FullName, role::Role};
+use crate::{email::Email, fullname::FullName, role::Role};
 
 #[derive(Debug, Clone)]
 pub struct User {

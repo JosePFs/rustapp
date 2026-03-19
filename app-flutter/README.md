@@ -135,6 +135,18 @@ flutter analyze
 flutter test
 ```
 
+## Debugging network requests
+
+```bash
+# Install local proxy with web gui
+pipx install mitmproxy
+
+# Set variables and launch app in linux and see requests in gui http://127.0.0.1:8081/
+export HTTP_PROXY=http://127.0.0.1:8080
+export HTTPS_PROXY=http://127.0.0.1:8080
+cargo xtask flutter-linux
+```
+
 ## Notes
 
 - If you rename the Rust bridge crate or output library stem, update:

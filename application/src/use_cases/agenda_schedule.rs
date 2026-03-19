@@ -1,4 +1,4 @@
-use crate::domain::entities::{ProgramScheduleItem, Workout};
+use domain::entities::{ProgramScheduleItem, Workout};
 
 /// Build agenda as ordered list of days from program schedule.
 pub fn build_agenda_schedule(

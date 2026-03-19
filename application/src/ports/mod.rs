@@ -11,3 +11,10 @@ pub use data_mutator::DataMutator;
 pub use data_mutator_send::DataMutatorSend;
 pub use data_provider::DataProvider;
 pub use data_provider_send::DataProviderSend;
+
+pub trait Backend: AuthService + DataMutator + DataProvider + Send + Sync {}
+
+pub trait MobileBackend:
+    AuthServiceSend + DataProviderSend + DataMutatorSend + Send + Sync
+{
+}

@@ -1,9 +1,10 @@
 use std::{collections::HashMap, sync::Arc};
 
 use futures::stream::{self, StreamExt};
+use futures::try_join;
 
-use crate::application::MobileBackend;
-use crate::domain::error::Result;
+use crate::ports::MobileBackend;
+use domain::error::Result;
 
 #[derive(Clone)]
 pub struct MobileSubmitPatientWorkoutFeedbackArgs {
@@ -28,24 +29,32 @@ impl<B: MobileBackend> MobileSubmitPatientWorkoutFeedbackUseCase<B> {
 
     pub async fn execute(&self, args: MobileSubmitPatientWorkoutFeedbackArgs) -> Result<()> {
         let token = &args.token;
+        let pid = &args.patient_program_id;
+        let di = args.day_index;
+
         let session = self
             .backend
-            .get_or_create_session(token, &args.patient_program_id, args.day_index, &args.session_date)
+            .get_or_create_session(token, pid, di, &args.session_date)
             .await?;
         let session_id = session.id;
 
-        self.backend
-            .update_session(token, &session_id, Some(&args.session_date))
-            .await?;
+        let update_fut = self
+            .backend
+            .update_session(token, &session_id, Some(&args.session_date));
 
-        match args.completion_status {
-            Some(true) => self.backend.complete_session(token, &session_id).await?,
-            Some(false) => self.backend.uncomplete_session(token, &session_id).await?,
-            None => {}
-        }
+        let complete_fut = async {
+            if args.completion_status.unwrap_or(false) {
+                Ok(())
+            } else {
+                self.backend.complete_session(token, &session_id).await
+            }
+        };
+
+        try_join!(update_fut, complete_fut)?;
 
         let token = args.token.clone();
         let session_id = session_id.clone();
+
         stream::iter(args.feedback_map.into_iter())
             .map(|(exercise_id, (effort, pain, comment))| {
                 let backend = self.backend.clone();

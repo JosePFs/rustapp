@@ -1,10 +1,10 @@
 use async_trait::async_trait;
 
-use crate::domain::entities::{
+use domain::entities::{
     Exercise, PatientProgram, Program, ProgramScheduleItem, SpecialistPatient, Workout,
     WorkoutSession,
 };
-use crate::domain::error::Result;
+use domain::error::Result;
 
 #[async_trait(?Send)]
 pub trait DataMutator: Send + Sync {

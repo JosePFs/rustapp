@@ -1,4 +1,4 @@
-use crate::domain::email::Email;
+use crate::email::Email;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Password(String);

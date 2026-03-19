@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use crate::application::Backend;
-use crate::domain::entities::Workout;
-use crate::domain::error::Result;
+use crate::ports::Backend;
+use domain::entities::Workout;
+use domain::error::Result;
 
 #[derive(Clone)]
 pub struct ListWorkoutLibraryArgs {

@@ -3,16 +3,16 @@ use serde::Deserialize;
 
 use super::client::SupabaseClient;
 use crate::application::ports::{AuthServiceSend, DataMutatorSend, DataProviderSend};
-use crate::domain::entities::{
-    PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback, Workout,
-    WorkoutExercise, WorkoutSession,
-};
-use crate::domain::{
-    credentials::Credentials, error::DomainError, error::Result, profile::Profile, session::Session,
-};
 use crate::infrastructure::api::dtos::{
     PatientProgramDto, ProfileDto, ProgramDto, ProgramScheduleItemDto, SessionExerciseFeedbackDto,
     WorkoutDto, WorkoutExerciseRow, WorkoutSessionDto,
+};
+use domain::entities::{
+    PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback, Workout,
+    WorkoutExercise, WorkoutSession,
+};
+use domain::{
+    credentials::Credentials, error::DomainError, error::Result, profile::Profile, session::Session,
 };
 
 fn parse_json<T: for<'de> Deserialize<'de>>(body: &[u8]) -> std::result::Result<T, String> {
@@ -314,4 +314,4 @@ impl DataMutatorSend for NativeApi {
     }
 }
 
-impl crate::application::MobileBackend for NativeApi {}
+impl application::ports::MobileBackend for NativeApi {}

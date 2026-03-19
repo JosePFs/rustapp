@@ -3,11 +3,9 @@ use std::sync::Arc;
 use futures::stream::{self, StreamExt};
 use futures::try_join;
 
-use crate::application::Backend;
-use crate::domain::entities::{
-    ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession,
-};
-use crate::domain::error::Result;
+use crate::ports::Backend;
+use domain::entities::{ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession};
+use domain::error::Result;
 
 pub struct GetPatientProgramsUseCaseArgs {
     pub token: String,

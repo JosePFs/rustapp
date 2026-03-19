@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use crate::application::Backend;
-use crate::domain::entities::SpecialistPatient;
-use crate::domain::error::Result;
-use crate::domain::profile::Profile;
+use crate::ports::Backend;
+use domain::entities::SpecialistPatient;
+use domain::error::Result;
+use domain::profile::Profile;
 
 #[derive(Clone)]
 pub struct GetSpecialistPatientsWithProfilesArgs {

@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use crate::application::use_cases::login::{LoginUseCaseArgs, LoginUseCaseResult, UserProfileType};
-use crate::application::MobileBackend;
-use crate::domain::error::Result;
-use crate::domain::role::Role;
+use crate::ports::MobileBackend;
+use crate::use_cases::login::{LoginUseCaseArgs, LoginUseCaseResult, UserProfileType};
+use domain::error::Result;
+use domain::role::Role;
 
 pub struct MobileLoginUseCase<B: MobileBackend> {
     backend: Arc<B>,

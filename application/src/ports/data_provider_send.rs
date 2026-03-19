@@ -1,10 +1,10 @@
 use async_trait::async_trait;
 
-use crate::domain::entities::{
-    PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutExercise,
-    WorkoutSession,
+use domain::entities::{
+    PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback, Workout,
+    WorkoutExercise, WorkoutSession,
 };
-use crate::domain::{error::Result, profile::Profile};
+use domain::{error::Result, profile::Profile};
 
 #[async_trait]
 pub trait DataProviderSend: Send + Sync {

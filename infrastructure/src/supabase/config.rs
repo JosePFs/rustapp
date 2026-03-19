@@ -1,4 +1,4 @@
-use crate::domain::error::Result;
+use domain::error::Result;
 
 #[derive(Clone)]
 pub struct SupabaseConfig {

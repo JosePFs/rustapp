@@ -2,10 +2,10 @@ use std::sync::Arc;
 
 use futures::try_join;
 
-use crate::application::Backend;
-use crate::domain::entities::{PatientProgram, Program, SpecialistPatient};
-use crate::domain::error::Result;
-use crate::domain::profile::Profile;
+use crate::ports::Backend;
+use domain::entities::{PatientProgram, Program, SpecialistPatient};
+use domain::error::Result;
+use domain::profile::Profile;
 
 #[derive(Clone)]
 pub struct SpecialistProgramsDataArgs {

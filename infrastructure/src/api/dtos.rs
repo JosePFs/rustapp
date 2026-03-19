@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 
-use crate::domain::entities::{
+use domain::entities::{
     Exercise, PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback,
     SpecialistPatient, Workout, WorkoutSession,
 };
-use crate::domain::{email::Email, fullname::FullName, id::Id, profile::Profile, role::Role};
+use domain::{email::Email, fullname::FullName, id::Id, profile::Profile, role::Role};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ProfileDto {

@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use crate::application::Backend;
-use crate::domain::entities::PatientProgram;
-use crate::domain::error::Result;
+use crate::ports::Backend;
+use domain::entities::PatientProgram;
+use domain::error::Result;
 
 #[derive(Clone)]
 pub struct AssignProgramToPatientArgs {

@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::domain::{credentials::Credentials, error::Result, session::Session};
+use domain::{credentials::Credentials, error::Result, session::Session};
 
 #[async_trait]
 pub trait AuthServiceSend: Send + Sync {

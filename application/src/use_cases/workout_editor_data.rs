@@ -2,8 +2,11 @@ use std::sync::Arc;
 
 use futures::try_join;
 
-use crate::application::Backend;
-use crate::domain::entities::{Exercise, Workout, WorkoutExercise};
+use crate::ports::Backend;
+use domain::{
+    entities::{Exercise, Workout, WorkoutExercise},
+    error::Result,
+};
 
 #[derive(Clone)]
 pub struct WorkoutEditorDataArgs {
@@ -28,10 +31,7 @@ impl<B: Backend> WorkoutEditorDataUseCase<B> {
         Self { backend }
     }
 
-    pub async fn execute(
-        &self,
-        args: WorkoutEditorDataArgs,
-    ) -> Result<WorkoutEditorDataResult, crate::domain::error::DomainError> {
+    pub async fn execute(&self, args: WorkoutEditorDataArgs) -> Result<WorkoutEditorDataResult> {
         let token = args.token;
         let specialist_id = args.specialist_id;
         let workout_id = args.workout_id.clone();

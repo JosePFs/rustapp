@@ -3,12 +3,12 @@ use std::sync::Arc;
 use futures::stream::{self, StreamExt};
 use futures::try_join;
 
-use crate::application::Backend;
-use crate::domain::entities::{
+use crate::ports::Backend;
+use domain::entities::{
     PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession,
 };
-use crate::domain::error::Result;
-use crate::domain::profile::Profile;
+use domain::error::Result;
+use domain::profile::Profile;
 
 #[derive(Clone)]
 pub struct PatientProgressArgs {

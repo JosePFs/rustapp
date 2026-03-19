@@ -3,12 +3,14 @@ use async_trait::async_trait;
 use serde::Deserialize;
 
 use super::client::SupabaseClient;
-use crate::application::{
-    ports::data_mutator::DataMutator, ports::data_provider::DataProvider, ports::AuthService,
-    Backend,
+use crate::infrastructure::api::dtos::{
+    ExerciseDto, PatientProgramDto, ProfileDto, ProgramDto, ProgramScheduleItemDto,
+    SessionExerciseFeedbackDto, SpecialistPatientDto, WorkoutDto, WorkoutExerciseRow,
+    WorkoutSessionDto,
 };
-use crate::domain::entities::SessionExerciseFeedback;
-use crate::domain::{
+use application::ports::{AuthService, Backend, DataMutator, DataProvider};
+use domain::entities::SessionExerciseFeedback;
+use domain::{
     credentials::Credentials,
     entities::{
         Exercise, PatientProgram, Program, ProgramScheduleItem, SpecialistPatient, Workout,
@@ -18,11 +20,6 @@ use crate::domain::{
     error::Result,
     profile::Profile,
     session::Session,
-};
-use crate::infrastructure::api::dtos::{
-    ExerciseDto, PatientProgramDto, ProfileDto, ProgramDto, ProgramScheduleItemDto,
-    SessionExerciseFeedbackDto, SpecialistPatientDto, WorkoutDto, WorkoutExerciseRow,
-    WorkoutSessionDto,
 };
 
 fn parse_json<T: for<'de> Deserialize<'de>>(body: &[u8]) -> std::result::Result<T, String> {

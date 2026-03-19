@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 
-use crate::domain::entities::WorkoutSession;
-use crate::domain::error::Result;
+use domain::entities::WorkoutSession;
+use domain::error::Result;
 
 #[async_trait]
 pub trait DataMutatorSend: Send + Sync {
