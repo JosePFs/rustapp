@@ -71,8 +71,15 @@ impl SupabaseClient {
         body: Option<&[u8]>,
     ) -> Result<Vec<u8>, String> {
         let url = format!("{}{}", self.config.rest_url().trim_end_matches('/'), path);
-        let response =
-            rest_request_inner(method, &url, &self.config.anon_key, access_token, body).await?;
+        let response = rest_request_inner(
+            method,
+            &url,
+            &self.config.anon_key,
+            access_token,
+            body,
+            None,
+        )
+        .await?;
         if response.status >= 200 && response.status < 300 {
             Ok(response.body)
         } else {
@@ -116,6 +123,30 @@ impl SupabaseClient {
         path: &str,
     ) -> Result<Vec<u8>, String> {
         self.rest_request(access_token, "DELETE", path, None).await
+    }
+
+    pub async fn rest_upsert<T: Serialize>(
+        &self,
+        access_token: Option<&str>,
+        path: &str,
+        payload: &T,
+    ) -> Result<Vec<u8>, String> {
+        let body = serde_json::to_vec(payload).map_err(|e| e.to_string())?;
+        let url = format!("{}{}", self.config.rest_url().trim_end_matches('/'), path);
+        let response = rest_request_inner(
+            "POST",
+            &url,
+            &self.config.anon_key,
+            access_token,
+            Some(&body),
+            Some("resolution=merge-duplicates,return=representation"),
+        )
+        .await?;
+        if response.status >= 200 && response.status < 300 {
+            Ok(response.body)
+        } else {
+            Err(format!("REST UPSERT: status {}", response.status))
+        }
     }
 }
 
@@ -229,6 +260,7 @@ async fn rest_request_inner(
     apikey: &str,
     bearer: Option<&str>,
     body: Option<&[u8]>,
+    prefer: Option<&str>,
 ) -> Result<HttpResponse, String> {
     use reqwest::Client;
     let client = Client::new();
@@ -243,7 +275,7 @@ async fn rest_request_inner(
         .header("apikey", apikey)
         .header("Content-Type", "application/json")
         .header("Accept", "application/json")
-        .header("Prefer", "return=representation");
+        .header("Prefer", prefer.unwrap_or("return=representation"));
     if let Some(t) = bearer {
         req = req.header("Authorization", format!("Bearer {}", t));
     }

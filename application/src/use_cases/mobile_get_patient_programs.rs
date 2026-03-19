@@ -24,6 +24,7 @@ pub struct MobileExerciseInstruction {
 
 #[derive(Clone, PartialEq)]
 pub struct MobileProgramDay {
+    pub session_id: Option<String>,
     pub day_index: i32,
     pub day_number: i32,
     pub workout_name: Option<String>,
@@ -127,57 +128,60 @@ impl<B: MobileBackend> MobileGetPatientProgramsUseCase<B> {
                                 })
                                 .unwrap_or_default();
 
-                            let (workout_name, workout_description, exercises, is_rest_day) =
-                                match workout_id_opt.as_ref() {
-                                    Some(workout_id) => {
-                                        let workout = workouts
-                                            .iter()
-                                            .find(|workout| workout.id == *workout_id);
-                                        let exercises = workout_exercises
-                                            .get(workout_id)
-                                            .cloned()
-                                            .unwrap_or_default()
-                                            .into_iter()
-                                            .map(|exercise| {
-                                                let existing_feedback =
-                                                    feedback_for_day.iter().find(|entry| {
-                                                        entry.exercise_id == exercise.exercise.id
-                                                    });
-                                                MobileExerciseInstruction {
-                                                    exercise_id: exercise.exercise.id.clone(),
-                                                    name: exercise.exercise.name.clone(),
-                                                    description: exercise
-                                                        .exercise
-                                                        .description
-                                                        .clone(),
-                                                    video_url: exercise.exercise.video_url.clone(),
-                                                    sets: exercise.sets,
-                                                    reps: exercise.reps,
-                                                    effort: existing_feedback
-                                                        .and_then(|entry| entry.effort),
-                                                    pain: existing_feedback
-                                                        .and_then(|entry| entry.pain),
-                                                    comment: existing_feedback
-                                                        .and_then(|entry| entry.comment.clone()),
-                                                }
-                                            })
-                                            .collect();
+                            let (
+                                session_id,
+                                workout_name,
+                                workout_description,
+                                exercises,
+                                is_rest_day,
+                            ) = match workout_id_opt.as_ref() {
+                                Some(workout_id) => {
+                                    let workout =
+                                        workouts.iter().find(|workout| workout.id == *workout_id);
+                                    let exercises = workout_exercises
+                                        .get(workout_id)
+                                        .cloned()
+                                        .unwrap_or_default()
+                                        .into_iter()
+                                        .map(|exercise| {
+                                            let existing_feedback =
+                                                feedback_for_day.iter().find(|entry| {
+                                                    entry.exercise_id == exercise.exercise.id
+                                                });
+                                            MobileExerciseInstruction {
+                                                exercise_id: exercise.exercise.id.clone(),
+                                                name: exercise.exercise.name.clone(),
+                                                description: exercise.exercise.description.clone(),
+                                                video_url: exercise.exercise.video_url.clone(),
+                                                sets: exercise.sets,
+                                                reps: exercise.reps,
+                                                effort: existing_feedback
+                                                    .and_then(|entry| entry.effort),
+                                                pain: existing_feedback
+                                                    .and_then(|entry| entry.pain),
+                                                comment: existing_feedback
+                                                    .and_then(|entry| entry.comment.clone()),
+                                            }
+                                        })
+                                        .collect();
 
-                                        (
-                                            Some(
-                                                workout
-                                                    .map(|workout| workout.name.clone())
-                                                    .unwrap_or(label.clone()),
-                                            ),
-                                            workout.and_then(|workout| workout.description.clone()),
-                                            exercises,
-                                            false,
-                                        )
-                                    }
-                                    None => (None, None, Vec::new(), true),
-                                };
+                                    (
+                                        session.map(|session| session.id.clone()),
+                                        Some(
+                                            workout
+                                                .map(|workout| workout.name.clone())
+                                                .unwrap_or(label.clone()),
+                                        ),
+                                        workout.and_then(|workout| workout.description.clone()),
+                                        exercises,
+                                        false,
+                                    )
+                                }
+                                None => (None, None, None, Vec::new(), true),
+                            };
 
                             MobileProgramDay {
+                                session_id,
                                 day_index,
                                 day_number: day_index + 1,
                                 workout_name,

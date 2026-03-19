@@ -244,27 +244,15 @@ impl DataMutatorSend for NativeApi {
             .map_err(DomainError::from)
     }
 
-    async fn update_session(
+    async fn complete_session(
         &self,
         access_token: &str,
         session_id: &str,
-        session_date: Option<&str>,
+        session_date: &str,
     ) -> Result<()> {
         let mut payload = serde_json::json!({});
-        if let Some(date) = session_date {
-            payload["session_date"] = serde_json::Value::String(date.to_string());
-        }
-        let path = format!("/workout_sessions?id=eq.{}", session_id);
-        self.client
-            .rest_patch(Some(access_token), &path, &payload)
-            .await?;
-        Ok(())
-    }
-
-    async fn complete_session(&self, access_token: &str, session_id: &str) -> Result<()> {
-        let payload = serde_json::json!({
-            "completed_at": chrono::Utc::now().to_rfc3339()
-        });
+        payload["session_date"] = serde_json::Value::String(session_date.to_string());
+        payload["completed_at"] = serde_json::Value::String(chrono::Utc::now().to_rfc3339());
         let path = format!("/workout_sessions?id=eq.{}", session_id);
         self.client
             .rest_patch(Some(access_token), &path, &payload)
@@ -304,12 +292,9 @@ impl DataMutatorSend for NativeApi {
             workout_session_id, exercise_id
         );
         self.client
-            .rest_delete(Some(access_token), &path)
+            .rest_upsert(Some(access_token), &path, &payload)
             .await
             .ok();
-        self.client
-            .rest_post(Some(access_token), "/session_exercise_feedback", &payload)
-            .await?;
         Ok(())
     }
 }

@@ -21,9 +21,8 @@ use application::{
     use_cases::restore_exercise::RestoreExerciseUseCase,
     use_cases::soft_delete_exercise::SoftDeleteExerciseUseCase,
     use_cases::specialist_programs_data::SpecialistProgramsDataUseCase,
-    use_cases::submit_patient_workout_feedback::SubmitPatientWorkoutFeedbackUseCase,
-    use_cases::uncomplete_patient_workout_session::UncompletePatientWorkoutSessionUseCase,
     use_cases::update_exercise::UpdateExerciseUseCase,
+    use_cases::update_patient_workout_feedback::UpdatePatientWorkoutFeedbackUseCase,
     use_cases::update_workout::UpdateWorkoutUseCase,
     use_cases::update_workout_exercise::UpdateWorkoutExerciseUseCase,
     use_cases::workout_editor_data::WorkoutEditorDataUseCase,
@@ -57,8 +56,7 @@ pub struct AppContext {
     remove_exercise_from_workout_use_case: Arc<RemoveExerciseFromWorkoutUseCase<Api>>,
     restore_exercise_use_case: Arc<RestoreExerciseUseCase<Api>>,
     soft_delete_exercise_use_case: Arc<SoftDeleteExerciseUseCase<Api>>,
-    submit_patient_workout_feedback_use_case: Arc<SubmitPatientWorkoutFeedbackUseCase<Api>>,
-    uncomplete_patient_workout_session_use_case: Arc<UncompletePatientWorkoutSessionUseCase<Api>>,
+    submit_patient_workout_feedback_use_case: Arc<UpdatePatientWorkoutFeedbackUseCase<Api>>,
     update_exercise_use_case: Arc<UpdateExerciseUseCase<Api>>,
     update_workout_use_case: Arc<UpdateWorkoutUseCase<Api>>,
     update_workout_exercise_use_case: Arc<UpdateWorkoutExerciseUseCase<Api>>,
@@ -92,10 +90,7 @@ impl AppContext {
         remove_exercise_from_workout_use_case: Arc<RemoveExerciseFromWorkoutUseCase<Api>>,
         restore_exercise_use_case: Arc<RestoreExerciseUseCase<Api>>,
         soft_delete_exercise_use_case: Arc<SoftDeleteExerciseUseCase<Api>>,
-        submit_patient_workout_feedback_use_case: Arc<SubmitPatientWorkoutFeedbackUseCase<Api>>,
-        uncomplete_patient_workout_session_use_case: Arc<
-            UncompletePatientWorkoutSessionUseCase<Api>,
-        >,
+        submit_patient_workout_feedback_use_case: Arc<UpdatePatientWorkoutFeedbackUseCase<Api>>,
         update_exercise_use_case: Arc<UpdateExerciseUseCase<Api>>,
         update_workout_use_case: Arc<UpdateWorkoutUseCase<Api>>,
         update_workout_exercise_use_case: Arc<UpdateWorkoutExerciseUseCase<Api>>,
@@ -125,7 +120,6 @@ impl AppContext {
             restore_exercise_use_case,
             soft_delete_exercise_use_case,
             submit_patient_workout_feedback_use_case,
-            uncomplete_patient_workout_session_use_case,
             update_exercise_use_case,
             update_workout_use_case,
             update_workout_exercise_use_case,
@@ -231,14 +225,8 @@ impl AppContext {
 
     pub fn submit_patient_workout_feedback_use_case(
         &self,
-    ) -> Arc<SubmitPatientWorkoutFeedbackUseCase<Api>> {
+    ) -> Arc<UpdatePatientWorkoutFeedbackUseCase<Api>> {
         self.submit_patient_workout_feedback_use_case.clone()
-    }
-
-    pub fn uncomplete_patient_workout_session_use_case(
-        &self,
-    ) -> Arc<UncompletePatientWorkoutSessionUseCase<Api>> {
-        self.uncomplete_patient_workout_session_use_case.clone()
     }
 
     pub fn update_exercise_use_case(&self) -> Arc<UpdateExerciseUseCase<Api>> {
@@ -303,12 +291,9 @@ pub fn build_app_context() -> Result<AppContext> {
     let restore_exercise_use_case = Arc::new(RestoreExerciseUseCase::<Api>::new(backend.clone()));
     let soft_delete_exercise_use_case =
         Arc::new(SoftDeleteExerciseUseCase::<Api>::new(backend.clone()));
-    let submit_patient_workout_feedback_use_case = Arc::new(SubmitPatientWorkoutFeedbackUseCase::<
+    let submit_patient_workout_feedback_use_case = Arc::new(UpdatePatientWorkoutFeedbackUseCase::<
         Api,
     >::new(backend.clone()));
-    let uncomplete_patient_workout_session_use_case = Arc::new(
-        UncompletePatientWorkoutSessionUseCase::<Api>::new(backend.clone()),
-    );
     let update_workout_use_case = Arc::new(UpdateWorkoutUseCase::<Api>::new(backend.clone()));
     let update_exercise_use_case = Arc::new(UpdateExerciseUseCase::<Api>::new(backend.clone()));
     let update_workout_exercise_use_case =
@@ -340,7 +325,6 @@ pub fn build_app_context() -> Result<AppContext> {
         restore_exercise_use_case,
         soft_delete_exercise_use_case,
         submit_patient_workout_feedback_use_case,
-        uncomplete_patient_workout_session_use_case,
         update_exercise_use_case,
         update_workout_use_case,
         update_workout_exercise_use_case,

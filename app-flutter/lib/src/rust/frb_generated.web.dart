@@ -39,13 +39,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   LoginRequest dco_decode_box_autoadd_login_request(dynamic raw);
 
   @protected
-  SubmitDayFeedbackRequest dco_decode_box_autoadd_submit_day_feedback_request(
-    dynamic raw,
-  );
+  MarkDayAsCompletedRequest
+  dco_decode_box_autoadd_mark_day_as_completed_request(dynamic raw);
 
   @protected
-  UpdateDayCompletionRequest
-  dco_decode_box_autoadd_update_day_completion_request(dynamic raw);
+  MarkDayAsUncompletedRequest
+  dco_decode_box_autoadd_mark_day_as_uncompleted_request(dynamic raw);
 
   @protected
   BridgeConfig dco_decode_bridge_config(dynamic raw);
@@ -92,6 +91,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   LoginResponse dco_decode_login_response(dynamic raw);
 
   @protected
+  MarkDayAsCompletedRequest dco_decode_mark_day_as_completed_request(
+    dynamic raw,
+  );
+
+  @protected
+  MarkDayAsUncompletedRequest dco_decode_mark_day_as_uncompleted_request(
+    dynamic raw,
+  );
+
+  @protected
   String? dco_decode_opt_String(dynamic raw);
 
   @protected
@@ -107,18 +116,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ProgramDaySummary dco_decode_program_day_summary(dynamic raw);
 
   @protected
-  SubmitDayFeedbackRequest dco_decode_submit_day_feedback_request(dynamic raw);
-
-  @protected
   int dco_decode_u_8(dynamic raw);
 
   @protected
   void dco_decode_unit(dynamic raw);
-
-  @protected
-  UpdateDayCompletionRequest dco_decode_update_day_completion_request(
-    dynamic raw,
-  );
 
   @protected
   String sse_decode_String(SseDeserializer deserializer);
@@ -143,13 +144,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  SubmitDayFeedbackRequest sse_decode_box_autoadd_submit_day_feedback_request(
+  MarkDayAsCompletedRequest
+  sse_decode_box_autoadd_mark_day_as_completed_request(
     SseDeserializer deserializer,
   );
 
   @protected
-  UpdateDayCompletionRequest
-  sse_decode_box_autoadd_update_day_completion_request(
+  MarkDayAsUncompletedRequest
+  sse_decode_box_autoadd_mark_day_as_uncompleted_request(
     SseDeserializer deserializer,
   );
 
@@ -202,6 +204,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   LoginResponse sse_decode_login_response(SseDeserializer deserializer);
 
   @protected
+  MarkDayAsCompletedRequest sse_decode_mark_day_as_completed_request(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  MarkDayAsUncompletedRequest sse_decode_mark_day_as_uncompleted_request(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
 
   @protected
@@ -221,20 +233,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  SubmitDayFeedbackRequest sse_decode_submit_day_feedback_request(
-    SseDeserializer deserializer,
-  );
-
-  @protected
   int sse_decode_u_8(SseDeserializer deserializer);
 
   @protected
   void sse_decode_unit(SseDeserializer deserializer);
-
-  @protected
-  UpdateDayCompletionRequest sse_decode_update_day_completion_request(
-    SseDeserializer deserializer,
-  );
 
   @protected
   void sse_encode_String(String self, SseSerializer serializer);
@@ -261,14 +263,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  void sse_encode_box_autoadd_submit_day_feedback_request(
-    SubmitDayFeedbackRequest self,
+  void sse_encode_box_autoadd_mark_day_as_completed_request(
+    MarkDayAsCompletedRequest self,
     SseSerializer serializer,
   );
 
   @protected
-  void sse_encode_box_autoadd_update_day_completion_request(
-    UpdateDayCompletionRequest self,
+  void sse_encode_box_autoadd_mark_day_as_uncompleted_request(
+    MarkDayAsUncompletedRequest self,
     SseSerializer serializer,
   );
 
@@ -330,6 +332,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_login_response(LoginResponse self, SseSerializer serializer);
 
   @protected
+  void sse_encode_mark_day_as_completed_request(
+    MarkDayAsCompletedRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_mark_day_as_uncompleted_request(
+    MarkDayAsUncompletedRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
 
   @protected
@@ -351,22 +365,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  void sse_encode_submit_day_feedback_request(
-    SubmitDayFeedbackRequest self,
-    SseSerializer serializer,
-  );
-
-  @protected
   void sse_encode_u_8(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_unit(void self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_update_day_completion_request(
-    UpdateDayCompletionRequest self,
-    SseSerializer serializer,
-  );
 }
 
 // Section: wire_class

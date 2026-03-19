@@ -64,7 +64,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => 478630217;
+  int get rustContentHash => -960944309;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -85,20 +85,20 @@ abstract class RustLibApi extends BaseApi {
     required BridgeConfig config,
   });
 
+  Future<void> crateApiMarkDayAsCompleted({
+    required String token,
+    required MarkDayAsCompletedRequest request,
+    required BridgeConfig config,
+  });
+
+  Future<void> crateApiMarkDayAsUncompleted({
+    required String token,
+    required MarkDayAsUncompletedRequest request,
+    required BridgeConfig config,
+  });
+
   Future<LoginResponse> crateApiRefreshSession({
     required String refreshToken,
-    required BridgeConfig config,
-  });
-
-  Future<void> crateApiSubmitDayFeedback({
-    required String token,
-    required SubmitDayFeedbackRequest request,
-    required BridgeConfig config,
-  });
-
-  Future<void> crateApiUpdateDayCompletion({
-    required String token,
-    required UpdateDayCompletionRequest request,
     required BridgeConfig config,
   });
 }
@@ -178,6 +178,85 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "login", argNames: ["request", "config"]);
 
   @override
+  Future<void> crateApiMarkDayAsCompleted({
+    required String token,
+    required MarkDayAsCompletedRequest request,
+    required BridgeConfig config,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(token, serializer);
+          sse_encode_box_autoadd_mark_day_as_completed_request(
+            request,
+            serializer,
+          );
+          sse_encode_box_autoadd_bridge_config(config, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 3,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiMarkDayAsCompletedConstMeta,
+        argValues: [token, request, config],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiMarkDayAsCompletedConstMeta => const TaskConstMeta(
+    debugName: "mark_day_as_completed",
+    argNames: ["token", "request", "config"],
+  );
+
+  @override
+  Future<void> crateApiMarkDayAsUncompleted({
+    required String token,
+    required MarkDayAsUncompletedRequest request,
+    required BridgeConfig config,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(token, serializer);
+          sse_encode_box_autoadd_mark_day_as_uncompleted_request(
+            request,
+            serializer,
+          );
+          sse_encode_box_autoadd_bridge_config(config, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 4,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiMarkDayAsUncompletedConstMeta,
+        argValues: [token, request, config],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiMarkDayAsUncompletedConstMeta =>
+      const TaskConstMeta(
+        debugName: "mark_day_as_uncompleted",
+        argNames: ["token", "request", "config"],
+      );
+
+  @override
   Future<LoginResponse> crateApiRefreshSession({
     required String refreshToken,
     required BridgeConfig config,
@@ -191,7 +270,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 3,
+            funcId: 5,
             port: port_,
           );
         },
@@ -210,85 +289,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     debugName: "refresh_session",
     argNames: ["refreshToken", "config"],
   );
-
-  @override
-  Future<void> crateApiSubmitDayFeedback({
-    required String token,
-    required SubmitDayFeedbackRequest request,
-    required BridgeConfig config,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(token, serializer);
-          sse_encode_box_autoadd_submit_day_feedback_request(
-            request,
-            serializer,
-          );
-          sse_encode_box_autoadd_bridge_config(config, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 4,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_String,
-        ),
-        constMeta: kCrateApiSubmitDayFeedbackConstMeta,
-        argValues: [token, request, config],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiSubmitDayFeedbackConstMeta => const TaskConstMeta(
-    debugName: "submit_day_feedback",
-    argNames: ["token", "request", "config"],
-  );
-
-  @override
-  Future<void> crateApiUpdateDayCompletion({
-    required String token,
-    required UpdateDayCompletionRequest request,
-    required BridgeConfig config,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(token, serializer);
-          sse_encode_box_autoadd_update_day_completion_request(
-            request,
-            serializer,
-          );
-          sse_encode_box_autoadd_bridge_config(config, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 5,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_String,
-        ),
-        constMeta: kCrateApiUpdateDayCompletionConstMeta,
-        argValues: [token, request, config],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiUpdateDayCompletionConstMeta =>
-      const TaskConstMeta(
-        debugName: "update_day_completion",
-        argNames: ["token", "request", "config"],
-      );
 
   @protected
   String dco_decode_String(dynamic raw) {
@@ -327,18 +327,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  SubmitDayFeedbackRequest dco_decode_box_autoadd_submit_day_feedback_request(
-    dynamic raw,
-  ) {
+  MarkDayAsCompletedRequest
+  dco_decode_box_autoadd_mark_day_as_completed_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_submit_day_feedback_request(raw);
+    return dco_decode_mark_day_as_completed_request(raw);
   }
 
   @protected
-  UpdateDayCompletionRequest
-  dco_decode_box_autoadd_update_day_completion_request(dynamic raw) {
+  MarkDayAsUncompletedRequest
+  dco_decode_box_autoadd_mark_day_as_uncompleted_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_update_day_completion_request(raw);
+    return dco_decode_mark_day_as_uncompleted_request(raw);
   }
 
   @protected
@@ -469,6 +468,35 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  MarkDayAsCompletedRequest dco_decode_mark_day_as_completed_request(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return MarkDayAsCompletedRequest(
+      patientProgramId: dco_decode_String(arr[0]),
+      dayIndex: dco_decode_i_32(arr[1]),
+      sessionDate: dco_decode_String(arr[2]),
+      feedback: dco_decode_list_exercise_feedback_input(arr[3]),
+    );
+  }
+
+  @protected
+  MarkDayAsUncompletedRequest dco_decode_mark_day_as_uncompleted_request(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1)
+      throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return MarkDayAsUncompletedRequest(
+      workoutSessionId: dco_decode_String(arr[0]),
+    );
+  }
+
+  @protected
   String? dco_decode_opt_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_String(raw);
@@ -508,31 +536,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ProgramDaySummary dco_decode_program_day_summary(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 8)
-      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
     return ProgramDaySummary(
       dayIndex: dco_decode_i_32(arr[0]),
       dayNumber: dco_decode_i_32(arr[1]),
-      workoutName: dco_decode_opt_String(arr[2]),
-      workoutDescription: dco_decode_opt_String(arr[3]),
-      isRestDay: dco_decode_bool(arr[4]),
-      sessionDate: dco_decode_opt_String(arr[5]),
-      completedAt: dco_decode_opt_String(arr[6]),
-      exercises: dco_decode_list_exercise_instruction_summary(arr[7]),
-    );
-  }
-
-  @protected
-  SubmitDayFeedbackRequest dco_decode_submit_day_feedback_request(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
-    return SubmitDayFeedbackRequest(
-      patientProgramId: dco_decode_String(arr[0]),
-      dayIndex: dco_decode_i_32(arr[1]),
-      sessionDate: dco_decode_String(arr[2]),
-      feedback: dco_decode_list_exercise_feedback_input(arr[3]),
+      sessionId: dco_decode_opt_String(arr[2]),
+      workoutName: dco_decode_opt_String(arr[3]),
+      workoutDescription: dco_decode_opt_String(arr[4]),
+      isRestDay: dco_decode_bool(arr[5]),
+      sessionDate: dco_decode_opt_String(arr[6]),
+      completedAt: dco_decode_opt_String(arr[7]),
+      exercises: dco_decode_list_exercise_instruction_summary(arr[8]),
     );
   }
 
@@ -546,22 +561,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void dco_decode_unit(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return;
-  }
-
-  @protected
-  UpdateDayCompletionRequest dco_decode_update_day_completion_request(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
-    return UpdateDayCompletionRequest(
-      patientProgramId: dco_decode_String(arr[0]),
-      dayIndex: dco_decode_i_32(arr[1]),
-      sessionDate: dco_decode_String(arr[2]),
-      completed: dco_decode_bool(arr[3]),
-    );
   }
 
   @protected
@@ -606,20 +605,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  SubmitDayFeedbackRequest sse_decode_box_autoadd_submit_day_feedback_request(
+  MarkDayAsCompletedRequest
+  sse_decode_box_autoadd_mark_day_as_completed_request(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return (sse_decode_submit_day_feedback_request(deserializer));
+    return (sse_decode_mark_day_as_completed_request(deserializer));
   }
 
   @protected
-  UpdateDayCompletionRequest
-  sse_decode_box_autoadd_update_day_completion_request(
+  MarkDayAsUncompletedRequest
+  sse_decode_box_autoadd_mark_day_as_uncompleted_request(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return (sse_decode_update_day_completion_request(deserializer));
+    return (sse_decode_mark_day_as_uncompleted_request(deserializer));
   }
 
   @protected
@@ -773,6 +773,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  MarkDayAsCompletedRequest sse_decode_mark_day_as_completed_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_patientProgramId = sse_decode_String(deserializer);
+    var var_dayIndex = sse_decode_i_32(deserializer);
+    var var_sessionDate = sse_decode_String(deserializer);
+    var var_feedback = sse_decode_list_exercise_feedback_input(deserializer);
+    return MarkDayAsCompletedRequest(
+      patientProgramId: var_patientProgramId,
+      dayIndex: var_dayIndex,
+      sessionDate: var_sessionDate,
+      feedback: var_feedback,
+    );
+  }
+
+  @protected
+  MarkDayAsUncompletedRequest sse_decode_mark_day_as_uncompleted_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_workoutSessionId = sse_decode_String(deserializer);
+    return MarkDayAsUncompletedRequest(workoutSessionId: var_workoutSessionId);
+  }
+
+  @protected
   String? sse_decode_opt_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -837,6 +863,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_dayIndex = sse_decode_i_32(deserializer);
     var var_dayNumber = sse_decode_i_32(deserializer);
+    var var_sessionId = sse_decode_opt_String(deserializer);
     var var_workoutName = sse_decode_opt_String(deserializer);
     var var_workoutDescription = sse_decode_opt_String(deserializer);
     var var_isRestDay = sse_decode_bool(deserializer);
@@ -848,29 +875,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return ProgramDaySummary(
       dayIndex: var_dayIndex,
       dayNumber: var_dayNumber,
+      sessionId: var_sessionId,
       workoutName: var_workoutName,
       workoutDescription: var_workoutDescription,
       isRestDay: var_isRestDay,
       sessionDate: var_sessionDate,
       completedAt: var_completedAt,
       exercises: var_exercises,
-    );
-  }
-
-  @protected
-  SubmitDayFeedbackRequest sse_decode_submit_day_feedback_request(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_patientProgramId = sse_decode_String(deserializer);
-    var var_dayIndex = sse_decode_i_32(deserializer);
-    var var_sessionDate = sse_decode_String(deserializer);
-    var var_feedback = sse_decode_list_exercise_feedback_input(deserializer);
-    return SubmitDayFeedbackRequest(
-      patientProgramId: var_patientProgramId,
-      dayIndex: var_dayIndex,
-      sessionDate: var_sessionDate,
-      feedback: var_feedback,
     );
   }
 
@@ -883,23 +894,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   void sse_decode_unit(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-  }
-
-  @protected
-  UpdateDayCompletionRequest sse_decode_update_day_completion_request(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_patientProgramId = sse_decode_String(deserializer);
-    var var_dayIndex = sse_decode_i_32(deserializer);
-    var var_sessionDate = sse_decode_String(deserializer);
-    var var_completed = sse_decode_bool(deserializer);
-    return UpdateDayCompletionRequest(
-      patientProgramId: var_patientProgramId,
-      dayIndex: var_dayIndex,
-      sessionDate: var_sessionDate,
-      completed: var_completed,
-    );
   }
 
   @protected
@@ -945,21 +939,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_box_autoadd_submit_day_feedback_request(
-    SubmitDayFeedbackRequest self,
+  void sse_encode_box_autoadd_mark_day_as_completed_request(
+    MarkDayAsCompletedRequest self,
     SseSerializer serializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_submit_day_feedback_request(self, serializer);
+    sse_encode_mark_day_as_completed_request(self, serializer);
   }
 
   @protected
-  void sse_encode_box_autoadd_update_day_completion_request(
-    UpdateDayCompletionRequest self,
+  void sse_encode_box_autoadd_mark_day_as_uncompleted_request(
+    MarkDayAsUncompletedRequest self,
     SseSerializer serializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_update_day_completion_request(self, serializer);
+    sse_encode_mark_day_as_uncompleted_request(self, serializer);
   }
 
   @protected
@@ -1085,6 +1079,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_mark_day_as_completed_request(
+    MarkDayAsCompletedRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.patientProgramId, serializer);
+    sse_encode_i_32(self.dayIndex, serializer);
+    sse_encode_String(self.sessionDate, serializer);
+    sse_encode_list_exercise_feedback_input(self.feedback, serializer);
+  }
+
+  @protected
+  void sse_encode_mark_day_as_uncompleted_request(
+    MarkDayAsUncompletedRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.workoutSessionId, serializer);
+  }
+
+  @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -1138,24 +1153,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.dayIndex, serializer);
     sse_encode_i_32(self.dayNumber, serializer);
+    sse_encode_opt_String(self.sessionId, serializer);
     sse_encode_opt_String(self.workoutName, serializer);
     sse_encode_opt_String(self.workoutDescription, serializer);
     sse_encode_bool(self.isRestDay, serializer);
     sse_encode_opt_String(self.sessionDate, serializer);
     sse_encode_opt_String(self.completedAt, serializer);
     sse_encode_list_exercise_instruction_summary(self.exercises, serializer);
-  }
-
-  @protected
-  void sse_encode_submit_day_feedback_request(
-    SubmitDayFeedbackRequest self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_String(self.patientProgramId, serializer);
-    sse_encode_i_32(self.dayIndex, serializer);
-    sse_encode_String(self.sessionDate, serializer);
-    sse_encode_list_exercise_feedback_input(self.feedback, serializer);
   }
 
   @protected
@@ -1167,17 +1171,5 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   void sse_encode_unit(void self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-  }
-
-  @protected
-  void sse_encode_update_day_completion_request(
-    UpdateDayCompletionRequest self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_String(self.patientProgramId, serializer);
-    sse_encode_i_32(self.dayIndex, serializer);
-    sse_encode_String(self.sessionDate, serializer);
-    sse_encode_bool(self.completed, serializer);
   }
 }

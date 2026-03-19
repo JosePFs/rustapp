@@ -14,4 +14,3 @@ int? choosePreferredTrainingDayIndex(List<rust_api.ProgramDaySummary> days) {
 
   return trainingDays.last.dayIndex;
 }
-

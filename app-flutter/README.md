@@ -141,6 +141,9 @@ flutter test
 # Install local proxy with web gui
 pipx install mitmproxy
 
+# Launch proxy web gui
+mitmweb
+
 # Set variables and launch app in linux and see requests in gui http://127.0.0.1:8081/
 export HTTP_PROXY=http://127.0.0.1:8080
 export HTTPS_PROXY=http://127.0.0.1:8080

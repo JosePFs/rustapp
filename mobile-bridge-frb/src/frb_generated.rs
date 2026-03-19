@@ -37,7 +37,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.11.1";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 478630217;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -960944309;
 
 // Section: executor
 
@@ -120,6 +120,88 @@ fn wire__crate__api__login_impl(
         },
     )
 }
+fn wire__crate__api__mark_day_as_completed_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "mark_day_as_completed",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_token = <String>::sse_decode(&mut deserializer);
+            let api_request =
+                <crate::api::MarkDayAsCompletedRequest>::sse_decode(&mut deserializer);
+            let api_config = <crate::api::BridgeConfig>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, String>(
+                    (move || async move {
+                        let output_ok =
+                            crate::api::mark_day_as_completed(api_token, api_request, api_config)
+                                .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__mark_day_as_uncompleted_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "mark_day_as_uncompleted",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_token = <String>::sse_decode(&mut deserializer);
+            let api_request =
+                <crate::api::MarkDayAsUncompletedRequest>::sse_decode(&mut deserializer);
+            let api_config = <crate::api::BridgeConfig>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, String>(
+                    (move || async move {
+                        let output_ok =
+                            crate::api::mark_day_as_uncompleted(api_token, api_request, api_config)
+                                .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__refresh_session_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -150,87 +232,6 @@ fn wire__crate__api__refresh_session_impl(
                     (move || async move {
                         let output_ok =
                             crate::api::refresh_session(api_refresh_token, api_config).await?;
-                        Ok(output_ok)
-                    })()
-                    .await,
-                )
-            }
-        },
-    )
-}
-fn wire__crate__api__submit_day_feedback_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
-    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
-    rust_vec_len_: i32,
-    data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "submit_day_feedback",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
-        },
-        move || {
-            let message = unsafe {
-                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
-                    ptr_,
-                    rust_vec_len_,
-                    data_len_,
-                )
-            };
-            let mut deserializer =
-                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_token = <String>::sse_decode(&mut deserializer);
-            let api_request = <crate::api::SubmitDayFeedbackRequest>::sse_decode(&mut deserializer);
-            let api_config = <crate::api::BridgeConfig>::sse_decode(&mut deserializer);
-            deserializer.end();
-            move |context| async move {
-                transform_result_sse::<_, String>(
-                    (move || async move {
-                        let output_ok =
-                            crate::api::submit_day_feedback(api_token, api_request, api_config)
-                                .await?;
-                        Ok(output_ok)
-                    })()
-                    .await,
-                )
-            }
-        },
-    )
-}
-fn wire__crate__api__update_day_completion_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
-    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
-    rust_vec_len_: i32,
-    data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "update_day_completion",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
-        },
-        move || {
-            let message = unsafe {
-                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
-                    ptr_,
-                    rust_vec_len_,
-                    data_len_,
-                )
-            };
-            let mut deserializer =
-                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_token = <String>::sse_decode(&mut deserializer);
-            let api_request =
-                <crate::api::UpdateDayCompletionRequest>::sse_decode(&mut deserializer);
-            let api_config = <crate::api::BridgeConfig>::sse_decode(&mut deserializer);
-            deserializer.end();
-            move |context| async move {
-                transform_result_sse::<_, String>(
-                    (move || async move {
-                        let output_ok =
-                            crate::api::update_day_completion(api_token, api_request, api_config)
-                                .await?;
                         Ok(output_ok)
                     })()
                     .await,
@@ -419,6 +420,32 @@ impl SseDecode for crate::api::LoginResponse {
     }
 }
 
+impl SseDecode for crate::api::MarkDayAsCompletedRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_patientProgramId = <String>::sse_decode(deserializer);
+        let mut var_dayIndex = <i32>::sse_decode(deserializer);
+        let mut var_sessionDate = <String>::sse_decode(deserializer);
+        let mut var_feedback = <Vec<crate::api::ExerciseFeedbackInput>>::sse_decode(deserializer);
+        return crate::api::MarkDayAsCompletedRequest {
+            patient_program_id: var_patientProgramId,
+            day_index: var_dayIndex,
+            session_date: var_sessionDate,
+            feedback: var_feedback,
+        };
+    }
+}
+
+impl SseDecode for crate::api::MarkDayAsUncompletedRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_workoutSessionId = <String>::sse_decode(deserializer);
+        return crate::api::MarkDayAsUncompletedRequest {
+            workout_session_id: var_workoutSessionId,
+        };
+    }
+}
+
 impl SseDecode for Option<String> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -481,6 +508,7 @@ impl SseDecode for crate::api::ProgramDaySummary {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_dayIndex = <i32>::sse_decode(deserializer);
         let mut var_dayNumber = <i32>::sse_decode(deserializer);
+        let mut var_sessionId = <Option<String>>::sse_decode(deserializer);
         let mut var_workoutName = <Option<String>>::sse_decode(deserializer);
         let mut var_workoutDescription = <Option<String>>::sse_decode(deserializer);
         let mut var_isRestDay = <bool>::sse_decode(deserializer);
@@ -491,28 +519,13 @@ impl SseDecode for crate::api::ProgramDaySummary {
         return crate::api::ProgramDaySummary {
             day_index: var_dayIndex,
             day_number: var_dayNumber,
+            session_id: var_sessionId,
             workout_name: var_workoutName,
             workout_description: var_workoutDescription,
             is_rest_day: var_isRestDay,
             session_date: var_sessionDate,
             completed_at: var_completedAt,
             exercises: var_exercises,
-        };
-    }
-}
-
-impl SseDecode for crate::api::SubmitDayFeedbackRequest {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut var_patientProgramId = <String>::sse_decode(deserializer);
-        let mut var_dayIndex = <i32>::sse_decode(deserializer);
-        let mut var_sessionDate = <String>::sse_decode(deserializer);
-        let mut var_feedback = <Vec<crate::api::ExerciseFeedbackInput>>::sse_decode(deserializer);
-        return crate::api::SubmitDayFeedbackRequest {
-            patient_program_id: var_patientProgramId,
-            day_index: var_dayIndex,
-            session_date: var_sessionDate,
-            feedback: var_feedback,
         };
     }
 }
@@ -529,22 +542,6 @@ impl SseDecode for () {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {}
 }
 
-impl SseDecode for crate::api::UpdateDayCompletionRequest {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut var_patientProgramId = <String>::sse_decode(deserializer);
-        let mut var_dayIndex = <i32>::sse_decode(deserializer);
-        let mut var_sessionDate = <String>::sse_decode(deserializer);
-        let mut var_completed = <bool>::sse_decode(deserializer);
-        return crate::api::UpdateDayCompletionRequest {
-            patient_program_id: var_patientProgramId,
-            day_index: var_dayIndex,
-            session_date: var_sessionDate,
-            completed: var_completed,
-        };
-    }
-}
-
 fn pde_ffi_dispatcher_primary_impl(
     func_id: i32,
     port: flutter_rust_bridge::for_generated::MessagePort,
@@ -556,9 +553,9 @@ fn pde_ffi_dispatcher_primary_impl(
     match func_id {
         1 => wire__crate__api__get_patient_programs_impl(port, ptr, rust_vec_len, data_len),
         2 => wire__crate__api__login_impl(port, ptr, rust_vec_len, data_len),
-        3 => wire__crate__api__refresh_session_impl(port, ptr, rust_vec_len, data_len),
-        4 => wire__crate__api__submit_day_feedback_impl(port, ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__update_day_completion_impl(port, ptr, rust_vec_len, data_len),
+        3 => wire__crate__api__mark_day_as_completed_impl(port, ptr, rust_vec_len, data_len),
+        4 => wire__crate__api__mark_day_as_uncompleted_impl(port, ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__refresh_session_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -679,6 +676,46 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::LoginResponse> for crate::api
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::MarkDayAsCompletedRequest {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.patient_program_id.into_into_dart().into_dart(),
+            self.day_index.into_into_dart().into_dart(),
+            self.session_date.into_into_dart().into_dart(),
+            self.feedback.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::MarkDayAsCompletedRequest
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::MarkDayAsCompletedRequest>
+    for crate::api::MarkDayAsCompletedRequest
+{
+    fn into_into_dart(self) -> crate::api::MarkDayAsCompletedRequest {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::MarkDayAsUncompletedRequest {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.workout_session_id.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::MarkDayAsUncompletedRequest
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::MarkDayAsUncompletedRequest>
+    for crate::api::MarkDayAsUncompletedRequest
+{
+    fn into_into_dart(self) -> crate::api::MarkDayAsUncompletedRequest {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::PatientProgramSummary {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -711,6 +748,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::ProgramDaySummary {
         [
             self.day_index.into_into_dart().into_dart(),
             self.day_number.into_into_dart().into_dart(),
+            self.session_id.into_into_dart().into_dart(),
             self.workout_name.into_into_dart().into_dart(),
             self.workout_description.into_into_dart().into_dart(),
             self.is_rest_day.into_into_dart().into_dart(),
@@ -726,52 +764,6 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ProgramDaySummary>
     for crate::api::ProgramDaySummary
 {
     fn into_into_dart(self) -> crate::api::ProgramDaySummary {
-        self
-    }
-}
-// Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for crate::api::SubmitDayFeedbackRequest {
-    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
-        [
-            self.patient_program_id.into_into_dart().into_dart(),
-            self.day_index.into_into_dart().into_dart(),
-            self.session_date.into_into_dart().into_dart(),
-            self.feedback.into_into_dart().into_dart(),
-        ]
-        .into_dart()
-    }
-}
-impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for crate::api::SubmitDayFeedbackRequest
-{
-}
-impl flutter_rust_bridge::IntoIntoDart<crate::api::SubmitDayFeedbackRequest>
-    for crate::api::SubmitDayFeedbackRequest
-{
-    fn into_into_dart(self) -> crate::api::SubmitDayFeedbackRequest {
-        self
-    }
-}
-// Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for crate::api::UpdateDayCompletionRequest {
-    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
-        [
-            self.patient_program_id.into_into_dart().into_dart(),
-            self.day_index.into_into_dart().into_dart(),
-            self.session_date.into_into_dart().into_dart(),
-            self.completed.into_into_dart().into_dart(),
-        ]
-        .into_dart()
-    }
-}
-impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for crate::api::UpdateDayCompletionRequest
-{
-}
-impl flutter_rust_bridge::IntoIntoDart<crate::api::UpdateDayCompletionRequest>
-    for crate::api::UpdateDayCompletionRequest
-{
-    fn into_into_dart(self) -> crate::api::UpdateDayCompletionRequest {
         self
     }
 }
@@ -905,6 +897,23 @@ impl SseEncode for crate::api::LoginResponse {
     }
 }
 
+impl SseEncode for crate::api::MarkDayAsCompletedRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.patient_program_id, serializer);
+        <i32>::sse_encode(self.day_index, serializer);
+        <String>::sse_encode(self.session_date, serializer);
+        <Vec<crate::api::ExerciseFeedbackInput>>::sse_encode(self.feedback, serializer);
+    }
+}
+
+impl SseEncode for crate::api::MarkDayAsUncompletedRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.workout_session_id, serializer);
+    }
+}
+
 impl SseEncode for Option<String> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -954,22 +963,13 @@ impl SseEncode for crate::api::ProgramDaySummary {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.day_index, serializer);
         <i32>::sse_encode(self.day_number, serializer);
+        <Option<String>>::sse_encode(self.session_id, serializer);
         <Option<String>>::sse_encode(self.workout_name, serializer);
         <Option<String>>::sse_encode(self.workout_description, serializer);
         <bool>::sse_encode(self.is_rest_day, serializer);
         <Option<String>>::sse_encode(self.session_date, serializer);
         <Option<String>>::sse_encode(self.completed_at, serializer);
         <Vec<crate::api::ExerciseInstructionSummary>>::sse_encode(self.exercises, serializer);
-    }
-}
-
-impl SseEncode for crate::api::SubmitDayFeedbackRequest {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <String>::sse_encode(self.patient_program_id, serializer);
-        <i32>::sse_encode(self.day_index, serializer);
-        <String>::sse_encode(self.session_date, serializer);
-        <Vec<crate::api::ExerciseFeedbackInput>>::sse_encode(self.feedback, serializer);
     }
 }
 
@@ -983,16 +983,6 @@ impl SseEncode for u8 {
 impl SseEncode for () {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {}
-}
-
-impl SseEncode for crate::api::UpdateDayCompletionRequest {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <String>::sse_encode(self.patient_program_id, serializer);
-        <i32>::sse_encode(self.day_index, serializer);
-        <String>::sse_encode(self.session_date, serializer);
-        <bool>::sse_encode(self.completed, serializer);
-    }
 }
 
 #[cfg(not(target_family = "wasm"))]

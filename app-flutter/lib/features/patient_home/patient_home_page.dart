@@ -18,9 +18,9 @@ class PatientHomePage extends StatefulWidget {
     required this.patientPrograms,
     required this.localeController,
     required this.localeLoaded,
-    this.onSignOut,
-    this.onSubmitDayFeedback,
-    this.onUpdateDayCompletion,
+    required this.onSignOut,
+    required this.onSubmitDayFeedback,
+    required this.onMarkDayAsUnCompleted,
     super.key,
   });
 
@@ -28,22 +28,24 @@ class PatientHomePage extends StatefulWidget {
   final List<rust_api.PatientProgramSummary> patientPrograms;
   final LocaleController localeController;
   final bool localeLoaded;
-  final VoidCallback? onSignOut;
-  final SubmitDayFeedbackCallback? onSubmitDayFeedback;
-  final UpdateDayCompletionCallback? onUpdateDayCompletion;
+  final VoidCallback onSignOut;
+  final MarkDayAsCompletedCallback onSubmitDayFeedback;
+  final MarkDayAsUncompletedCallback onMarkDayAsUnCompleted;
 
   @override
   State<PatientHomePage> createState() => _PatientHomePageState();
 }
 
 class _PatientHomePageState extends State<PatientHomePage> {
-  String? _selectedProgramId;
-  int? _selectedDayIndex;
-  SubmittingDayAction _submittingAction = SubmittingDayAction.none;
   final Map<String, ExerciseFeedbackDraft> _feedbackDrafts = {};
   final Map<String, String> _completionDateDrafts = {};
   final Map<String, TextEditingController> _commentControllers = {};
   final _completionDateController = TextEditingController();
+
+  String? _selectedProgramId;
+  int? _selectedDayIndex;
+  SubmittingDayAction _submittingAction = SubmittingDayAction.none;
+  LastUserAction _lastUserAction = LastUserAction.none;
 
   bool get _submittingFeedback => _submittingAction != SubmittingDayAction.none;
   bool get _submittingSave => _submittingAction == SubmittingDayAction.save;
@@ -129,11 +131,10 @@ class _PatientHomePageState extends State<PatientHomePage> {
               ];
             },
           ),
-          if (widget.onSignOut != null)
-            TextButton(
-              onPressed: widget.onSignOut,
-              child: Text(context.l10n.patientHomeSignOut),
-            ),
+          TextButton(
+            onPressed: widget.onSignOut,
+            child: Text(context.l10n.patientHomeSignOut),
+          ),
         ],
       ),
       body: LayoutBuilder(
@@ -169,7 +170,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
               _feedbackDrafts[exerciseKey]?.comment = value;
             },
             onSaveDay: _saveSelectedDay,
-            onMarkNotCompleted: () => _updateSelectedDayCompletion(false),
+            onMarkNotCompleted: _updateSelectedDayAsUncompleted,
           );
 
           return ListView(
@@ -224,6 +225,10 @@ class _PatientHomePageState extends State<PatientHomePage> {
       return;
     }
 
+    if (_lastUserAction == LastUserAction.markedUncompleted) {
+      return;
+    }
+
     final selectedProgramExists = widget.patientPrograms.any(
       (program) => program.patientProgramId == _selectedProgramId,
     );
@@ -244,6 +249,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
     final preferredDayIndex = choosePreferredTrainingDayIndex(
       selectedProgram.days,
     );
+
     final selectedDayExists = selectedDay != null && !selectedDay.isRestDay;
     if (!selectedDayExists ||
         (selectedDay.completedAt != null &&
@@ -292,6 +298,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
   void _selectProgram(String programId) {
     setState(() {
       _selectedProgramId = programId;
+      _lastUserAction = LastUserAction.none;
     });
     _syncSelection();
   }
@@ -299,6 +306,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
   void _selectDay(int dayIndex) {
     setState(() {
       _selectedDayIndex = dayIndex;
+      _lastUserAction = LastUserAction.none;
     });
     _syncCompletionDateControllerForCurrentSelection();
   }
@@ -353,7 +361,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
       context: context,
       initialDate: initialDate,
       firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
+      lastDate: DateTime(2050),
     );
     if (pickedDate == null || !mounted) {
       return;
@@ -381,13 +389,9 @@ class _PatientHomePageState extends State<PatientHomePage> {
       return;
     }
 
-    if (widget.onSubmitDayFeedback == null ||
-        widget.onUpdateDayCompletion == null) {
-      return;
-    }
-
     setState(() {
       _submittingAction = SubmittingDayAction.save;
+      _lastUserAction = LastUserAction.saved;
     });
 
     try {
@@ -412,8 +416,8 @@ class _PatientHomePageState extends State<PatientHomePage> {
         );
       }).toList();
 
-      await widget.onSubmitDayFeedback!(
-        rust_api.SubmitDayFeedbackRequest(
+      await widget.onSubmitDayFeedback(
+        rust_api.MarkDayAsCompletedRequest(
           patientProgramId: selectedProgram.patientProgramId,
           dayIndex: selectedDay.dayIndex,
           sessionDate: _completionDateController.text.trim(),
@@ -421,23 +425,9 @@ class _PatientHomePageState extends State<PatientHomePage> {
         ),
       );
 
-      final sessionDate = _completionDateController.text.trim();
-      // Inside the save flow we keep the same "save" action spinner state until
-      // the whole operation completes.
-      await widget.onUpdateDayCompletion!(
-        rust_api.UpdateDayCompletionRequest(
-          patientProgramId: selectedProgram.patientProgramId,
-          dayIndex: selectedDay.dayIndex,
-          sessionDate: sessionDate,
-          completed: true,
-        ),
-      );
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.statusSessionSavedAsCompleted),
-          ),
+          SnackBar(content: Text(context.l10n.statusSessionSavedAsCompleted)),
         );
       }
     } finally {
@@ -449,45 +439,35 @@ class _PatientHomePageState extends State<PatientHomePage> {
     }
   }
 
-  Future<void> _updateSelectedDayCompletion(bool completed) async {
+  Future<void> _updateSelectedDayAsUncompleted() async {
     final selectedProgram = widget.patientPrograms
         .where((program) => program.patientProgramId == _selectedProgramId)
         .firstOrNull;
     final selectedDay = selectedProgram?.days
         .where((day) => day.dayIndex == _selectedDayIndex)
         .firstOrNull;
-    if (selectedProgram == null || selectedDay == null) {
-      return;
-    }
-    if (widget.onUpdateDayCompletion == null) {
+    if (selectedProgram == null ||
+        selectedDay == null ||
+        selectedDay.sessionId == null) {
       return;
     }
 
     setState(() {
-      _submittingAction = completed
-          ? SubmittingDayAction.save
-          : SubmittingDayAction.markNotCompleted;
+      _submittingAction = SubmittingDayAction.markNotCompleted;
+      _lastUserAction = LastUserAction.markedUncompleted;
     });
     try {
-      final sessionDate = _completionDateController.text.trim();
-      await widget.onUpdateDayCompletion!(
-        rust_api.UpdateDayCompletionRequest(
-          patientProgramId: selectedProgram.patientProgramId,
-          dayIndex: selectedDay.dayIndex,
-          sessionDate: sessionDate,
-          completed: completed,
+      await widget.onMarkDayAsUnCompleted(
+        rust_api.MarkDayAsUncompletedRequest(
+          workoutSessionId: selectedDay.sessionId!,
         ),
       );
 
       if (mounted) {
-        final message = completed
-            ? context.l10n.statusSessionMarkedCompleted
-            : context.l10n.statusSessionMarkedNotCompleted;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-          ),
-        );
+        final message = context.l10n.statusSessionMarkedNotCompleted;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     } finally {
       if (mounted) {
@@ -500,3 +480,5 @@ class _PatientHomePageState extends State<PatientHomePage> {
 }
 
 enum SubmittingDayAction { none, save, markNotCompleted }
+
+enum LastUserAction { none, saved, markedUncompleted }

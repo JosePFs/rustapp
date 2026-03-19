@@ -1,20 +1,26 @@
 use std::sync::Arc;
 
-use ::infrastructure::supabase::{
-    client::SupabaseClient, config::SupabaseConfig, native_api::NativeApi,
-};
 use serde::{Deserialize, Serialize};
 
-use crate::application::ports::DataProviderSend;
-use crate::application::use_cases::get_patient_programs::GetPatientProgramsUseCaseArgs;
-use crate::application::use_cases::login::{LoginUseCaseArgs, UserProfileType};
-use crate::application::use_cases::mobile_get_patient_programs::MobileGetPatientProgramsUseCase;
-use crate::application::use_cases::mobile_login::MobileLoginUseCase;
-use crate::application::use_cases::mobile_submit_patient_workout_feedback::{
-    MobileSubmitPatientWorkoutFeedbackArgs, MobileSubmitPatientWorkoutFeedbackUseCase,
+use application::{
+    ports::DataProviderSend,
+    use_cases::{
+        get_patient_programs::GetPatientProgramsUseCaseArgs,
+        login::LoginUseCaseArgs,
+        login::UserProfileType,
+        mobile_get_patient_programs::MobileGetPatientProgramsUseCase,
+        mobile_login::MobileLoginUseCase,
+        mobile_submit_patient_workout_feedback::{
+            MobileSubmitPatientWorkoutFeedbackArgs, MobileSubmitPatientWorkoutFeedbackUseCase,
+        },
+        uncomplete_patient_workout_session::UncompletePatientWorkoutSessionArgs,
+        uncomplete_patient_workout_session::UncompletePatientWorkoutSessionUseCase,
+    },
 };
-use domain::credentials::Credentials;
-use domain::role::Role;
+use domain::{credentials::Credentials, role::Role};
+use infrastructure::supabase::{
+    client::SupabaseClient, config::SupabaseConfig, native_api::NativeApi,
+};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BridgeConfig {
@@ -53,6 +59,7 @@ pub struct ExerciseInstructionSummary {
 pub struct ProgramDaySummary {
     pub day_index: i32,
     pub day_number: i32,
+    pub session_id: Option<String>,
     pub workout_name: Option<String>,
     pub workout_description: Option<String>,
     pub is_rest_day: bool,
@@ -70,7 +77,7 @@ pub struct ExerciseFeedbackInput {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SubmitDayFeedbackRequest {
+pub struct MarkDayAsCompletedRequest {
     pub patient_program_id: String,
     pub day_index: i32,
     pub session_date: String,
@@ -78,11 +85,8 @@ pub struct SubmitDayFeedbackRequest {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct UpdateDayCompletionRequest {
-    pub patient_program_id: String,
-    pub day_index: i32,
-    pub session_date: String,
-    pub completed: bool,
+pub struct MarkDayAsUncompletedRequest {
+    pub workout_session_id: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -187,6 +191,7 @@ pub async fn get_patient_programs(
                 .days
                 .into_iter()
                 .map(|day| ProgramDaySummary {
+                    session_id: day.session_id,
                     day_index: day.day_index,
                     day_number: day.day_number,
                     workout_name: day.workout_name,
@@ -215,9 +220,9 @@ pub async fn get_patient_programs(
         .collect())
 }
 
-pub async fn submit_day_feedback(
+pub async fn mark_day_as_completed(
     token: String,
-    request: SubmitDayFeedbackRequest,
+    request: MarkDayAsCompletedRequest,
     config: BridgeConfig,
 ) -> Result<(), String> {
     let use_case = MobileSubmitPatientWorkoutFeedbackUseCase::<NativeApi>::new(backend(config));
@@ -232,12 +237,19 @@ pub async fn submit_day_feedback(
         })
         .collect();
 
+    let MarkDayAsCompletedRequest {
+        patient_program_id,
+        day_index,
+        session_date,
+        ..
+    } = request;
+
     use_case
         .execute(MobileSubmitPatientWorkoutFeedbackArgs {
             token,
-            patient_program_id: request.patient_program_id,
-            day_index: request.day_index,
-            session_date: request.session_date,
+            patient_program_id,
+            day_index,
+            session_date,
             feedback_map,
             completion_status: None,
         })
@@ -245,20 +257,16 @@ pub async fn submit_day_feedback(
         .map_err(|error| error.to_string())
 }
 
-pub async fn update_day_completion(
+pub async fn mark_day_as_uncompleted(
     token: String,
-    request: UpdateDayCompletionRequest,
+    request: MarkDayAsUncompletedRequest,
     config: BridgeConfig,
 ) -> Result<(), String> {
-    let use_case = MobileSubmitPatientWorkoutFeedbackUseCase::<NativeApi>::new(backend(config));
+    let use_case = UncompletePatientWorkoutSessionUseCase::<NativeApi>::new(backend(config));
     use_case
-        .execute(MobileSubmitPatientWorkoutFeedbackArgs {
+        .execute(UncompletePatientWorkoutSessionArgs {
             token,
-            patient_program_id: request.patient_program_id,
-            day_index: request.day_index,
-            session_date: request.session_date,
-            feedback_map: std::collections::HashMap::new(),
-            completion_status: Some(request.completed),
+            workout_session_id: request.workout_session_id,
         })
         .await
         .map_err(|error| error.to_string())

@@ -9,7 +9,7 @@ use crate::ports::Backend;
 use domain::error::Result;
 
 #[derive(Clone)]
-pub struct SubmitPatientWorkoutFeedbackArgs {
+pub struct UpdatePatientWorkoutFeedbackArgs {
     pub token: String,
     pub patient_program_id: String,
     pub day_index: i32,
@@ -18,18 +18,18 @@ pub struct SubmitPatientWorkoutFeedbackArgs {
     pub feedback_map: std::collections::HashMap<String, (i32, i32, String)>,
 }
 
-pub struct SubmitPatientWorkoutFeedbackUseCase<B: Backend> {
+pub struct UpdatePatientWorkoutFeedbackUseCase<B: Backend> {
     backend: Arc<B>,
 }
 
-impl<B: Backend> SubmitPatientWorkoutFeedbackUseCase<B> {
+impl<B: Backend> UpdatePatientWorkoutFeedbackUseCase<B> {
     const MAX_CONCURRENT_REQUESTS: usize = 6;
 
     pub fn new(backend: Arc<B>) -> Self {
         Self { backend }
     }
 
-    pub async fn execute(&self, args: SubmitPatientWorkoutFeedbackArgs) -> Result<()> {
+    pub async fn execute(&self, args: UpdatePatientWorkoutFeedbackArgs) -> Result<()> {
         let token = &args.token;
         let pid = &args.patient_program_id;
         let di = args.day_index;

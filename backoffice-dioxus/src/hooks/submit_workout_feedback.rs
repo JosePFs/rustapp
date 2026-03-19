@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use dioxus::prelude::*;
 
 use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::use_cases::submit_patient_workout_feedback::{
-    SubmitPatientWorkoutFeedbackArgs, SubmitPatientWorkoutFeedbackUseCase,
+use application::use_cases::update_patient_workout_feedback::{
+    UpdatePatientWorkoutFeedbackArgs, UpdatePatientWorkoutFeedbackUseCase,
 };
 use domain::error::DomainError;
 
@@ -22,7 +22,7 @@ pub fn use_submit_workout_feedback(
     feedback_completed: bool,
 ) -> UseSubmitWorkoutFeedback {
     let app_context = use_app_context();
-    let submit_use_case: std::sync::Arc<SubmitPatientWorkoutFeedbackUseCase<_>> =
+    let submit_use_case: std::sync::Arc<UpdatePatientWorkoutFeedbackUseCase<_>> =
         app_context.submit_patient_workout_feedback_use_case();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
@@ -51,7 +51,7 @@ pub fn use_submit_workout_feedback(
             let date_str = session_date();
             let fb_map = exercise_feedback();
 
-            let args = SubmitPatientWorkoutFeedbackArgs {
+            let args = UpdatePatientWorkoutFeedbackArgs {
                 token,
                 patient_program_id,
                 day_index,

@@ -342,7 +342,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
   }
 
   Future<void> _submitDayFeedback(
-    rust_api.SubmitDayFeedbackRequest request,
+    rust_api.MarkDayAsCompletedRequest request,
   ) async {
     final loginResponse = _loginResponse;
     if (loginResponse == null) {
@@ -357,7 +357,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
     try {
       final submitResult = await _withAuthRetry(
         loginResponse,
-        (token) => rust_api.submitDayFeedback(
+        (token) => rust_api.markDayAsCompleted(
           token: token,
           request: request,
           config: widget.bridgeConfig.toBridgeConfig(),
@@ -395,8 +395,8 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
     }
   }
 
-  Future<void> _updateDayCompletion(
-    rust_api.UpdateDayCompletionRequest request,
+  Future<void> _updateDayAsUnCompleted(
+    rust_api.MarkDayAsUncompletedRequest request,
   ) async {
     final loginResponse = _loginResponse;
     if (loginResponse == null) {
@@ -411,7 +411,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
     try {
       final updateResult = await _withAuthRetry(
         loginResponse,
-        (token) => rust_api.updateDayCompletion(
+        (token) => rust_api.markDayAsUncompleted(
           token: token,
           request: request,
           config: widget.bridgeConfig.toBridgeConfig(),
@@ -437,7 +437,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
       if (mounted) {
         setState(() {
           _patientPrograms = programsResult.value;
-          _status = request.completed
+          _status = request.workoutSessionId.isNotEmpty
               ? context.l10n.statusSessionMarkedCompleted
               : context.l10n.statusSessionMarkedNotCompleted;
         });
@@ -475,7 +475,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
         patientPrograms: _patientPrograms,
         onSignOut: _signOut,
         onSubmitDayFeedback: _submitDayFeedback,
-        onUpdateDayCompletion: _updateDayCompletion,
+        onMarkDayAsUnCompleted: _updateDayAsUnCompleted,
         localeController: widget.localeController,
         localeLoaded: widget.localeLoaded,
       );

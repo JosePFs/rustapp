@@ -20,7 +20,6 @@ pub mod soft_delete_exercise;
 pub mod specialist_patients;
 pub mod specialist_programs;
 pub mod submit_workout_feedback;
-pub mod uncomplete_workout_session;
 pub mod update_exercise;
 pub mod update_workout;
 pub mod update_workout_exercise;

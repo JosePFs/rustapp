@@ -1,7 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
 use futures::stream::{self, StreamExt};
-use futures::try_join;
 
 use crate::ports::MobileBackend;
 use domain::error::Result;
@@ -38,19 +37,9 @@ impl<B: MobileBackend> MobileSubmitPatientWorkoutFeedbackUseCase<B> {
             .await?;
         let session_id = session.id;
 
-        let update_fut = self
-            .backend
-            .update_session(token, &session_id, Some(&args.session_date));
-
-        let complete_fut = async {
-            if args.completion_status.unwrap_or(false) {
-                Ok(())
-            } else {
-                self.backend.complete_session(token, &session_id).await
-            }
-        };
-
-        try_join!(update_fut, complete_fut)?;
+        self.backend
+            .complete_session(token, &session_id, &args.session_date)
+            .await?;
 
         let token = args.token.clone();
         let session_id = session_id.clone();

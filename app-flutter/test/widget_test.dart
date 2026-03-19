@@ -166,6 +166,9 @@ void main() {
     await tester.pumpWidget(
       wrapWithL10n(
         PatientHomePage(
+          onSignOut: () {},
+          onSubmitDayFeedback: (request) async {},
+          onMarkDayAsUnCompleted: (request) async {},
           loginResponse: rust_api.LoginResponse(
             accessToken: 'token',
             userId: 'patient-1',

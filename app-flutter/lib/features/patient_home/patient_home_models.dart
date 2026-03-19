@@ -12,8 +12,7 @@ class ExerciseFeedbackDraft {
   String comment;
 }
 
-typedef SubmitDayFeedbackCallback =
-    Future<void> Function(rust_api.SubmitDayFeedbackRequest request);
-typedef UpdateDayCompletionCallback =
-    Future<void> Function(rust_api.UpdateDayCompletionRequest request);
-
+typedef MarkDayAsCompletedCallback =
+    Future<void> Function(rust_api.MarkDayAsCompletedRequest request);
+typedef MarkDayAsUncompletedCallback =
+    Future<void> Function(rust_api.MarkDayAsUncompletedRequest request);

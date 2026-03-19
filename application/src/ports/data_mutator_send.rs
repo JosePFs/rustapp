@@ -13,14 +13,12 @@ pub trait DataMutatorSend: Send + Sync {
         session_date: &str,
     ) -> Result<WorkoutSession>;
 
-    async fn update_session(
+    async fn complete_session(
         &self,
         access_token: &str,
         session_id: &str,
-        session_date: Option<&str>,
+        session_date: &str,
     ) -> Result<()>;
-
-    async fn complete_session(&self, access_token: &str, session_id: &str) -> Result<()>;
 
     async fn uncomplete_session(&self, access_token: &str, session_id: &str) -> Result<()>;
 

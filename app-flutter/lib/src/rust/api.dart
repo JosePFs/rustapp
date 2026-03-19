@@ -30,21 +30,21 @@ Future<List<PatientProgramSummary>> getPatientPrograms({
   config: config,
 );
 
-Future<void> submitDayFeedback({
+Future<void> markDayAsCompleted({
   required String token,
-  required SubmitDayFeedbackRequest request,
+  required MarkDayAsCompletedRequest request,
   required BridgeConfig config,
-}) => RustLib.instance.api.crateApiSubmitDayFeedback(
+}) => RustLib.instance.api.crateApiMarkDayAsCompleted(
   token: token,
   request: request,
   config: config,
 );
 
-Future<void> updateDayCompletion({
+Future<void> markDayAsUncompleted({
   required String token,
-  required UpdateDayCompletionRequest request,
+  required MarkDayAsUncompletedRequest request,
   required BridgeConfig config,
-}) => RustLib.instance.api.crateApiUpdateDayCompletion(
+}) => RustLib.instance.api.crateApiMarkDayAsUncompleted(
   token: token,
   request: request,
   config: config,
@@ -196,6 +196,53 @@ class LoginResponse {
           userProfileType == other.userProfileType;
 }
 
+class MarkDayAsCompletedRequest {
+  final String patientProgramId;
+  final int dayIndex;
+  final String sessionDate;
+  final List<ExerciseFeedbackInput> feedback;
+
+  const MarkDayAsCompletedRequest({
+    required this.patientProgramId,
+    required this.dayIndex,
+    required this.sessionDate,
+    required this.feedback,
+  });
+
+  @override
+  int get hashCode =>
+      patientProgramId.hashCode ^
+      dayIndex.hashCode ^
+      sessionDate.hashCode ^
+      feedback.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MarkDayAsCompletedRequest &&
+          runtimeType == other.runtimeType &&
+          patientProgramId == other.patientProgramId &&
+          dayIndex == other.dayIndex &&
+          sessionDate == other.sessionDate &&
+          feedback == other.feedback;
+}
+
+class MarkDayAsUncompletedRequest {
+  final String workoutSessionId;
+
+  const MarkDayAsUncompletedRequest({required this.workoutSessionId});
+
+  @override
+  int get hashCode => workoutSessionId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MarkDayAsUncompletedRequest &&
+          runtimeType == other.runtimeType &&
+          workoutSessionId == other.workoutSessionId;
+}
+
 class PatientProgramSummary {
   final String patientProgramId;
   final String programId;
@@ -246,6 +293,7 @@ class PatientProgramSummary {
 class ProgramDaySummary {
   final int dayIndex;
   final int dayNumber;
+  final String? sessionId;
   final String? workoutName;
   final String? workoutDescription;
   final bool isRestDay;
@@ -256,6 +304,7 @@ class ProgramDaySummary {
   const ProgramDaySummary({
     required this.dayIndex,
     required this.dayNumber,
+    this.sessionId,
     this.workoutName,
     this.workoutDescription,
     required this.isRestDay,
@@ -268,6 +317,7 @@ class ProgramDaySummary {
   int get hashCode =>
       dayIndex.hashCode ^
       dayNumber.hashCode ^
+      sessionId.hashCode ^
       workoutName.hashCode ^
       workoutDescription.hashCode ^
       isRestDay.hashCode ^
@@ -282,72 +332,11 @@ class ProgramDaySummary {
           runtimeType == other.runtimeType &&
           dayIndex == other.dayIndex &&
           dayNumber == other.dayNumber &&
+          sessionId == other.sessionId &&
           workoutName == other.workoutName &&
           workoutDescription == other.workoutDescription &&
           isRestDay == other.isRestDay &&
           sessionDate == other.sessionDate &&
           completedAt == other.completedAt &&
           exercises == other.exercises;
-}
-
-class SubmitDayFeedbackRequest {
-  final String patientProgramId;
-  final int dayIndex;
-  final String sessionDate;
-  final List<ExerciseFeedbackInput> feedback;
-
-  const SubmitDayFeedbackRequest({
-    required this.patientProgramId,
-    required this.dayIndex,
-    required this.sessionDate,
-    required this.feedback,
-  });
-
-  @override
-  int get hashCode =>
-      patientProgramId.hashCode ^
-      dayIndex.hashCode ^
-      sessionDate.hashCode ^
-      feedback.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SubmitDayFeedbackRequest &&
-          runtimeType == other.runtimeType &&
-          patientProgramId == other.patientProgramId &&
-          dayIndex == other.dayIndex &&
-          sessionDate == other.sessionDate &&
-          feedback == other.feedback;
-}
-
-class UpdateDayCompletionRequest {
-  final String patientProgramId;
-  final int dayIndex;
-  final String sessionDate;
-  final bool completed;
-
-  const UpdateDayCompletionRequest({
-    required this.patientProgramId,
-    required this.dayIndex,
-    required this.sessionDate,
-    required this.completed,
-  });
-
-  @override
-  int get hashCode =>
-      patientProgramId.hashCode ^
-      dayIndex.hashCode ^
-      sessionDate.hashCode ^
-      completed.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is UpdateDayCompletionRequest &&
-          runtimeType == other.runtimeType &&
-          patientProgramId == other.patientProgramId &&
-          dayIndex == other.dayIndex &&
-          sessionDate == other.sessionDate &&
-          completed == other.completed;
 }
