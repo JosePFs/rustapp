@@ -7,8 +7,8 @@ use unic_langid::langid;
 
 use app_context::build_app_context;
 use views::{
-    ExerciseLibrary, LoginView, PatientDashboard, PatientProgress, PatientWorkoutSessionView,
-    ProgramEditor, SpecialistPatients, SpecialistPrograms, WorkoutEditor, WorkoutLibrary,
+    ExerciseLibrary, LoginView, PatientProgress, ProgramEditor, SpecialistPatients,
+    SpecialistPrograms, WorkoutEditor, WorkoutLibrary,
 };
 
 mod app_context;
@@ -32,13 +32,6 @@ pub enum Route {
     WorkoutEditor { id: String },
     #[route("/specialist/patient/:id")]
     PatientProgress { id: String },
-    #[route("/patient")]
-    PatientDashboard {},
-    #[route("/patient/program/:patient_program_id/day/:day_index")]
-    PatientWorkoutSessionView {
-        patient_program_id: String,
-        day_index: String,
-    },
     #[route("/programs/:id/edit")]
     ProgramEditor { id: String },
 }

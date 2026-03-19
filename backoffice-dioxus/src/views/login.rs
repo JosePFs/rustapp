@@ -1,43 +1,57 @@
+use application::use_cases::login::LoginUseCaseResult;
 use dioxus::prelude::*;
+
+use dioxus_i18n::t;
 use dioxus_router::use_navigator;
 
 use crate::components::{Login, LoginResult};
-use crate::hooks::login::use_login;
+use crate::hooks::{login::use_login, AsyncState};
 use crate::Route;
-use domain::credentials::Credentials;
 
 #[component]
 pub fn LoginView() -> Element {
     let nav = use_navigator();
     let mut login = use_login();
+    let login_result: Memo<LoginResult> = use_memo(move || login.state.read().clone().into());
 
     use_effect(move || {
-        let use_login_state = login.state.read();
-        if let Some(login_use_case_result) = use_login_state.data() {
-            if login_use_case_result.is_login_as_patient() {
-                nav.push(Route::PatientDashboard {});
-            } else if login_use_case_result.is_login_as_specialist() {
-                nav.push(Route::SpecialistPatients {});
-            }
+        if login_result.read().is_success() {
+            nav.push(Route::SpecialistPatients {});
         }
     });
-
-    let use_login_state = login.state.read();
-    let login_result = if let Some(error) = use_login_state.error() {
-        LoginResult::Error(error.to_string())
-    } else if use_login_state.is_loading() {
-        LoginResult::Pending
-    } else {
-        LoginResult::None
-    };
 
     rsx! {
         Login {
             background_image: asset!("/assets/login.webp"),
             onsubmit: move |(email, password): (String, String)| {
-                login.action.call(Credentials::from(&email, &password));
+                login.action.call((email, password));
             },
             login_result,
+        }
+    }
+}
+
+impl From<LoginUseCaseResult> for LoginResult {
+    fn from(login_use_case_result: LoginUseCaseResult) -> Self {
+        if login_use_case_result.is_login_as_specialist() {
+            LoginResult::Success
+        } else {
+            LoginResult::Error(t!("wrong_credentials"))
+        }
+    }
+}
+
+impl From<AsyncState<LoginUseCaseResult>> for LoginResult {
+    fn from(state: AsyncState<LoginUseCaseResult>) -> Self {
+        if state.is_idle() {
+            LoginResult::Idle
+        } else if state.is_loading() {
+            LoginResult::Pending
+        } else {
+            state
+                .data()
+                .map(|login_use_case_result| login_use_case_result.clone().into())
+                .unwrap_or(LoginResult::Error(t!("wrong_credentials")))
         }
     }
 }

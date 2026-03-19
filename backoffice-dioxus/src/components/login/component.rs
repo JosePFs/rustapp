@@ -7,16 +7,27 @@ use crate::components::{
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LoginResult {
-    None,
+    Idle,
     Pending,
+    Success,
     Error(String),
+}
+
+impl LoginResult {
+    pub fn is_success(&self) -> bool {
+        matches!(self, LoginResult::Success)
+    }
+
+    pub fn is_pending(&self) -> bool {
+        matches!(self, LoginResult::Pending)
+    }
 }
 
 #[component]
 pub fn Login(
     background_image: ReadSignal<Asset>,
     onsubmit: EventHandler<(String, String)>,
-    login_result: LoginResult,
+    login_result: Memo<LoginResult>,
 ) -> Element {
     let mut email = use_signal(|| String::new());
     let mut password = use_signal(|| String::new());
@@ -55,7 +66,7 @@ pub fn Login(
                         CardDescription {
                             { t!("login_description") }
                         }
-                        match &login_result {
+                        match &*login_result.read() {
                             LoginResult::Error(err) => {
                                 rsx! {
                                     p { class: "text-error text-sm p-2 rounded-md bg-red-50 border border-red-200", "{err}" }
@@ -108,10 +119,10 @@ pub fn Login(
                     }
                     CardFooter {
                         Button {
-                            class: if matches!(login_result, LoginResult::Pending) { "opacity-50 !cursor-not-allowed" } else { "" },
+                            class: if login_result.read().is_pending() { "opacity-50 !cursor-not-allowed" } else { "" },
                             r#type: "submit",
                             form: "login-form",
-                            disabled: matches!(login_result, LoginResult::Pending),
+                            disabled: login_result.read().is_pending(),
                             { t!("login_button_label") },
                         }
                     }

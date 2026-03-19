@@ -7,7 +7,7 @@ use domain::credentials::Credentials;
 
 #[derive(Debug, Clone)]
 pub struct UseLogin {
-    pub action: Action<(Credentials,), LoginUseCaseResult>,
+    pub action: Action<((String, String),), LoginUseCaseResult>,
     pub state: Signal<AsyncState<LoginUseCaseResult>>,
 }
 
@@ -18,14 +18,16 @@ pub fn use_login() -> UseLogin {
     let mut state = use_signal(|| AsyncState::<LoginUseCaseResult>::Idle);
 
     let login_use_case_for_action = login_use_case.clone();
-    let action = use_action(move |credentials: Credentials| {
+    let action = use_action(move |(email, password): (String, String)| {
         let login_use_case = login_use_case_for_action.clone();
 
         async move {
             state.set(AsyncState::<LoginUseCaseResult>::Loading);
 
             login_use_case
-                .execute(LoginUseCaseArgs { credentials })
+                .execute(LoginUseCaseArgs {
+                    credentials: Credentials::from(&email, &password),
+                })
                 .await
                 .map(|login_use_case_result| {
                     state.set(AsyncState::<LoginUseCaseResult>::Ready(
