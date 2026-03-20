@@ -1,9 +1,9 @@
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 use serde::{Deserialize, Serialize};
 
 use application::{
-    ports::DataProviderSend,
+    ports::{AuthServiceSend as _, DataProviderSend},
     use_cases::{
         login::{LoginUseCaseArgs, UserProfileType},
         mobile_get_patient_programs::{
@@ -18,14 +18,13 @@ use application::{
         },
     },
 };
-use infrastructure::supabase::{
-    client::SupabaseClient, config::SupabaseConfig, native_api::NativeApi,
-};
+use infrastructure::supabase::native_api::NativeApi;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BridgeConfig {
-    pub url: String,
-    pub anon_key: String,
+static NATIVE_API: LazyLock<Arc<NativeApi>> =
+    LazyLock::new(|| Arc::new(NativeApi::builder().build()));
+
+fn get_api() -> Arc<NativeApi> {
+    NATIVE_API.clone()
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -101,16 +100,8 @@ pub struct PatientProgramSummary {
     pub average_pain: Option<f32>,
 }
 
-fn backend(config: BridgeConfig) -> Arc<NativeApi> {
-    let config = SupabaseConfig {
-        url: config.url,
-        anon_key: config.anon_key,
-    };
-    Arc::new(NativeApi::new(SupabaseClient::new(config)))
-}
-
-pub async fn login(request: LoginRequest, config: BridgeConfig) -> Result<LoginResponse, String> {
-    let use_case = MobileLoginUseCase::<NativeApi>::new(backend(config));
+pub async fn login(request: LoginRequest) -> Result<LoginResponse, String> {
+    let use_case = MobileLoginUseCase::<NativeApi>::new(get_api());
     let result = use_case
         .execute(LoginUseCaseArgs::from(&request.email, &request.password))
         .await
@@ -120,29 +111,19 @@ pub async fn login(request: LoginRequest, config: BridgeConfig) -> Result<LoginR
         access_token: result.session.access_token().to_string(),
         refresh_token: result.session.refresh_token().map(|t| t.to_string()),
         user_id: result.session.user_id().to_string(),
-        user_profile_type: match result.user_profile_type {
-            UserProfileType::Specialist => "specialist".to_string(),
-            UserProfileType::Patient => "patient".to_string(),
-        },
+        user_profile_type: result.user_profile_type.to_string(),
     })
 }
 
-pub async fn refresh_session(
-    refresh_token: String,
-    config: BridgeConfig,
-) -> Result<LoginResponse, String> {
-    let api = backend(config.clone());
-    let client = SupabaseClient::new(SupabaseConfig {
-        url: config.url,
-        anon_key: config.anon_key,
-    });
-    let session = client
+pub async fn refresh_session(refresh_token: String) -> Result<LoginResponse, String> {
+    let api = get_api();
+    let session = api
         .refresh_session(&refresh_token)
         .await
         .map_err(|e| e.to_string())?;
 
     let profiles = api
-        .get_profiles_by_ids(&[session.user.id.to_string()], &session.access_token)
+        .get_profiles_by_ids(&[session.user_id().to_string()], &session.access_token())
         .await
         .ok();
     let user_profile_type = profiles
@@ -151,21 +132,15 @@ pub async fn refresh_session(
         .unwrap_or_default();
 
     Ok(LoginResponse {
-        access_token: session.access_token,
-        refresh_token: session.refresh_token,
-        user_id: session.user.id,
-        user_profile_type: match user_profile_type {
-            UserProfileType::Specialist => "specialist".to_string(),
-            UserProfileType::Patient => "patient".to_string(),
-        },
+        access_token: session.access_token().to_string(),
+        refresh_token: session.refresh_token().map(|t| t.to_string()),
+        user_id: session.user_id().to_string(),
+        user_profile_type: user_profile_type.to_string(),
     })
 }
 
-pub async fn get_patient_programs(
-    token: String,
-    config: BridgeConfig,
-) -> Result<Vec<PatientProgramSummary>, String> {
-    let use_case = MobileGetPatientProgramsUseCase::<NativeApi>::new(backend(config));
+pub async fn get_patient_programs(token: String) -> Result<Vec<PatientProgramSummary>, String> {
+    let use_case = MobileGetPatientProgramsUseCase::<NativeApi>::new(get_api());
     let result = use_case
         .execute(GetPatientProgramsUseCaseArgs { token })
         .await
@@ -218,9 +193,8 @@ pub async fn get_patient_programs(
 pub async fn mark_day_as_completed(
     token: String,
     request: MarkDayAsCompletedRequest,
-    config: BridgeConfig,
 ) -> Result<(), String> {
-    let use_case = MobileSubmitPatientWorkoutFeedbackUseCase::<NativeApi>::new(backend(config));
+    let use_case = MobileSubmitPatientWorkoutFeedbackUseCase::<NativeApi>::new(get_api());
     let feedback_map = request
         .feedback
         .into_iter()
@@ -255,9 +229,8 @@ pub async fn mark_day_as_completed(
 pub async fn mark_day_as_uncompleted(
     token: String,
     request: MarkDayAsUncompletedRequest,
-    config: BridgeConfig,
 ) -> Result<(), String> {
-    let use_case = UncompletePatientWorkoutSessionUseCase::<NativeApi>::new(backend(config));
+    let use_case = UncompletePatientWorkoutSessionUseCase::<NativeApi>::new(get_api());
     use_case
         .execute(UncompletePatientWorkoutSessionArgs {
             token,

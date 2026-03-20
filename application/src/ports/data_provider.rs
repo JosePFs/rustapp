@@ -81,7 +81,6 @@ pub trait DataProvider: Send + Sync {
         workout_session_id: &str,
     ) -> Result<Vec<SessionExerciseFeedback>>;
 
-    /// All feedback for sessions belonging to this patient program (for agenda averages).
     async fn list_session_exercise_feedback_for_program(
         &self,
         access_token: &str,

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:app_flutter/main.dart';
-import 'package:app_flutter/core/bridge_runtime_config.dart';
 import 'package:app_flutter/core/locale_controller.dart';
 import 'package:app_flutter/features/patient_home/exercise_video_panel.dart';
 import 'package:app_flutter/features/patient_home/patient_home_page.dart';
@@ -136,15 +135,7 @@ void main() {
 
   testWidgets('renders splash then login shell', (WidgetTester tester) async {
     await tester.pumpWidget(
-      wrapWithL10n(
-        const EixeApp(
-          bridgeConfig: BridgeRuntimeConfig(
-            supabaseUrl: 'https://example.supabase.co',
-            supabaseAnonKey: 'anon-key',
-          ),
-          autoInitializeBridge: false,
-        ),
-      ),
+      wrapWithL10n(const EixeApp(autoInitializeBridge: false)),
     );
 
     expect(find.text('Eixe'), findsWidgets);

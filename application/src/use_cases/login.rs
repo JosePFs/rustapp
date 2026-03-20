@@ -28,11 +28,20 @@ pub enum UserProfileType {
     Patient,
 }
 
-impl UserProfileType {
-    pub fn from(role: &Role) -> Self {
-        match role {
-            Role::Specialist => UserProfileType::Specialist,
-            Role::Patient => UserProfileType::Patient,
+impl From<&Role> for UserProfileType {
+    fn from(role: &Role) -> Self {
+        match *role {
+            Role::Specialist => Self::Specialist,
+            Role::Patient => Self::Patient,
+        }
+    }
+}
+
+impl ToString for UserProfileType {
+    fn to_string(&self) -> String {
+        match self {
+            UserProfileType::Specialist => "specialist".to_string(),
+            UserProfileType::Patient => "patient".to_string(),
         }
     }
 }

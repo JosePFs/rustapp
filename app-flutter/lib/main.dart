@@ -3,24 +3,18 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 
 import 'core/bootstrap_page.dart';
-import 'core/bridge_runtime_config.dart';
 import 'core/locale_controller.dart';
 import 'core/theme/eixe_theme.dart';
 import 'core/theme/eixe_colors.dart';
 import 'l10n/app_localizations.dart';
 
 void main() {
-  runApp(EixeApp(bridgeConfig: BridgeRuntimeConfig.fromEnvironment()));
+  runApp(EixeApp());
 }
 
 class EixeApp extends StatefulWidget {
-  const EixeApp({
-    required this.bridgeConfig,
-    this.autoInitializeBridge = true,
-    super.key,
-  });
+  const EixeApp({this.autoInitializeBridge = true, super.key});
 
-  final BridgeRuntimeConfig bridgeConfig;
   final bool autoInitializeBridge;
 
   @override
@@ -99,7 +93,6 @@ class _EixeAppState extends State<EixeApp> {
               darkTheme: darkTheme,
               themeMode: ThemeMode.system,
               home: PatientAppBootstrapPage(
-                bridgeConfig: widget.bridgeConfig,
                 autoInitializeBridge: widget.autoInitializeBridge,
                 localeController: _localeController,
                 localeLoaded: _localeLoaded,

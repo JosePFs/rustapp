@@ -1,9 +1,10 @@
 use async_trait::async_trait;
 
+use serde::de::DeserializeOwned;
 use serde::Deserialize;
 
 use super::client::SupabaseClient;
-use crate::infrastructure::api::dtos::{
+use crate::api::dtos::{
     ExerciseDto, PatientProgramDto, ProfileDto, ProgramDto, ProgramScheduleItemDto,
     SessionExerciseFeedbackDto, SpecialistPatientDto, WorkoutDto, WorkoutExerciseRow,
     WorkoutSessionDto,
@@ -22,7 +23,7 @@ use domain::{
     session::Session,
 };
 
-fn parse_json<T: for<'de> Deserialize<'de>>(body: &[u8]) -> std::result::Result<T, String> {
+fn parse_json<T: DeserializeOwned>(body: &[u8]) -> std::result::Result<T, String> {
     serde_json::from_slice(body).map_err(|e| e.to_string())
 }
 
@@ -39,13 +40,24 @@ impl Api {
 
 #[async_trait(?Send)]
 impl AuthService for Api {
-    async fn sign_in(&self, credentials: &Credentials) -> crate::domain::error::Result<Session> {
+    async fn sign_in(&self, credentials: &Credentials) -> domain::error::Result<Session> {
         self.client
             .sign_in(credentials)
             .await
             .map_err(|e| {
                 log::warn!("Login failed: {}", e);
                 DomainError::Login("wrong_credentials".to_string())
+            })
+            .map(|auth| Session::new(auth.access_token, auth.refresh_token, auth.user.id))
+    }
+
+    async fn refresh_session(&self, refresh_token: &str) -> Result<Session> {
+        self.client
+            .refresh_session(refresh_token)
+            .await
+            .map_err(|e| {
+                log::warn!("Refresh session failed: {}", e);
+                DomainError::Login("refresh_token_expired".to_string())
             })
             .map(|auth| Session::new(auth.access_token, auth.refresh_token, auth.user.id))
     }

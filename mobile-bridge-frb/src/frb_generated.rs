@@ -68,13 +68,11 @@ fn wire__crate__api__get_patient_programs_impl(
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_token = <String>::sse_decode(&mut deserializer);
-            let api_config = <crate::api::BridgeConfig>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, String>(
                     (move || async move {
-                        let output_ok =
-                            crate::api::get_patient_programs(api_token, api_config).await?;
+                        let output_ok = crate::api::get_patient_programs(api_token).await?;
                         Ok(output_ok)
                     })()
                     .await,
@@ -106,12 +104,11 @@ fn wire__crate__api__login_impl(
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_request = <crate::api::LoginRequest>::sse_decode(&mut deserializer);
-            let api_config = <crate::api::BridgeConfig>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, String>(
                     (move || async move {
-                        let output_ok = crate::api::login(api_request, api_config).await?;
+                        let output_ok = crate::api::login(api_request).await?;
                         Ok(output_ok)
                     })()
                     .await,
@@ -145,14 +142,12 @@ fn wire__crate__api__mark_day_as_completed_impl(
             let api_token = <String>::sse_decode(&mut deserializer);
             let api_request =
                 <crate::api::MarkDayAsCompletedRequest>::sse_decode(&mut deserializer);
-            let api_config = <crate::api::BridgeConfig>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, String>(
                     (move || async move {
                         let output_ok =
-                            crate::api::mark_day_as_completed(api_token, api_request, api_config)
-                                .await?;
+                            crate::api::mark_day_as_completed(api_token, api_request).await?;
                         Ok(output_ok)
                     })()
                     .await,
@@ -186,14 +181,12 @@ fn wire__crate__api__mark_day_as_uncompleted_impl(
             let api_token = <String>::sse_decode(&mut deserializer);
             let api_request =
                 <crate::api::MarkDayAsUncompletedRequest>::sse_decode(&mut deserializer);
-            let api_config = <crate::api::BridgeConfig>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, String>(
                     (move || async move {
                         let output_ok =
-                            crate::api::mark_day_as_uncompleted(api_token, api_request, api_config)
-                                .await?;
+                            crate::api::mark_day_as_uncompleted(api_token, api_request).await?;
                         Ok(output_ok)
                     })()
                     .await,
@@ -225,13 +218,11 @@ fn wire__crate__api__refresh_session_impl(
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_refresh_token = <String>::sse_decode(&mut deserializer);
-            let api_config = <crate::api::BridgeConfig>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, String>(
                     (move || async move {
-                        let output_ok =
-                            crate::api::refresh_session(api_refresh_token, api_config).await?;
+                        let output_ok = crate::api::refresh_session(api_refresh_token).await?;
                         Ok(output_ok)
                     })()
                     .await,
@@ -255,18 +246,6 @@ impl SseDecode for bool {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         deserializer.cursor.read_u8().unwrap() != 0
-    }
-}
-
-impl SseDecode for crate::api::BridgeConfig {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut var_url = <String>::sse_decode(deserializer);
-        let mut var_anonKey = <String>::sse_decode(deserializer);
-        return crate::api::BridgeConfig {
-            url: var_url,
-            anon_key: var_anonKey,
-        };
     }
 }
 
@@ -575,22 +554,6 @@ fn pde_ffi_dispatcher_sync_impl(
 // Section: rust2dart
 
 // Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for crate::api::BridgeConfig {
-    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
-        [
-            self.url.into_into_dart().into_dart(),
-            self.anon_key.into_into_dart().into_dart(),
-        ]
-        .into_dart()
-    }
-}
-impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::BridgeConfig {}
-impl flutter_rust_bridge::IntoIntoDart<crate::api::BridgeConfig> for crate::api::BridgeConfig {
-    fn into_into_dart(self) -> crate::api::BridgeConfig {
-        self
-    }
-}
-// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::ExerciseFeedbackInput {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -779,14 +742,6 @@ impl SseEncode for bool {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         serializer.cursor.write_u8(self as _).unwrap();
-    }
-}
-
-impl SseEncode for crate::api::BridgeConfig {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <String>::sse_encode(self.url, serializer);
-        <String>::sse_encode(self.anon_key, serializer);
     }
 }
 

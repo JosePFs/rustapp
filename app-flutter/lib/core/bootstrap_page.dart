@@ -11,7 +11,6 @@ import 'package:app_flutter/core/session_store.dart';
 import 'package:app_flutter/l10n/app_localizations_ext.dart';
 import 'package:app_flutter/src/rust/api.dart' as rust_api;
 import 'package:app_flutter/src/rust/frb_generated.dart';
-import 'bridge_runtime_config.dart';
 
 enum BootstrapStage { starting, readyForLogin, error }
 
@@ -24,14 +23,12 @@ class _SessionBound<T> {
 
 class PatientAppBootstrapPage extends StatefulWidget {
   const PatientAppBootstrapPage({
-    required this.bridgeConfig,
     required this.localeController,
     required this.localeLoaded,
     this.autoInitializeBridge = true,
     super.key,
   });
 
-  final BridgeRuntimeConfig bridgeConfig;
   final LocaleController localeController;
   final bool localeLoaded;
   final bool autoInitializeBridge;
@@ -121,7 +118,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
   }
 
   Future<void> _tryRestoreSession() async {
-    if (_busy || !_bridgeInitialized || !widget.bridgeConfig.isConfigured) {
+    if (_busy || !_bridgeInitialized) {
       return;
     }
     setState(() {
@@ -186,14 +183,6 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
       return;
     }
 
-    if (!widget.bridgeConfig.isConfigured) {
-      setState(() {
-        _stage = BootstrapStage.error;
-        _status = context.l10n.errorMissingSupabaseConfig;
-      });
-      return;
-    }
-
     if (!widget.autoInitializeBridge) {
       setState(() {
         _bridgeInitialized = true;
@@ -231,14 +220,6 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
   }
 
   Future<void> _loginAndLoadPrograms() async {
-    if (!widget.bridgeConfig.isConfigured) {
-      setState(() {
-        _stage = BootstrapStage.error;
-        _status = context.l10n.errorMissingSupabaseConfig;
-      });
-      return;
-    }
-
     if (!_bridgeInitialized) {
       await _initializeBridge();
       if (!_bridgeInitialized) {
@@ -259,7 +240,6 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         ),
-        config: widget.bridgeConfig.toBridgeConfig(),
       );
       final result = await _loadPatientProgramsWithRefresh(loginResponse);
       await _promoteSession(result.session);
@@ -309,10 +289,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
     if (refreshToken == null || refreshToken.trim().isEmpty) {
       throw StateError('Missing refresh token.');
     }
-    return rust_api.refreshSession(
-      refreshToken: refreshToken,
-      config: widget.bridgeConfig.toBridgeConfig(),
-    );
+    return rust_api.refreshSession(refreshToken: refreshToken);
   }
 
   Future<_SessionBound<T>> _withAuthRetry<T>(
@@ -334,10 +311,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
   _loadPatientProgramsWithRefresh(rust_api.LoginResponse session) {
     return _withAuthRetry(
       session,
-      (token) => rust_api.getPatientPrograms(
-        token: token,
-        config: widget.bridgeConfig.toBridgeConfig(),
-      ),
+      (token) => rust_api.getPatientPrograms(token: token),
     );
   }
 
@@ -357,11 +331,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
     try {
       final submitResult = await _withAuthRetry(
         loginResponse,
-        (token) => rust_api.markDayAsCompleted(
-          token: token,
-          request: request,
-          config: widget.bridgeConfig.toBridgeConfig(),
-        ),
+        (token) => rust_api.markDayAsCompleted(token: token, request: request),
       );
       if (submitResult.session.accessToken != loginResponse.accessToken ||
           submitResult.session.refreshToken != loginResponse.refreshToken) {
@@ -369,10 +339,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
       }
       final programsResult = await _withAuthRetry(
         submitResult.session,
-        (token) => rust_api.getPatientPrograms(
-          token: token,
-          config: widget.bridgeConfig.toBridgeConfig(),
-        ),
+        (token) => rust_api.getPatientPrograms(token: token),
       );
       if (programsResult.session.accessToken !=
               submitResult.session.accessToken ||
@@ -411,11 +378,8 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
     try {
       final updateResult = await _withAuthRetry(
         loginResponse,
-        (token) => rust_api.markDayAsUncompleted(
-          token: token,
-          request: request,
-          config: widget.bridgeConfig.toBridgeConfig(),
-        ),
+        (token) =>
+            rust_api.markDayAsUncompleted(token: token, request: request),
       );
       if (updateResult.session.accessToken != loginResponse.accessToken ||
           updateResult.session.refreshToken != loginResponse.refreshToken) {
@@ -423,10 +387,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
       }
       final programsResult = await _withAuthRetry(
         updateResult.session,
-        (token) => rust_api.getPatientPrograms(
-          token: token,
-          config: widget.bridgeConfig.toBridgeConfig(),
-        ),
+        (token) => rust_api.getPatientPrograms(token: token),
       );
       if (programsResult.session.accessToken !=
               updateResult.session.accessToken ||
@@ -514,13 +475,6 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
             style: theme.textTheme.titleMedium,
           ),
           const SizedBox(height: 16),
-          if (kDebugMode)
-            Text(
-              widget.bridgeConfig.isConfigured
-                  ? 'Supabase configuration loaded from Dart defines.'
-                  : 'Supabase configuration missing. Use --dart-define for SUPABASE_URL and SUPABASE_ANON_KEY.',
-            ),
-          const SizedBox(height: 12),
           TextField(
             controller: _emailController,
             decoration: InputDecoration(
@@ -625,11 +579,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
                 style: theme.textTheme.headlineSmall,
               ),
               const SizedBox(height: 12),
-              Text(
-                widget.bridgeConfig.isConfigured
-                    ? context.l10n.statusInitializingBridge
-                    : context.l10n.errorMissingSupabaseConfig,
-              ),
+              Text(context.l10n.statusInitializingBridge),
               const SizedBox(height: 24),
               if (_busy) const CircularProgressIndicator(),
               if (!_busy) ...[

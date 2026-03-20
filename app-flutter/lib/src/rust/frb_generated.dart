@@ -77,30 +77,21 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 abstract class RustLibApi extends BaseApi {
   Future<List<PatientProgramSummary>> crateApiGetPatientPrograms({
     required String token,
-    required BridgeConfig config,
   });
 
-  Future<LoginResponse> crateApiLogin({
-    required LoginRequest request,
-    required BridgeConfig config,
-  });
+  Future<LoginResponse> crateApiLogin({required LoginRequest request});
 
   Future<void> crateApiMarkDayAsCompleted({
     required String token,
     required MarkDayAsCompletedRequest request,
-    required BridgeConfig config,
   });
 
   Future<void> crateApiMarkDayAsUncompleted({
     required String token,
     required MarkDayAsUncompletedRequest request,
-    required BridgeConfig config,
   });
 
-  Future<LoginResponse> crateApiRefreshSession({
-    required String refreshToken,
-    required BridgeConfig config,
-  });
+  Future<LoginResponse> crateApiRefreshSession({required String refreshToken});
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -114,14 +105,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @override
   Future<List<PatientProgramSummary>> crateApiGetPatientPrograms({
     required String token,
-    required BridgeConfig config,
   }) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(token, serializer);
-          sse_encode_box_autoadd_bridge_config(config, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -134,7 +123,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_String,
         ),
         constMeta: kCrateApiGetPatientProgramsConstMeta,
-        argValues: [token, config],
+        argValues: [token],
         apiImpl: this,
       ),
     );
@@ -142,20 +131,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiGetPatientProgramsConstMeta => const TaskConstMeta(
     debugName: "get_patient_programs",
-    argNames: ["token", "config"],
+    argNames: ["token"],
   );
 
   @override
-  Future<LoginResponse> crateApiLogin({
-    required LoginRequest request,
-    required BridgeConfig config,
-  }) {
+  Future<LoginResponse> crateApiLogin({required LoginRequest request}) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_login_request(request, serializer);
-          sse_encode_box_autoadd_bridge_config(config, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -168,20 +153,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_String,
         ),
         constMeta: kCrateApiLoginConstMeta,
-        argValues: [request, config],
+        argValues: [request],
         apiImpl: this,
       ),
     );
   }
 
   TaskConstMeta get kCrateApiLoginConstMeta =>
-      const TaskConstMeta(debugName: "login", argNames: ["request", "config"]);
+      const TaskConstMeta(debugName: "login", argNames: ["request"]);
 
   @override
   Future<void> crateApiMarkDayAsCompleted({
     required String token,
     required MarkDayAsCompletedRequest request,
-    required BridgeConfig config,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -192,7 +176,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             request,
             serializer,
           );
-          sse_encode_box_autoadd_bridge_config(config, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -205,7 +188,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_String,
         ),
         constMeta: kCrateApiMarkDayAsCompletedConstMeta,
-        argValues: [token, request, config],
+        argValues: [token, request],
         apiImpl: this,
       ),
     );
@@ -213,14 +196,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiMarkDayAsCompletedConstMeta => const TaskConstMeta(
     debugName: "mark_day_as_completed",
-    argNames: ["token", "request", "config"],
+    argNames: ["token", "request"],
   );
 
   @override
   Future<void> crateApiMarkDayAsUncompleted({
     required String token,
     required MarkDayAsUncompletedRequest request,
-    required BridgeConfig config,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -231,7 +213,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             request,
             serializer,
           );
-          sse_encode_box_autoadd_bridge_config(config, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -244,7 +225,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_String,
         ),
         constMeta: kCrateApiMarkDayAsUncompletedConstMeta,
-        argValues: [token, request, config],
+        argValues: [token, request],
         apiImpl: this,
       ),
     );
@@ -253,20 +234,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiMarkDayAsUncompletedConstMeta =>
       const TaskConstMeta(
         debugName: "mark_day_as_uncompleted",
-        argNames: ["token", "request", "config"],
+        argNames: ["token", "request"],
       );
 
   @override
-  Future<LoginResponse> crateApiRefreshSession({
-    required String refreshToken,
-    required BridgeConfig config,
-  }) {
+  Future<LoginResponse> crateApiRefreshSession({required String refreshToken}) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(refreshToken, serializer);
-          sse_encode_box_autoadd_bridge_config(config, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -279,7 +256,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_String,
         ),
         constMeta: kCrateApiRefreshSessionConstMeta,
-        argValues: [refreshToken, config],
+        argValues: [refreshToken],
         apiImpl: this,
       ),
     );
@@ -287,7 +264,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiRefreshSessionConstMeta => const TaskConstMeta(
     debugName: "refresh_session",
-    argNames: ["refreshToken", "config"],
+    argNames: ["refreshToken"],
   );
 
   @protected
@@ -300,12 +277,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   bool dco_decode_bool(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as bool;
-  }
-
-  @protected
-  BridgeConfig dco_decode_box_autoadd_bridge_config(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_bridge_config(raw);
   }
 
   @protected
@@ -338,18 +309,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   dco_decode_box_autoadd_mark_day_as_uncompleted_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_mark_day_as_uncompleted_request(raw);
-  }
-
-  @protected
-  BridgeConfig dco_decode_bridge_config(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 2)
-      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
-    return BridgeConfig(
-      url: dco_decode_String(arr[0]),
-      anonKey: dco_decode_String(arr[1]),
-    );
   }
 
   @protected
@@ -577,14 +536,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  BridgeConfig sse_decode_box_autoadd_bridge_config(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return (sse_decode_bridge_config(deserializer));
-  }
-
-  @protected
   double sse_decode_box_autoadd_f_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_f_32(deserializer));
@@ -620,14 +571,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_mark_day_as_uncompleted_request(deserializer));
-  }
-
-  @protected
-  BridgeConfig sse_decode_bridge_config(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_url = sse_decode_String(deserializer);
-    var var_anonKey = sse_decode_String(deserializer);
-    return BridgeConfig(url: var_url, anonKey: var_anonKey);
   }
 
   @protected
@@ -909,15 +852,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_box_autoadd_bridge_config(
-    BridgeConfig self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_bridge_config(self, serializer);
-  }
-
-  @protected
   void sse_encode_box_autoadd_f_32(double self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_f_32(self, serializer);
@@ -954,13 +888,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_mark_day_as_uncompleted_request(self, serializer);
-  }
-
-  @protected
-  void sse_encode_bridge_config(BridgeConfig self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_String(self.url, serializer);
-    sse_encode_String(self.anonKey, serializer);
   }
 
   @protected

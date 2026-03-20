@@ -5,4 +5,5 @@ use domain::{credentials::Credentials, error::Result, session::Session};
 #[async_trait]
 pub trait AuthServiceSend: Send + Sync {
     async fn sign_in(&self, credentials: &Credentials) -> Result<Session>;
+    async fn refresh_session(&self, refresh_token: &str) -> Result<Session>;
 }

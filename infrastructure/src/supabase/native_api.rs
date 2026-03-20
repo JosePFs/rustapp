@@ -2,11 +2,13 @@ use async_trait::async_trait;
 use serde::Deserialize;
 
 use super::client::SupabaseClient;
-use crate::application::ports::{AuthServiceSend, DataMutatorSend, DataProviderSend};
-use crate::infrastructure::api::dtos::{
+use crate::api::dtos::{
     PatientProgramDto, ProfileDto, ProgramDto, ProgramScheduleItemDto, SessionExerciseFeedbackDto,
     WorkoutDto, WorkoutExerciseRow, WorkoutSessionDto,
 };
+use crate::supabase::config::SupabaseConfig;
+use application::ports::MobileBackend;
+use application::ports::{AuthServiceSend, DataMutatorSend, DataProviderSend};
 use domain::entities::{
     PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback, Workout,
     WorkoutExercise, WorkoutSession,
@@ -15,37 +17,18 @@ use domain::{
     credentials::Credentials, error::DomainError, error::Result, profile::Profile, session::Session,
 };
 
-fn parse_json<T: for<'de> Deserialize<'de>>(body: &[u8]) -> std::result::Result<T, String> {
-    serde_json::from_slice(body).map_err(|e| e.to_string())
-}
-
 #[derive(Clone)]
 pub struct NativeApi {
     client: SupabaseClient,
 }
 
 impl NativeApi {
-    pub fn new(client: SupabaseClient) -> Self {
+    fn new(client: SupabaseClient) -> Self {
         Self { client }
     }
 
-    async fn get_workouts_by_ids(
-        &self,
-        access_token: &str,
-        ids: &[String],
-    ) -> Result<Vec<Workout>> {
-        if ids.is_empty() {
-            return Ok(vec![]);
-        }
-
-        let ids_param = ids.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(",");
-        let path = format!(
-            "/workouts?id=in.({})&select=id,specialist_id,name,description,order_index,created_at,updated_at",
-            ids_param
-        );
-        let body = self.client.rest_get(Some(access_token), &path).await?;
-        let rows: Vec<WorkoutDto> = parse_json(&body)?;
-        Ok(rows.into_iter().map(Into::into).collect())
+    pub fn builder() -> NativeApiBuilder {
+        NativeApiBuilder::new()
     }
 }
 
@@ -58,6 +41,17 @@ impl AuthServiceSend for NativeApi {
             .map_err(|e| {
                 log::warn!("Login failed: {}", e);
                 DomainError::Login("wrong_credentials".to_string())
+            })
+            .map(|auth| Session::new(auth.access_token, auth.refresh_token, auth.user.id))
+    }
+
+    async fn refresh_session(&self, refresh_token: &str) -> Result<Session> {
+        self.client
+            .refresh_session(refresh_token)
+            .await
+            .map_err(|e| {
+                log::warn!("Refresh session failed: {}", e);
+                DomainError::Login("refresh_token_expired".to_string())
             })
             .map(|auth| Session::new(auth.access_token, auth.refresh_token, auth.user.id))
     }
@@ -107,7 +101,19 @@ impl DataProviderSend for NativeApi {
             .into_iter()
             .collect();
 
-        self.get_workouts_by_ids(access_token, &ids).await
+        if ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let ids_param = ids.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(",");
+        let path = format!(
+                "/workouts?id=in.({})&select=id,specialist_id,name,description,order_index,created_at,updated_at",
+                ids_param
+            );
+        let body = self.client.rest_get(Some(access_token), &path).await?;
+        let rows: Vec<WorkoutDto> = parse_json(&body)?;
+
+        Ok(rows.into_iter().map(Into::into).collect())
     }
 
     async fn list_program_schedule(
@@ -299,4 +305,31 @@ impl DataMutatorSend for NativeApi {
     }
 }
 
-impl application::ports::MobileBackend for NativeApi {}
+fn parse_json<T: for<'de> Deserialize<'de>>(body: &[u8]) -> std::result::Result<T, String> {
+    serde_json::from_slice(body).map_err(|e| e.to_string())
+}
+
+pub struct NativeApiBuilder {
+    config: Option<SupabaseConfig>,
+}
+
+impl NativeApiBuilder {
+    pub fn new() -> Self {
+        Self { config: None }
+    }
+
+    pub fn with_config(mut self, config: SupabaseConfig) -> Self {
+        self.config = Some(config);
+        self
+    }
+
+    pub fn build(self) -> NativeApi {
+        let config = self
+            .config
+            .unwrap_or_else(|| SupabaseConfig::from_env().expect("Failed to load Supabase config"));
+
+        NativeApi::new(SupabaseClient::new(config))
+    }
+}
+
+impl MobileBackend for NativeApi {}

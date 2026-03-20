@@ -91,12 +91,7 @@ fn run_cargo_command(args: &[&str]) {
 }
 
 fn run_flutter_command(command: &str, args: &[String]) {
-    dotenvy::dotenv().ok();
-
-    let supabase_url = std::env::var("SUPABASE_URL").expect("SUPABASE_URL not set");
-    let supabase_key = std::env::var("SUPABASE_ANON_KEY").expect("SUPABASE_ANON_KEY not set");
-
-    run_bash_command(format!("cd app-flutter && flutter {command} --dart-define=SUPABASE_URL={supabase_url} --dart-define=SUPABASE_ANON_KEY={supabase_key} {}", args.join(" ")).as_str());
+    run_bash_command(format!("cd app-flutter && flutter {command} {}", args.join(" ")).as_str());
 }
 
 fn run_bash_command(command_line: &str) {

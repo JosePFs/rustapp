@@ -25,9 +25,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool dco_decode_bool(dynamic raw);
 
   @protected
-  BridgeConfig dco_decode_box_autoadd_bridge_config(dynamic raw);
-
-  @protected
   double dco_decode_box_autoadd_f_32(dynamic raw);
 
   @protected
@@ -43,9 +40,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   MarkDayAsUncompletedRequest
   dco_decode_box_autoadd_mark_day_as_uncompleted_request(dynamic raw);
-
-  @protected
-  BridgeConfig dco_decode_bridge_config(dynamic raw);
 
   @protected
   ExerciseFeedbackInput dco_decode_exercise_feedback_input(dynamic raw);
@@ -126,11 +120,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool sse_decode_bool(SseDeserializer deserializer);
 
   @protected
-  BridgeConfig sse_decode_box_autoadd_bridge_config(
-    SseDeserializer deserializer,
-  );
-
-  @protected
   double sse_decode_box_autoadd_f_32(SseDeserializer deserializer);
 
   @protected
@@ -152,9 +141,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   sse_decode_box_autoadd_mark_day_as_uncompleted_request(
     SseDeserializer deserializer,
   );
-
-  @protected
-  BridgeConfig sse_decode_bridge_config(SseDeserializer deserializer);
 
   @protected
   ExerciseFeedbackInput sse_decode_exercise_feedback_input(
@@ -243,12 +229,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_bool(bool self, SseSerializer serializer);
 
   @protected
-  void sse_encode_box_autoadd_bridge_config(
-    BridgeConfig self,
-    SseSerializer serializer,
-  );
-
-  @protected
   void sse_encode_box_autoadd_f_32(double self, SseSerializer serializer);
 
   @protected
@@ -271,9 +251,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     MarkDayAsUncompletedRequest self,
     SseSerializer serializer,
   );
-
-  @protected
-  void sse_encode_bridge_config(BridgeConfig self, SseSerializer serializer);
 
   @protected
   void sse_encode_exercise_feedback_input(

@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{domain::credentials::Credentials, infrastructure::supabase::config::SupabaseConfig};
+use crate::supabase::config::SupabaseConfig;
+use domain::credentials::Credentials;
 
 #[derive(Clone)]
 pub struct SupabaseClient {

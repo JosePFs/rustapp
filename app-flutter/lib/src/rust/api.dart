@@ -6,67 +6,34 @@
 import 'frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `backend`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These functions are ignored because they are not marked as `pub`: `get_api`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
-Future<LoginResponse> login({
-  required LoginRequest request,
-  required BridgeConfig config,
-}) => RustLib.instance.api.crateApiLogin(request: request, config: config);
+Future<LoginResponse> login({required LoginRequest request}) =>
+    RustLib.instance.api.crateApiLogin(request: request);
 
-Future<LoginResponse> refreshSession({
-  required String refreshToken,
-  required BridgeConfig config,
-}) => RustLib.instance.api.crateApiRefreshSession(
-  refreshToken: refreshToken,
-  config: config,
-);
+Future<LoginResponse> refreshSession({required String refreshToken}) =>
+    RustLib.instance.api.crateApiRefreshSession(refreshToken: refreshToken);
 
 Future<List<PatientProgramSummary>> getPatientPrograms({
   required String token,
-  required BridgeConfig config,
-}) => RustLib.instance.api.crateApiGetPatientPrograms(
-  token: token,
-  config: config,
-);
+}) => RustLib.instance.api.crateApiGetPatientPrograms(token: token);
 
 Future<void> markDayAsCompleted({
   required String token,
   required MarkDayAsCompletedRequest request,
-  required BridgeConfig config,
 }) => RustLib.instance.api.crateApiMarkDayAsCompleted(
   token: token,
   request: request,
-  config: config,
 );
 
 Future<void> markDayAsUncompleted({
   required String token,
   required MarkDayAsUncompletedRequest request,
-  required BridgeConfig config,
 }) => RustLib.instance.api.crateApiMarkDayAsUncompleted(
   token: token,
   request: request,
-  config: config,
 );
-
-class BridgeConfig {
-  final String url;
-  final String anonKey;
-
-  const BridgeConfig({required this.url, required this.anonKey});
-
-  @override
-  int get hashCode => url.hashCode ^ anonKey.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is BridgeConfig &&
-          runtimeType == other.runtimeType &&
-          url == other.url &&
-          anonKey == other.anonKey;
-}
 
 class ExerciseFeedbackInput {
   final String exerciseId;

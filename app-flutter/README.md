@@ -52,12 +52,7 @@ The Rust bridge lives in `../mobile-bridge-frb`.
 
 ## Configuration
 
-The Flutter app expects Supabase settings via Dart defines:
-
-```bash
---dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co
---dart-define=SUPABASE_ANON_KEY=your_anon_key
-```
+The Flutter app expects Supabase settings via Rust.
 
 This keeps the runtime configuration on the Flutter side, which is the natural entrypoint for mobile app environment-specific values.
 
@@ -92,9 +87,7 @@ The Linux CMake build invokes `scripts/build_rust_bridge_linux.sh` automatically
 
 ```bash
 cd /app-flutter
-flutter run -d linux \
-  --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=your_anon_key
+flutter run -d linux
 ```
 
 ### Android
@@ -103,9 +96,7 @@ The Android Gradle build invokes `scripts/build_rust_bridge_android.sh` automati
 
 ```bash
 cd app-flutter
-flutter run -d 'mobile device id' \
-  --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=your_anon_key
+flutter run -d 'mobile device id'
 ```
 
 ## Manual Rust Bridge Builds

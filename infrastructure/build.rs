@@ -1,5 +1,3 @@
-//! Load .env and expose SUPABASE_* at compile time for web/native consumers.
-
 use std::fs;
 use std::path::Path;
 

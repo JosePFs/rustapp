@@ -3,7 +3,6 @@ use std::sync::Arc;
 use crate::ports::MobileBackend;
 use crate::use_cases::login::{LoginUseCaseArgs, LoginUseCaseResult, UserProfileType};
 use domain::error::Result;
-use domain::role::Role;
 
 pub struct MobileLoginUseCase<B: MobileBackend> {
     backend: Arc<B>,
@@ -26,11 +25,8 @@ impl<B: MobileBackend> MobileLoginUseCase<B> {
         let user_profile_type = profiles
             .map(|profiles| profiles.into_iter().next().map(|p| p.role().clone()))
             .flatten()
-            .map(|role| match role {
-                Role::Specialist => UserProfileType::Specialist,
-                Role::Patient => UserProfileType::Patient,
-            })
-            .unwrap_or(UserProfileType::Patient);
+            .map(|role| UserProfileType::from(&role))
+            .unwrap_or_default();
 
         Ok(LoginUseCaseResult {
             session,
