@@ -26,7 +26,7 @@ impl Credentials {
 
     pub fn from(email: &str, password: &str) -> Self {
         Self::new(
-            Email::new(email.to_string()),
+            Email::try_from(email.to_string()).unwrap(),
             Password::new(password.to_string()),
         )
     }

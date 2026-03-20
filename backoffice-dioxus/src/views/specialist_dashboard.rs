@@ -112,7 +112,7 @@ pub fn SpecialistPatients() -> Element {
                                                 {
                                                     data.profiles
                                                         .iter()
-                                                        .find(|p| p.id().value() == link.patient_id)
+                                                        .find(|p| p.id() == &link.patient_id)
                                                         .map(|p: &Profile| rsx! { "{p.full_name()} ({p.email()})" })
                                                         .unwrap_or(rsx! { "{link.patient_id}" })
                                                 }

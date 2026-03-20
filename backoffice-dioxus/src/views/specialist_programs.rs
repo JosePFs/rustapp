@@ -271,7 +271,7 @@ pub fn SpecialistPrograms() -> Element {
                                     let rows: Vec<dioxus::prelude::Element> = links
                                         .iter()
                                         .filter_map(|link| {
-                                            let profile = profiles.iter().find(|p| p.id().value() == link.patient_id)?.clone();
+                                            let profile = profiles.iter().find(|p| p.id() == &link.patient_id)?.clone();
                                             let has_any = selected_prog_ids
                                                 .iter()
                                                 .any(|prog_id| existing.contains(&(link.patient_id.clone(), prog_id.clone())));
@@ -328,7 +328,7 @@ pub fn SpecialistPrograms() -> Element {
                                                         let ids: HashSet<String> = links
                                                             .iter()
                                                             .filter_map(|link| {
-                                                                let profile = profiles.iter().find(|p| p.id().value() == link.patient_id)?;
+                                                                let profile = profiles.iter().find(|p| p.id() == &link.patient_id)?;
                                                                 let has_any = selected_prog_ids
                                                                     .iter()
                                                                     .any(|prog_id| existing.contains(&(link.patient_id.clone(), prog_id.clone())));

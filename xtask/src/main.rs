@@ -28,6 +28,15 @@ fn main() {
         "dioxus-run" => {
             run_cargo_command(&["run", "--bin", "dev", "--", "web"]);
         }
+        "dioxus-check" => {
+            run_cargo_command(&["check"]);
+        }
+        "dioxus-test" => {
+            run_cargo_command(&["test"]);
+        }
+        "dioxus-build" => {
+            run_cargo_command(&["build", "--release"]);
+        }
 
         // Flutter Bridge Development
         "frb-generate" => {
@@ -40,10 +49,22 @@ fn main() {
             );
         }
 
+        // Domain Commands
+        "domain-check" => run_cargo_command(&["check", "--package", "domain"]),
+        "domain-test" => run_cargo_command(&["test", "--package", "domain"]),
+        "domain-build" => run_cargo_command(&["build", "--release", "--package", "domain"]),
+
+        // Application Commands
+        "application-check" => run_cargo_command(&["check", "--package", "application"]),
+        "application-test" => run_cargo_command(&["test", "--package", "application"]),
+        "application-build" => {
+            run_cargo_command(&["build", "--release", "--package", "application"])
+        }
+
         // General Commands
         "check-all" => run_cargo_command(&["check", "--workspace"]),
         "test-all" => run_cargo_command(&["test", "--workspace"]),
-        "clean" => run_cargo_command(&["clean"]),
+        "clean" => run_cargo_command(&["clean", "--workspace"]),
 
         "help" | "--help" | "-h" => show_help(),
 
@@ -78,8 +99,6 @@ fn show_help() {
 }
 
 fn run_cargo_command(args: &[&str]) {
-    println!("🔧 Running: cargo {}", args.join(" "));
-
     let status = Command::new("cargo")
         .args(args)
         .status()

@@ -130,10 +130,10 @@ pub struct WorkoutExerciseRow {
 impl From<ProfileDto> for Profile {
     fn from(dto: ProfileDto) -> Self {
         Profile::new(
-            Id::new(dto.id),
-            Email::new(dto.email),
-            FullName::new(dto.full_name),
-            Role::new(&dto.role),
+            Id::try_from(dto.id).unwrap(),
+            Email::try_from(dto.email).unwrap(),
+            FullName::try_from(dto.full_name).unwrap(),
+            Role::try_from(dto.role).unwrap(),
         )
     }
 }

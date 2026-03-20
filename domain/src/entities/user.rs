@@ -1,15 +1,15 @@
-use crate::vos::{email::Email, fullname::FullName, role::Role};
+use crate::vos::{email::Email, fullname::FullName, id::Id, role::Role};
 
 #[derive(Debug, Clone)]
 pub struct User {
-    id: String,
+    id: Id,
     fullname: FullName,
     email: Email,
     role: Role,
 }
 
 impl User {
-    pub fn new(id: String, fullname: FullName, email: Email, role: Role) -> Self {
+    pub fn new(id: Id, fullname: FullName, email: Email, role: Role) -> Self {
         Self {
             id,
             fullname,
@@ -18,7 +18,7 @@ impl User {
         }
     }
 
-    pub fn id(&self) -> &str {
+    pub fn id(&self) -> &Id {
         &self.id
     }
 
