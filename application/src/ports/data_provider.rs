@@ -4,7 +4,7 @@ use domain::entities::{
     Exercise, PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback,
     SpecialistPatient, Workout, WorkoutExercise, WorkoutSession,
 };
-use domain::{error::Result, profile::Profile};
+use domain::{error::Result, vos::profile::Profile};
 
 #[async_trait(?Send)]
 pub trait DataProvider: Send + Sync {

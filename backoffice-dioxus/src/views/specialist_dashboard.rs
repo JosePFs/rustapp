@@ -13,7 +13,7 @@ use crate::hooks::{
     specialist_patients::use_specialist_patients, AsyncState,
 };
 use crate::Route;
-use domain::profile::Profile;
+use domain::vos::profile::Profile;
 
 #[component]
 pub fn SpecialistPatients() -> Element {

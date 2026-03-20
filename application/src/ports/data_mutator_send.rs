@@ -1,7 +1,6 @@
 use async_trait::async_trait;
 
-use domain::entities::WorkoutSession;
-use domain::error::Result;
+use domain::{entities::entities::WorkoutSession, error::Result};
 
 #[async_trait]
 pub trait DataMutatorSend: Send + Sync {

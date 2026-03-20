@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::ports::Backend;
 use domain::entities::SpecialistPatient;
 use domain::error::Result;
-use domain::profile::Profile;
+use domain::vos::profile::Profile;
 
 #[derive(Clone)]
 pub struct GetSpecialistPatientsWithProfilesArgs {

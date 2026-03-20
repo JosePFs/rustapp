@@ -4,7 +4,7 @@ use crate::app_context::LoginUseCaseType;
 use crate::hooks::app_context::use_app_context;
 use crate::hooks::AsyncState;
 use application::use_cases::login::{LoginUseCaseArgs, LoginUseCaseResult};
-use domain::credentials::Credentials;
+use domain::vos::credentials::Credentials;
 
 #[derive(Debug, Clone)]
 pub struct UseLogin {

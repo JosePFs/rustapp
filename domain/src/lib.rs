@@ -1,10 +1,4 @@
-pub mod credentials;
-pub mod email;
 pub mod entities;
 pub mod error;
-pub mod fullname;
-pub mod id;
-pub mod profile;
-pub mod role;
-pub mod session;
-pub mod user;
+pub mod ports;
+pub mod vos;

@@ -1,6 +1,9 @@
 use async_trait::async_trait;
 
-use domain::{credentials::Credentials, error::Result, session::Session};
+use domain::{
+    error::Result,
+    vos::{credentials::Credentials, session::Session},
+};
 
 #[async_trait]
 pub trait AuthServiceSend: Send + Sync {

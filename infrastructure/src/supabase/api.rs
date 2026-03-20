@@ -12,15 +12,15 @@ use crate::api::dtos::{
 use application::ports::{AuthService, Backend, DataMutator, DataProvider};
 use domain::entities::SessionExerciseFeedback;
 use domain::{
-    credentials::Credentials,
     entities::{
         Exercise, PatientProgram, Program, ProgramScheduleItem, SpecialistPatient, Workout,
         WorkoutExercise, WorkoutSession,
     },
     error::DomainError,
     error::Result,
-    profile::Profile,
-    session::Session,
+    vos::credentials::Credentials,
+    vos::profile::Profile,
+    vos::session::Session,
 };
 
 fn parse_json<T: DeserializeOwned>(body: &[u8]) -> std::result::Result<T, String> {

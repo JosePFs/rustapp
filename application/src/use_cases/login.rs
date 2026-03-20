@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
 use crate::ports::Backend;
-use domain::{credentials::Credentials, error::Result, role::Role, session::Session};
+use domain::{
+    error::Result,
+    vos::{credentials::Credentials, role::Role, session::Session},
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LoginUseCaseArgs {

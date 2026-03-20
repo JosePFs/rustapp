@@ -4,7 +4,7 @@ use domain::entities::{
     Exercise, PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback,
     SpecialistPatient, Workout, WorkoutSession,
 };
-use domain::{email::Email, fullname::FullName, id::Id, profile::Profile, role::Role};
+use domain::vos::{email::Email, fullname::FullName, id::Id, profile::Profile, role::Role};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ProfileDto {

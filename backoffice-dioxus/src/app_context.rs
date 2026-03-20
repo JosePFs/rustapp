@@ -28,7 +28,7 @@ use application::{
     use_cases::update_workout_exercise::UpdateWorkoutExerciseUseCase,
     use_cases::workout_editor_data::WorkoutEditorDataUseCase,
 };
-use domain::{error::Result, session::Session};
+use domain::{error::Result, vos::session::Session};
 use infrastructure::supabase::{api::Api, client::SupabaseClient, config::SupabaseConfig};
 
 #[derive(Clone)]

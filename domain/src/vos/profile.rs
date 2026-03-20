@@ -1,4 +1,4 @@
-use crate::{email::Email, fullname::FullName, id::Id, role::Role};
+use crate::vos::{email::Email, fullname::FullName, id::Id, role::Role};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Profile {

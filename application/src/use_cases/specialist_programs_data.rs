@@ -5,7 +5,7 @@ use futures::try_join;
 use crate::ports::Backend;
 use domain::entities::{PatientProgram, Program, SpecialistPatient};
 use domain::error::Result;
-use domain::profile::Profile;
+use domain::vos::profile::Profile;
 
 #[derive(Clone)]
 pub struct SpecialistProgramsDataArgs {

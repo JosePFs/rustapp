@@ -1,4 +1,4 @@
-use crate::email::Email;
+use crate::vos::email::Email;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Password(String);

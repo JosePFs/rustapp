@@ -8,7 +8,7 @@ use domain::entities::{
     PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession,
 };
 use domain::error::Result;
-use domain::profile::Profile;
+use domain::vos::profile::Profile;
 
 #[derive(Clone)]
 pub struct PatientProgressArgs {

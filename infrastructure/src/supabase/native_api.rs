@@ -14,7 +14,8 @@ use domain::entities::{
     WorkoutExercise, WorkoutSession,
 };
 use domain::{
-    credentials::Credentials, error::DomainError, error::Result, profile::Profile, session::Session,
+    error::DomainError, error::Result, vos::credentials::Credentials, vos::profile::Profile,
+    vos::session::Session,
 };
 
 #[derive(Clone)]
