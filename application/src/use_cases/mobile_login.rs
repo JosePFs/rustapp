@@ -1,20 +1,22 @@
 use std::sync::Arc;
 
+use crate::ports::auth::auth::AuthService;
 use crate::ports::MobileBackend;
 use crate::use_cases::login::{LoginUseCaseArgs, LoginUseCaseResult, UserProfileType};
 use domain::error::Result;
 
-pub struct MobileLoginUseCase<B: MobileBackend> {
+pub struct MobileLoginUseCase<B: MobileBackend, A: AuthService> {
     backend: Arc<B>,
+    auth: Arc<A>,
 }
 
-impl<B: MobileBackend> MobileLoginUseCase<B> {
-    pub fn new(backend: Arc<B>) -> Self {
-        Self { backend }
+impl<B: MobileBackend, A: AuthService> MobileLoginUseCase<B, A> {
+    pub fn new(backend: Arc<B>, auth: Arc<A>) -> Self {
+        Self { backend, auth }
     }
 
     pub async fn execute(&self, args: LoginUseCaseArgs) -> Result<LoginUseCaseResult> {
-        let session = self.backend.sign_in(&args.credentials).await?;
+        let session = self.auth.sign_in(&args.credentials).await?;
 
         let profiles = self
             .backend

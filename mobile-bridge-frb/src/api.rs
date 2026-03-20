@@ -3,7 +3,8 @@ use std::sync::{Arc, LazyLock};
 use serde::{Deserialize, Serialize};
 
 use application::{
-    ports::{AuthServiceSend as _, DataProviderSend},
+    ports::auth::auth::AuthService,
+    ports::DataProviderSend,
     use_cases::{
         login::{LoginUseCaseArgs, UserProfileType},
         mobile_get_patient_programs::{
@@ -18,13 +19,20 @@ use application::{
         },
     },
 };
-use infrastructure::supabase::native_api::NativeApi;
+use infrastructure::supabase::{auth::SupabaseAuth, native_api::NativeApi};
 
 static NATIVE_API: LazyLock<Arc<NativeApi>> =
     LazyLock::new(|| Arc::new(NativeApi::builder().build()));
 
+static SUPABASE_AUTH: LazyLock<Arc<SupabaseAuth>> =
+    LazyLock::new(|| Arc::new(SupabaseAuth::builder().build()));
+
 fn get_api() -> Arc<NativeApi> {
     NATIVE_API.clone()
+}
+
+fn get_auth() -> Arc<SupabaseAuth> {
+    SUPABASE_AUTH.clone()
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -101,7 +109,7 @@ pub struct PatientProgramSummary {
 }
 
 pub async fn login(request: LoginRequest) -> Result<LoginResponse, String> {
-    let use_case = MobileLoginUseCase::<NativeApi>::new(get_api());
+    let use_case = MobileLoginUseCase::<NativeApi, SupabaseAuth>::new(get_api(), get_auth());
     let result = use_case
         .execute(LoginUseCaseArgs::from(&request.email, &request.password))
         .await
@@ -116,8 +124,9 @@ pub async fn login(request: LoginRequest) -> Result<LoginResponse, String> {
 }
 
 pub async fn refresh_session(refresh_token: String) -> Result<LoginResponse, String> {
+    let auth = get_auth();
     let api = get_api();
-    let session = api
+    let session = auth
         .refresh_session(&refresh_token)
         .await
         .map_err(|e| e.to_string())?;

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::supabase::config::SupabaseConfig;
-use domain::vos::credentials::Credentials;
+use application::ports::auth::credentials::Credentials;
 
 #[derive(Clone)]
 pub struct SupabaseClient {

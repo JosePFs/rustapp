@@ -9,7 +9,8 @@ use crate::api::dtos::{
     SessionExerciseFeedbackDto, SpecialistPatientDto, WorkoutDto, WorkoutExerciseRow,
     WorkoutSessionDto,
 };
-use application::ports::{AuthService, Backend, DataMutator, DataProvider};
+use crate::supabase::config::SupabaseConfig;
+use application::ports::{Backend, DataMutator, DataProvider};
 use domain::entities::SessionExerciseFeedback;
 use domain::{
     entities::{
@@ -18,9 +19,7 @@ use domain::{
     },
     error::DomainError,
     error::Result,
-    vos::credentials::Credentials,
     vos::profile::Profile,
-    vos::session::Session,
 };
 
 fn parse_json<T: DeserializeOwned>(body: &[u8]) -> std::result::Result<T, String> {
@@ -33,33 +32,12 @@ pub struct Api {
 }
 
 impl Api {
-    pub fn new(client: SupabaseClient) -> Self {
+    fn new(client: SupabaseClient) -> Self {
         Self { client }
     }
-}
 
-#[async_trait(?Send)]
-impl AuthService for Api {
-    async fn sign_in(&self, credentials: &Credentials) -> domain::error::Result<Session> {
-        self.client
-            .sign_in(credentials)
-            .await
-            .map_err(|e| {
-                log::warn!("Login failed: {}", e);
-                DomainError::Login("wrong_credentials".to_string())
-            })
-            .map(|auth| Session::new(auth.access_token, auth.refresh_token, auth.user.id))
-    }
-
-    async fn refresh_session(&self, refresh_token: &str) -> Result<Session> {
-        self.client
-            .refresh_session(refresh_token)
-            .await
-            .map_err(|e| {
-                log::warn!("Refresh session failed: {}", e);
-                DomainError::Login("refresh_token_expired".to_string())
-            })
-            .map(|auth| Session::new(auth.access_token, auth.refresh_token, auth.user.id))
+    pub fn builder() -> ApiBuilder {
+        ApiBuilder::new()
     }
 }
 
@@ -778,6 +756,29 @@ impl DataMutator for Api {
             .rest_patch(Some(access_token), &path, &payload)
             .await?;
         Ok(())
+    }
+}
+
+pub struct ApiBuilder {
+    config: Option<SupabaseConfig>,
+}
+
+impl ApiBuilder {
+    pub fn new() -> Self {
+        Self { config: None }
+    }
+
+    pub fn with_config(mut self, config: SupabaseConfig) -> Self {
+        self.config = Some(config);
+        self
+    }
+
+    pub fn build(self) -> Api {
+        let config = self
+            .config
+            .unwrap_or_else(|| SupabaseConfig::from_env().expect("Failed to load Supabase config"));
+
+        Api::new(SupabaseClient::new(config))
     }
 }
 

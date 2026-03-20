@@ -4,6 +4,7 @@ use dioxus::signals::Signal;
 
 use anymap2::{any::Any, AnyMap};
 
+use application::ports::auth::session::Session;
 use application::{
     use_cases::add_exercise_to_workout::AddExerciseToWorkoutUseCase,
     use_cases::add_specialist_patient::AddSpecialistPatientUseCase,
@@ -28,8 +29,9 @@ use application::{
     use_cases::update_workout_exercise::UpdateWorkoutExerciseUseCase,
     use_cases::workout_editor_data::WorkoutEditorDataUseCase,
 };
-use domain::{error::Result, vos::session::Session};
-use infrastructure::supabase::{api::Api, client::SupabaseClient, config::SupabaseConfig};
+use domain::error::Result;
+use infrastructure::supabase::api::Api;
+use infrastructure::supabase::auth::SupabaseAuth;
 
 #[derive(Clone)]
 pub struct AppContext {
@@ -58,10 +60,8 @@ impl AppContext {
 }
 
 pub fn build_app_context() -> Result<AppContext> {
-    let config = SupabaseConfig::from_env()?;
-
-    let api = Api::new(SupabaseClient::new(config));
-    let backend = Arc::new(api);
+    let auth = Arc::new(SupabaseAuth::builder().build());
+    let backend = Arc::new(Api::builder().build());
 
     let add_specialist_patient_use_case =
         Arc::new(AddSpecialistPatientUseCase::<Api>::new(backend.clone()));
@@ -79,7 +79,10 @@ pub fn build_app_context() -> Result<AppContext> {
         DeleteProgramScheduleItemUseCase::<Api>::new(backend.clone()),
     );
     let delete_workout_use_case = Arc::new(DeleteWorkoutUseCase::<Api>::new(backend.clone()));
-    let login_use_case = Arc::new(LoginUseCase::<Api>::new(backend.clone()));
+    let login_use_case = Arc::new(LoginUseCase::<Api, SupabaseAuth>::new(
+        backend.clone(),
+        auth.clone(),
+    ));
     let get_specialist_patients_with_profiles_use_case = Arc::new(
         GetSpecialistPatientsWithProfilesUseCase::<Api>::new(backend.clone()),
     );
@@ -142,7 +145,7 @@ pub type CreateProgramScheduleItemUseCaseType = CreateProgramScheduleItemUseCase
 pub type CreateWorkoutUseCaseType = CreateWorkoutUseCase<Api>;
 pub type DeleteProgramScheduleItemUseCaseType = DeleteProgramScheduleItemUseCase<Api>;
 pub type DeleteWorkoutUseCaseType = DeleteWorkoutUseCase<Api>;
-pub type LoginUseCaseType = LoginUseCase<Api>;
+pub type LoginUseCaseType = LoginUseCase<Api, SupabaseAuth>;
 pub type GetSpecialistPatientsWithProfilesUseCaseType =
     GetSpecialistPatientsWithProfilesUseCase<Api>;
 pub type SpecialistProgramsDataUseCaseType = SpecialistProgramsDataUseCase<Api>;

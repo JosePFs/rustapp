@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
+use crate::ports::auth::auth::AuthService;
+use crate::ports::auth::{credentials::Credentials, session::Session};
 use crate::ports::Backend;
-use domain::{
-    error::Result,
-    vos::{credentials::Credentials, role::Role, session::Session},
-};
+use domain::error::Result;
+use domain::vos::role::Role;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LoginUseCaseArgs {
@@ -65,17 +65,18 @@ impl LoginUseCaseResult {
     }
 }
 
-pub struct LoginUseCase<B: Backend> {
+pub struct LoginUseCase<B: Backend, A: AuthService> {
     backend: Arc<B>,
+    auth: Arc<A>,
 }
 
-impl<B: Backend> LoginUseCase<B> {
-    pub fn new(backend: Arc<B>) -> Self {
-        Self { backend }
+impl<B: Backend, A: AuthService> LoginUseCase<B, A> {
+    pub fn new(backend: Arc<B>, auth: Arc<A>) -> Self {
+        Self { backend, auth }
     }
 
     pub async fn execute(&self, args: LoginUseCaseArgs) -> Result<LoginUseCaseResult> {
-        let session = self.backend.sign_in(&args.credentials).await?;
+        let session = self.auth.sign_in(&args.credentials).await?;
 
         let profiles = self
             .backend

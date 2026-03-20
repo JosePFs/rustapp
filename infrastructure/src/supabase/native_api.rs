@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+
 use serde::Deserialize;
 
 use super::client::SupabaseClient;
@@ -8,15 +9,12 @@ use crate::api::dtos::{
 };
 use crate::supabase::config::SupabaseConfig;
 use application::ports::MobileBackend;
-use application::ports::{AuthServiceSend, DataMutatorSend, DataProviderSend};
+use application::ports::{DataMutatorSend, DataProviderSend};
 use domain::entities::{
     PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback, Workout,
     WorkoutExercise, WorkoutSession,
 };
-use domain::{
-    error::DomainError, error::Result, vos::credentials::Credentials, vos::profile::Profile,
-    vos::session::Session,
-};
+use domain::{error::DomainError, error::Result, vos::profile::Profile};
 
 #[derive(Clone)]
 pub struct NativeApi {
@@ -30,31 +28,6 @@ impl NativeApi {
 
     pub fn builder() -> NativeApiBuilder {
         NativeApiBuilder::new()
-    }
-}
-
-#[async_trait]
-impl AuthServiceSend for NativeApi {
-    async fn sign_in(&self, credentials: &Credentials) -> Result<Session> {
-        self.client
-            .sign_in(credentials)
-            .await
-            .map_err(|e| {
-                log::warn!("Login failed: {}", e);
-                DomainError::Login("wrong_credentials".to_string())
-            })
-            .map(|auth| Session::new(auth.access_token, auth.refresh_token, auth.user.id))
-    }
-
-    async fn refresh_session(&self, refresh_token: &str) -> Result<Session> {
-        self.client
-            .refresh_session(refresh_token)
-            .await
-            .map_err(|e| {
-                log::warn!("Refresh session failed: {}", e);
-                DomainError::Login("refresh_token_expired".to_string())
-            })
-            .map(|auth| Session::new(auth.access_token, auth.refresh_token, auth.user.id))
     }
 }
 

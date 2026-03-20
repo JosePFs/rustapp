@@ -3,8 +3,8 @@ use dioxus::prelude::*;
 use crate::app_context::LoginUseCaseType;
 use crate::hooks::app_context::use_app_context;
 use crate::hooks::AsyncState;
+use application::ports::auth::credentials::Credentials;
 use application::use_cases::login::{LoginUseCaseArgs, LoginUseCaseResult};
-use domain::vos::credentials::Credentials;
 
 #[derive(Debug, Clone)]
 pub struct UseLogin {
