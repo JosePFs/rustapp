@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::UpdateWorkoutExerciseUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
 use application::use_cases::update_workout_exercise::{
     UpdateWorkoutExerciseArgs, UpdateWorkoutExerciseUseCase,
@@ -14,10 +15,7 @@ pub struct UseUpdateWorkoutExercise {
 
 pub fn use_update_workout_exercise() -> UseUpdateWorkoutExercise {
     let app_context = use_app_context();
-    let use_case: std::sync::Arc<
-        UpdateWorkoutExerciseUseCase<infrastructure::supabase::api::Api>,
-    > = app_context
-        .update_workout_exercise_use_case();
+    let use_case = app_context.use_case::<UpdateWorkoutExerciseUseCaseType>();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
 

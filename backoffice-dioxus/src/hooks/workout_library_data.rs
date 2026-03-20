@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::ListWorkoutLibraryUseCaseType;
 use crate::hooks::app_context::use_app_context;
 use application::use_cases::list_workout_library::{ListWorkoutLibraryArgs, ListWorkoutLibraryUseCase};
 use domain::error::DomainError;
@@ -12,9 +13,7 @@ pub struct UseWorkoutLibraryData {
 
 pub fn use_workout_library_data() -> UseWorkoutLibraryData {
     let app_context = use_app_context();
-    let use_case: std::sync::Arc<
-        ListWorkoutLibraryUseCase<infrastructure::supabase::api::Api>,
-    > = app_context.list_workout_library_use_case();
+    let use_case = app_context.use_case::<ListWorkoutLibraryUseCaseType>();
     let session_signal = app_context.session();
 
     let use_case_clone = use_case.clone();

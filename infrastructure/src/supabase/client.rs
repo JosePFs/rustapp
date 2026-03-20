@@ -295,6 +295,7 @@ async fn rest_request_inner(
     apikey: &str,
     bearer: Option<&str>,
     body: Option<&[u8]>,
+    prefer: Option<&str>,
 ) -> Result<HttpResponse, String> {
     use gloo_net::http::Request;
     use js_sys::Uint8Array;
@@ -310,7 +311,7 @@ async fn rest_request_inner(
         .header("apikey", apikey)
         .header("Content-Type", "application/json")
         .header("Accept", "application/json")
-        .header("Prefer", "return=representation");
+        .header("Prefer", prefer.unwrap_or("return=representation"));
     if let Some(t) = bearer {
         req = req.header("Authorization", &format!("Bearer {}", t));
     }

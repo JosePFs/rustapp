@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::ListWorkoutLibraryUseCaseType;
 use crate::{hooks::app_context::use_app_context, hooks::AsyncState};
 use application::use_cases::list_workout_library::ListWorkoutLibraryArgs;
 use domain::entities::Workout;
@@ -14,7 +15,7 @@ pub struct UseWorkoutLibrary {
 pub fn use_workout_library(filter: Signal<String>) -> UseWorkoutLibrary {
     let app_context = use_app_context();
     let app_session = app_context.session();
-    let use_case = app_context.list_workout_library_use_case();
+    let use_case = app_context.use_case::<ListWorkoutLibraryUseCaseType>();
     let mut state = use_signal(|| AsyncState::<Vec<Workout>>::Loading);
 
     let use_case = use_case.clone();

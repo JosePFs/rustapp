@@ -1,7 +1,8 @@
 use dioxus::prelude::*;
 
+use crate::app_context::UpdateExerciseUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::use_cases::update_exercise::{UpdateExerciseArgs, UpdateExerciseUseCase};
+use application::use_cases::update_exercise::UpdateExerciseArgs;
 use domain::error::DomainError;
 
 #[derive(Clone)]
@@ -12,9 +13,7 @@ pub struct UseUpdateExercise {
 
 pub fn use_update_exercise() -> UseUpdateExercise {
     let app_context = use_app_context();
-    let use_case: std::sync::Arc<
-        UpdateExerciseUseCase<infrastructure::supabase::api::Api>,
-    > = app_context.update_exercise_use_case();
+    let use_case = app_context.use_case::<UpdateExerciseUseCaseType>();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
 

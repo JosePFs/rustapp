@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::GetSpecialistPatientsWithProfilesUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
 use application::use_cases::get_specialist_patients_with_profiles::{
     GetSpecialistPatientsWithProfilesArgs, GetSpecialistPatientsWithProfilesResult,
@@ -15,7 +16,7 @@ pub struct UseSpecialistPatients {
 pub fn use_specialist_patients() -> UseSpecialistPatients {
     let app_context = use_app_context();
     let app_session = app_context.session();
-    let use_case = app_context.get_specialist_patients_with_profiles_use_case();
+    let use_case = app_context.use_case::<GetSpecialistPatientsWithProfilesUseCaseType>();
     let mut state = use_signal(|| AsyncState::<GetSpecialistPatientsWithProfilesResult>::Loading);
 
     let use_case = use_case.clone();

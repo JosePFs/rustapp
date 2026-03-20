@@ -5,19 +5,19 @@ use serde::{Deserialize, Serialize};
 use application::{
     ports::DataProviderSend,
     use_cases::{
-        get_patient_programs::GetPatientProgramsUseCaseArgs,
-        login::LoginUseCaseArgs,
-        login::UserProfileType,
-        mobile_get_patient_programs::MobileGetPatientProgramsUseCase,
+        login::{LoginUseCaseArgs, UserProfileType},
+        mobile_get_patient_programs::{
+            GetPatientProgramsUseCaseArgs, MobileGetPatientProgramsUseCase,
+        },
         mobile_login::MobileLoginUseCase,
         mobile_submit_patient_workout_feedback::{
             MobileSubmitPatientWorkoutFeedbackArgs, MobileSubmitPatientWorkoutFeedbackUseCase,
         },
-        uncomplete_patient_workout_session::UncompletePatientWorkoutSessionArgs,
-        uncomplete_patient_workout_session::UncompletePatientWorkoutSessionUseCase,
+        uncomplete_patient_workout_session::{
+            UncompletePatientWorkoutSessionArgs, UncompletePatientWorkoutSessionUseCase,
+        },
     },
 };
-use domain::{credentials::Credentials, role::Role};
 use infrastructure::supabase::{
     client::SupabaseClient, config::SupabaseConfig, native_api::NativeApi,
 };
@@ -112,9 +112,7 @@ fn backend(config: BridgeConfig) -> Arc<NativeApi> {
 pub async fn login(request: LoginRequest, config: BridgeConfig) -> Result<LoginResponse, String> {
     let use_case = MobileLoginUseCase::<NativeApi>::new(backend(config));
     let result = use_case
-        .execute(LoginUseCaseArgs {
-            credentials: Credentials::from(&request.email, &request.password),
-        })
+        .execute(LoginUseCaseArgs::from(&request.email, &request.password))
         .await
         .map_err(|error| error.to_string())?;
 
@@ -149,11 +147,8 @@ pub async fn refresh_session(
         .ok();
     let user_profile_type = profiles
         .and_then(|profiles| profiles.into_iter().next().map(|p| p.role().clone()))
-        .map(|role| match role {
-            Role::Specialist => UserProfileType::Specialist,
-            Role::Patient => UserProfileType::Patient,
-        })
-        .unwrap_or(UserProfileType::Patient);
+        .map(|role| UserProfileType::from(&role))
+        .unwrap_or_default();
 
     Ok(LoginResponse {
         access_token: session.access_token,

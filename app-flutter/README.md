@@ -71,6 +71,9 @@ flutter_rust_bridge_codegen generate \
   --rust-input crate::api \
   --dart-root app-flutter \
   --dart-output app-flutter/lib/src/rust
+
+# Or using xtask crate
+cargo xtask frb-generate
 ```
 
 Use this whenever you change public APIs in `mobile-bridge-frb/src/api.rs`, but `build_rust_bridge_linux.sh` and `build_rust_bridge_android.s` already generates when changes detected.

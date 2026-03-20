@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::ListProgramScheduleUseCaseType;
 use crate::hooks::app_context::use_app_context;
 use application::use_cases::list_program_schedule::{ListProgramScheduleArgs, ListProgramScheduleUseCase, ProgramScheduleData};
 use domain::error::DomainError;
@@ -11,9 +12,7 @@ pub struct UseProgramScheduleData {
 
 pub fn use_program_schedule_data(program_id: String) -> UseProgramScheduleData {
     let app_context = use_app_context();
-    let use_case: std::sync::Arc<
-        ListProgramScheduleUseCase<infrastructure::supabase::api::Api>,
-    > = app_context.list_program_schedule_use_case();
+    let use_case = app_context.use_case::<ListProgramScheduleUseCaseType>();
     let session_signal = app_context.session();
 
     let use_case_clone = use_case.clone();

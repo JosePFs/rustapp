@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::RestoreExerciseUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
 use application::use_cases::restore_exercise::{RestoreExerciseArgs, RestoreExerciseUseCase};
 use domain::error::DomainError;
@@ -12,9 +13,7 @@ pub struct UseRestoreExercise {
 
 pub fn use_restore_exercise() -> UseRestoreExercise {
     let app_context = use_app_context();
-    let use_case: std::sync::Arc<
-        RestoreExerciseUseCase<infrastructure::supabase::api::Api>,
-    > = app_context.restore_exercise_use_case();
+    let use_case = app_context.use_case::<RestoreExerciseUseCaseType>();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
 

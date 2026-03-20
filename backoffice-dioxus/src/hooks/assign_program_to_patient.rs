@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::AssignProgramToPatientUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
 use application::use_cases::assign_program_to_patient::{
     AssignProgramToPatientArgs, AssignProgramToPatientUseCase,
@@ -14,10 +15,7 @@ pub struct UseAssignProgramToPatient {
 
 pub fn use_assign_program_to_patient() -> UseAssignProgramToPatient {
     let app_context = use_app_context();
-    let use_case: std::sync::Arc<
-        AssignProgramToPatientUseCase<infrastructure::supabase::api::Api>,
-    > = app_context
-        .assign_program_to_patient_use_case();
+    let use_case = app_context.use_case::<AssignProgramToPatientUseCaseType>();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
 

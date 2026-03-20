@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::CreateProgramScheduleItemUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
 use application::use_cases::create_program_schedule_item::{
     CreateProgramScheduleItemArgs, CreateProgramScheduleItemUseCase,
@@ -14,10 +15,7 @@ pub struct UseCreateProgramScheduleItem {
 
 pub fn use_create_program_schedule_item() -> UseCreateProgramScheduleItem {
     let app_context = use_app_context();
-    let use_case: std::sync::Arc<
-        CreateProgramScheduleItemUseCase<infrastructure::supabase::api::Api>,
-    > = app_context
-        .create_program_schedule_item_use_case();
+    let use_case = app_context.use_case::<CreateProgramScheduleItemUseCaseType>();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
 

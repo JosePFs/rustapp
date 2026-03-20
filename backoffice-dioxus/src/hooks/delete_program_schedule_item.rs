@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::DeleteProgramScheduleItemUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
 use application::use_cases::delete_program_schedule_item::{
     DeleteProgramScheduleItemArgs, DeleteProgramScheduleItemUseCase,
@@ -14,10 +15,7 @@ pub struct UseDeleteProgramScheduleItem {
 
 pub fn use_delete_program_schedule_item() -> UseDeleteProgramScheduleItem {
     let app_context = use_app_context();
-    let use_case: std::sync::Arc<
-        DeleteProgramScheduleItemUseCase<infrastructure::supabase::api::Api>,
-    > = app_context
-        .delete_program_schedule_item_use_case();
+    let use_case = app_context.use_case::<DeleteProgramScheduleItemUseCaseType>();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
 

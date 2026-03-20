@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::LoginUseCaseType;
 use crate::hooks::app_context::use_app_context;
 use crate::hooks::AsyncState;
 use application::use_cases::login::{LoginUseCaseArgs, LoginUseCaseResult};
@@ -13,7 +14,7 @@ pub struct UseLogin {
 
 pub fn use_login() -> UseLogin {
     let app_context = use_app_context();
-    let login_use_case = app_context.login_use_case();
+    let login_use_case = app_context.use_case::<LoginUseCaseType>();
     let mut app_session = app_context.session();
     let mut state = use_signal(|| AsyncState::<LoginUseCaseResult>::Idle);
 

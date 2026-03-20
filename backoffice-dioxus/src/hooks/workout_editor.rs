@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::WorkoutEditorDataUseCaseType;
 use crate::{hooks::app_context::use_app_context, hooks::AsyncState};
 use application::use_cases::workout_editor_data::{WorkoutEditorDataArgs, WorkoutEditorDataResult};
 use domain::error::{DomainError, Result};
@@ -13,7 +14,7 @@ pub struct UseWorkoutEditor {
 pub fn use_workout_editor(workout_id: String) -> UseWorkoutEditor {
     let app_context = use_app_context();
     let app_session = app_context.session();
-    let use_case = app_context.workout_editor_data_use_case();
+    let use_case = app_context.use_case::<WorkoutEditorDataUseCaseType>();
     let mut state = use_signal(|| AsyncState::<WorkoutEditorDataResult>::Loading);
 
     let use_case = use_case.clone();

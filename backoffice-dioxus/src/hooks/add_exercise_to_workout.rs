@@ -1,9 +1,10 @@
 use dioxus::prelude::*;
 
-use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::use_cases::add_exercise_to_workout::{
-    AddExerciseToWorkoutArgs, AddExerciseToWorkoutUseCase,
+use crate::{
+    app_context::AddExerciseToWorkoutUseCaseType,
+    hooks::{app_context::use_app_context, AsyncState},
 };
+use application::use_cases::add_exercise_to_workout::AddExerciseToWorkoutArgs;
 use domain::error::DomainError;
 
 #[derive(Clone)]
@@ -14,9 +15,7 @@ pub struct UseAddExerciseToWorkout {
 
 pub fn use_add_exercise_to_workout() -> UseAddExerciseToWorkout {
     let app_context = use_app_context();
-    let use_case: std::sync::Arc<
-        AddExerciseToWorkoutUseCase<infrastructure::supabase::api::Api>,
-    > = app_context.add_exercise_to_workout_use_case();
+    let use_case = app_context.use_case::<AddExerciseToWorkoutUseCaseType>();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
 

@@ -1,7 +1,8 @@
 use dioxus::prelude::*;
 
+use crate::app_context::CreateExerciseUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::use_cases::create_exercise::{CreateExerciseArgs, CreateExerciseUseCase};
+use application::use_cases::create_exercise::CreateExerciseArgs;
 use domain::error::DomainError;
 
 #[derive(Clone)]
@@ -12,9 +13,7 @@ pub struct UseCreateExercise {
 
 pub fn use_create_exercise() -> UseCreateExercise {
     let app_context = use_app_context();
-    let use_case: std::sync::Arc<
-        CreateExerciseUseCase<infrastructure::supabase::api::Api>,
-    > = app_context.create_exercise_use_case();
+    let use_case = app_context.use_case::<CreateExerciseUseCaseType>();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
 

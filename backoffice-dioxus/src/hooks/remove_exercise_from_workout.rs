@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::RemoveExerciseFromWorkoutUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
 use application::use_cases::remove_exercise_from_workout::{
     RemoveExerciseFromWorkoutArgs, RemoveExerciseFromWorkoutUseCase,
@@ -14,10 +15,7 @@ pub struct UseRemoveExerciseFromWorkout {
 
 pub fn use_remove_exercise_from_workout() -> UseRemoveExerciseFromWorkout {
     let app_context = use_app_context();
-    let use_case: std::sync::Arc<
-        RemoveExerciseFromWorkoutUseCase<infrastructure::supabase::api::Api>,
-    > = app_context
-        .remove_exercise_from_workout_use_case();
+    let use_case = app_context.use_case::<RemoveExerciseFromWorkoutUseCaseType>();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
 

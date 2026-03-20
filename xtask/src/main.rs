@@ -29,6 +29,17 @@ fn main() {
             run_cargo_command(&["run", "--bin", "dev", "--", "web"]);
         }
 
+        // Flutter Bridge Development
+        "frb-generate" => {
+            run_bash_command(
+                "flutter_rust_bridge_codegen generate \
+                --rust-root mobile-bridge-frb \
+                --rust-input crate::api \
+                --dart-root app-flutter \
+                --dart-output app-flutter/lib/src/rust",
+            );
+        }
+
         // General Commands
         "check-all" => run_cargo_command(&["check", "--workspace"]),
         "test-all" => run_cargo_command(&["test", "--workspace"]),

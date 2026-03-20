@@ -1,9 +1,10 @@
 use dioxus::prelude::*;
 
-use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::use_cases::add_specialist_patient::{
-    AddSpecialistPatientArgs, AddSpecialistPatientUseCase,
+use crate::{
+    app_context::AddSpecialistPatientUseCaseType,
+    hooks::{app_context::use_app_context, AsyncState},
 };
+use application::use_cases::add_specialist_patient::AddSpecialistPatientArgs;
 use domain::error::DomainError;
 
 #[derive(Clone)]
@@ -14,8 +15,7 @@ pub struct UseAddSpecialistPatient {
 
 pub fn use_add_specialist_patient() -> UseAddSpecialistPatient {
     let app_context = use_app_context();
-    let use_case: std::sync::Arc<AddSpecialistPatientUseCase<infrastructure::supabase::api::Api>> =
-        app_context.add_specialist_patient_use_case();
+    let use_case = app_context.use_case::<AddSpecialistPatientUseCaseType>();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
 

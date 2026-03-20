@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::ListExerciseLibraryUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
 use application::use_cases::list_exercise_library::ListExerciseLibraryArgs;
 use domain::{
@@ -16,7 +17,7 @@ pub struct UseExerciseLibrary {
 pub fn use_exercise_library(filter: Signal<String>) -> UseExerciseLibrary {
     let app_context = use_app_context();
     let app_session = app_context.session();
-    let use_case = app_context.list_exercise_library_use_case();
+    let use_case = app_context.use_case::<ListExerciseLibraryUseCaseType>();
     let mut state = use_signal(|| AsyncState::<Vec<Exercise>>::Loading);
 
     let use_case = use_case.clone();

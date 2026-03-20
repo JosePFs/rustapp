@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::DeleteWorkoutUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
 use application::use_cases::delete_workout::{DeleteWorkoutArgs, DeleteWorkoutUseCase};
 use domain::error::DomainError;
@@ -12,8 +13,7 @@ pub struct UseDeleteWorkout {
 
 pub fn use_delete_workout() -> UseDeleteWorkout {
     let app_context = use_app_context();
-    let use_case: std::sync::Arc<DeleteWorkoutUseCase<infrastructure::supabase::api::Api>> =
-        app_context.delete_workout_use_case();
+    let use_case = app_context.use_case::<DeleteWorkoutUseCaseType>();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
 

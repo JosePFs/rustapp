@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::SoftDeleteExerciseUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
 use application::use_cases::soft_delete_exercise::{
     SoftDeleteExerciseArgs, SoftDeleteExerciseUseCase,
@@ -14,9 +15,7 @@ pub struct UseSoftDeleteExercise {
 
 pub fn use_soft_delete_exercise() -> UseSoftDeleteExercise {
     let app_context = use_app_context();
-    let use_case: std::sync::Arc<
-        SoftDeleteExerciseUseCase<infrastructure::supabase::api::Api>,
-    > = app_context.soft_delete_exercise_use_case();
+    let use_case = app_context.use_case::<SoftDeleteExerciseUseCaseType>();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
 

@@ -5,7 +5,6 @@ use futures::try_join;
 
 use crate::ports::MobileBackend;
 use crate::use_cases::agenda_schedule::build_agenda_schedule;
-use crate::use_cases::get_patient_programs::GetPatientProgramsUseCaseArgs;
 use domain::entities::{SessionExerciseFeedback, WorkoutExercise};
 use domain::error::Result;
 
@@ -45,6 +44,10 @@ pub struct MobilePatientProgram {
     pub progress_percent: i32,
     pub average_effort: Option<f32>,
     pub average_pain: Option<f32>,
+}
+
+pub struct GetPatientProgramsUseCaseArgs {
+    pub token: String,
 }
 
 #[derive(Clone, PartialEq)]

@@ -1,14 +1,19 @@
 use std::sync::Arc;
 
 use crate::ports::Backend;
-use domain::credentials::Credentials;
-use domain::error::Result;
-use domain::role::Role;
-use domain::session::Session;
+use domain::{credentials::Credentials, error::Result, role::Role, session::Session};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LoginUseCaseArgs {
     pub credentials: Credentials,
+}
+
+impl LoginUseCaseArgs {
+    pub fn from(email: &str, password: &str) -> Self {
+        Self {
+            credentials: Credentials::from(email, password),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -21,6 +26,21 @@ pub struct LoginUseCaseResult {
 pub enum UserProfileType {
     Specialist,
     Patient,
+}
+
+impl UserProfileType {
+    pub fn from(role: &Role) -> Self {
+        match role {
+            Role::Specialist => UserProfileType::Specialist,
+            Role::Patient => UserProfileType::Patient,
+        }
+    }
+}
+
+impl Default for UserProfileType {
+    fn default() -> Self {
+        UserProfileType::Patient
+    }
 }
 
 impl LoginUseCaseResult {
@@ -54,11 +74,8 @@ impl<B: Backend> LoginUseCase<B> {
         let user_profile_type = profiles
             .map(|profiles| profiles.into_iter().next().map(|p| p.role().clone()))
             .flatten()
-            .map(|role| match role {
-                Role::Specialist => UserProfileType::Specialist,
-                Role::Patient => UserProfileType::Patient,
-            })
-            .unwrap_or(UserProfileType::Patient);
+            .map(|role| UserProfileType::from(&role))
+            .unwrap_or_default();
 
         Ok(LoginUseCaseResult {
             session,

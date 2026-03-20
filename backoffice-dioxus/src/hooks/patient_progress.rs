@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::PatientProgressUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
 use application::use_cases::patient_progress::{PatientProgressArgs, PatientProgressResult};
 use domain::error::DomainError;
@@ -12,7 +13,7 @@ pub struct UsePatientProgress {
 pub fn use_patient_progress(patient_id: String) -> UsePatientProgress {
     let app_context = use_app_context();
     let app_session = app_context.session();
-    let use_case = app_context.patient_progress_use_case();
+    let use_case = app_context.use_case::<PatientProgressUseCaseType>();
     let mut state = use_signal(|| AsyncState::<PatientProgressResult>::Loading);
 
     let use_case = use_case.clone();

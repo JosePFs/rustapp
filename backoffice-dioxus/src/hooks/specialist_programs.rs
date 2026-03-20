@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 
+use crate::app_context::SpecialistProgramsDataUseCaseType;
 use application::use_cases::specialist_programs_data::{
     SpecialistProgramsDataArgs, SpecialistProgramsDataResult,
 };
@@ -16,7 +17,7 @@ pub struct UseSpecialistPrograms {
 pub fn use_specialist_programs() -> UseSpecialistPrograms {
     let app_context = use_app_context();
     let app_session = app_context.session();
-    let use_case = app_context.specialist_programs_data_use_case();
+    let use_case = app_context.use_case::<SpecialistProgramsDataUseCaseType>();
     let mut state = use_signal(|| AsyncState::<SpecialistProgramsDataResult>::Loading);
 
     let use_case = use_case.clone();
