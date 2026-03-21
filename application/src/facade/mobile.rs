@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use domain::error::Result;
 use domain::repositories::{PatientSessionWriteRepository, SpecialistCatalogReadRepository};
 
@@ -31,8 +30,7 @@ where
     pub uncomplete_patient_workout_session_uc: Arc<UncompletePatientWorkoutSessionUseCase<D>>,
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl<D, A> MobileApi for MobileFacade<D, A>
 where
     D: SpecialistCatalogReadRepository + PatientSessionWriteRepository + Send + Sync,

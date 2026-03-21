@@ -1,8 +1,3 @@
-//! Narrow read ports for the specialist catalog (interface segregation).
-//! The aggregate [`crate::repositories::SpecialistCatalogReadRepository`] is their sum.
-
-use async_trait::async_trait;
-
 use crate::aggregates::{
     PatientProgramFull, ProgramWithAgenda, SpecialistDashboard, WorkoutWithExercises,
 };
@@ -17,8 +12,7 @@ use crate::vos::library_name_filter::LibraryNameFilter;
 use crate::vos::profile::Profile;
 use crate::vos::AccessToken;
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait GetProfilesByIdsRead: Send + Sync {
     async fn get_profiles_by_ids(
         &self,
@@ -27,8 +21,7 @@ pub trait GetProfilesByIdsRead: Send + Sync {
     ) -> Result<Vec<Profile>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait GetPatientIdByEmailRead: Send + Sync {
     async fn get_patient_id_by_email(
         &self,
@@ -37,8 +30,7 @@ pub trait GetPatientIdByEmailRead: Send + Sync {
     ) -> Result<Option<Id>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait ListSpecialistPatientsRead: Send + Sync {
     async fn list_specialist_patients(
         &self,
@@ -46,14 +38,12 @@ pub trait ListSpecialistPatientsRead: Send + Sync {
     ) -> Result<Vec<SpecialistPatient>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait ListProgramsRead: Send + Sync {
     async fn list_programs(&self, access_token: &AccessToken) -> Result<Vec<Program>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait GetProgramRead: Send + Sync {
     async fn get_program(
         &self,
@@ -62,8 +52,7 @@ pub trait GetProgramRead: Send + Sync {
     ) -> Result<Option<Program>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait ListWorkoutLibraryRead: Send + Sync {
     async fn list_workout_library(
         &self,
@@ -73,8 +62,7 @@ pub trait ListWorkoutLibraryRead: Send + Sync {
     ) -> Result<Vec<Workout>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait GetWorkoutsByIdsRead: Send + Sync {
     async fn get_workouts_by_ids(
         &self,
@@ -83,8 +71,7 @@ pub trait GetWorkoutsByIdsRead: Send + Sync {
     ) -> Result<Vec<Workout>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait ListWorkoutsForProgramRead: Send + Sync {
     async fn list_workouts_for_program(
         &self,
@@ -93,8 +80,7 @@ pub trait ListWorkoutsForProgramRead: Send + Sync {
     ) -> Result<Vec<Workout>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait ListProgramScheduleRead: Send + Sync {
     async fn list_program_schedule(
         &self,
@@ -103,8 +89,7 @@ pub trait ListProgramScheduleRead: Send + Sync {
     ) -> Result<Vec<ProgramScheduleItem>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait ListExercisesForWorkoutRead: Send + Sync {
     async fn list_exercises_for_workout(
         &self,
@@ -113,8 +98,7 @@ pub trait ListExercisesForWorkoutRead: Send + Sync {
     ) -> Result<Vec<WorkoutExercise>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait ListExerciseLibraryRead: Send + Sync {
     async fn list_exercise_library(
         &self,
@@ -124,8 +108,7 @@ pub trait ListExerciseLibraryRead: Send + Sync {
     ) -> Result<Vec<Exercise>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait ListPatientProgramsForSpecialistRead: Send + Sync {
     async fn list_patient_programs_for_specialist(
         &self,
@@ -133,8 +116,7 @@ pub trait ListPatientProgramsForSpecialistRead: Send + Sync {
     ) -> Result<Vec<PatientProgram>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait GetPatientProgramByIdRead: Send + Sync {
     async fn get_patient_program_by_id(
         &self,
@@ -143,8 +125,7 @@ pub trait GetPatientProgramByIdRead: Send + Sync {
     ) -> Result<Option<PatientProgram>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait ListWorkoutSessionsRead: Send + Sync {
     async fn list_workout_sessions(
         &self,
@@ -153,8 +134,7 @@ pub trait ListWorkoutSessionsRead: Send + Sync {
     ) -> Result<Vec<WorkoutSession>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait ListSessionExerciseFeedbackRead: Send + Sync {
     async fn list_session_exercise_feedback(
         &self,
@@ -163,8 +143,7 @@ pub trait ListSessionExerciseFeedbackRead: Send + Sync {
     ) -> Result<Vec<SessionExerciseFeedback>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait ListSessionExerciseFeedbackForProgramRead: Send + Sync {
     async fn list_session_exercise_feedback_for_program(
         &self,
@@ -173,8 +152,7 @@ pub trait ListSessionExerciseFeedbackForProgramRead: Send + Sync {
     ) -> Result<Vec<SessionExerciseFeedback>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait ListActivePatientProgramsRead: Send + Sync {
     async fn list_active_patient_programs(
         &self,
@@ -182,8 +160,7 @@ pub trait ListActivePatientProgramsRead: Send + Sync {
     ) -> Result<Vec<PatientProgram>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait GetWorkoutWithExercisesRead: Send + Sync {
     async fn get_workout_with_exercises(
         &self,
@@ -192,8 +169,7 @@ pub trait GetWorkoutWithExercisesRead: Send + Sync {
     ) -> Result<Option<WorkoutWithExercises>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait GetProgramWithAgendaRead: Send + Sync {
     async fn get_program_with_agenda(
         &self,
@@ -202,8 +178,7 @@ pub trait GetProgramWithAgendaRead: Send + Sync {
     ) -> Result<Option<ProgramWithAgenda>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait GetPatientProgramFullRead: Send + Sync {
     async fn get_patient_program_full(
         &self,
@@ -212,8 +187,7 @@ pub trait GetPatientProgramFullRead: Send + Sync {
     ) -> Result<Option<PatientProgramFull>>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait GetSpecialistDashboardRead: Send + Sync {
     async fn get_specialist_dashboard(
         &self,

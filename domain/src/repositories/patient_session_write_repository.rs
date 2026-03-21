@@ -1,5 +1,3 @@
-use async_trait::async_trait;
-
 use crate::entities::WorkoutSession;
 use crate::error::Result;
 use crate::vos::id::Id;
@@ -7,8 +5,7 @@ use crate::vos::{
     AccessToken, DayIndex, EffortScore, FeedbackComment, PainScore, SessionDate,
 };
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait PatientSessionWriteRepository: Send + Sync {
     async fn get_or_create_session(
         &self,

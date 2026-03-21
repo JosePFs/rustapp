@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-use async_trait::async_trait;
-
 use super::client::SupabaseClient;
 use crate::supabase::config::SupabaseConfig;
 use crate::supabase::DEFAULT_CLIENT;
@@ -24,8 +22,7 @@ impl SupabaseAuth {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl AuthService for SupabaseAuth {
     async fn sign_in(&self, credentials: &Credentials) -> domain::error::Result<Session> {
         self.client

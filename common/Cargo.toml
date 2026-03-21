@@ -1,0 +1,12 @@
+[package]
+name = "common"
+version.workspace = true
+edition.workspace = true
+description = "Proc-macros shared across workspace crates"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"

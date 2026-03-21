@@ -1,5 +1,3 @@
-use async_trait::async_trait;
-
 use crate::entities::{
     Exercise, PatientProgram, Program, ProgramScheduleItem, SpecialistPatient, Workout,
     WorkoutSession,
@@ -12,8 +10,7 @@ use crate::vos::{
     WorkoutName,
 };
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait AddSpecialistPatientWrite: Send + Sync {
     async fn add_specialist_patient(
         &self,
@@ -23,8 +20,7 @@ pub trait AddSpecialistPatientWrite: Send + Sync {
     ) -> Result<SpecialistPatient>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait CreateProgramWrite: Send + Sync {
     async fn create_program(
         &self,
@@ -35,8 +31,7 @@ pub trait CreateProgramWrite: Send + Sync {
     ) -> Result<Program>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait CreateWorkoutWrite: Send + Sync {
     async fn create_workout(
         &self,
@@ -47,8 +42,7 @@ pub trait CreateWorkoutWrite: Send + Sync {
     ) -> Result<Workout>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait UpdateWorkoutWrite: Send + Sync {
     async fn update_workout(
         &self,
@@ -60,14 +54,12 @@ pub trait UpdateWorkoutWrite: Send + Sync {
     ) -> Result<()>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait DeleteWorkoutWrite: Send + Sync {
     async fn delete_workout(&self, access_token: &AccessToken, workout_id: &Id) -> Result<()>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait CreateProgramScheduleItemWrite: Send + Sync {
     async fn create_program_schedule_item(
         &self,
@@ -79,8 +71,7 @@ pub trait CreateProgramScheduleItemWrite: Send + Sync {
     ) -> Result<ProgramScheduleItem>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait DeleteProgramScheduleItemWrite: Send + Sync {
     async fn delete_program_schedule_item(
         &self,
@@ -89,8 +80,7 @@ pub trait DeleteProgramScheduleItemWrite: Send + Sync {
     ) -> Result<()>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait CreateExerciseWrite: Send + Sync {
     async fn create_exercise(
         &self,
@@ -103,8 +93,7 @@ pub trait CreateExerciseWrite: Send + Sync {
     ) -> Result<Exercise>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait AddExerciseToWorkoutWrite: Send + Sync {
     async fn add_exercise_to_workout(
         &self,
@@ -117,8 +106,7 @@ pub trait AddExerciseToWorkoutWrite: Send + Sync {
     ) -> Result<()>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait RemoveExerciseFromWorkoutWrite: Send + Sync {
     async fn remove_exercise_from_workout(
         &self,
@@ -128,8 +116,7 @@ pub trait RemoveExerciseFromWorkoutWrite: Send + Sync {
     ) -> Result<()>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait UpdateWorkoutExerciseWrite: Send + Sync {
     async fn update_workout_exercise(
         &self,
@@ -142,8 +129,7 @@ pub trait UpdateWorkoutExerciseWrite: Send + Sync {
     ) -> Result<()>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait UpdateExerciseWrite: Send + Sync {
     async fn update_exercise(
         &self,
@@ -156,8 +142,7 @@ pub trait UpdateExerciseWrite: Send + Sync {
     ) -> Result<()>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait SoftDeleteExerciseWrite: Send + Sync {
     async fn soft_delete_exercise(
         &self,
@@ -166,14 +151,12 @@ pub trait SoftDeleteExerciseWrite: Send + Sync {
     ) -> Result<()>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait RestoreExerciseWrite: Send + Sync {
     async fn restore_exercise(&self, access_token: &AccessToken, exercise_id: &Id) -> Result<()>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait AssignProgramToPatientWrite: Send + Sync {
     async fn assign_program_to_patient(
         &self,
@@ -183,8 +166,7 @@ pub trait AssignProgramToPatientWrite: Send + Sync {
     ) -> Result<PatientProgram>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait UnassignProgramFromPatientWrite: Send + Sync {
     async fn unassign_program_from_patient(
         &self,
@@ -193,8 +175,7 @@ pub trait UnassignProgramFromPatientWrite: Send + Sync {
     ) -> Result<()>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait GetOrCreateSessionCatalogWrite: Send + Sync {
     async fn get_or_create_session(
         &self,
@@ -205,14 +186,12 @@ pub trait GetOrCreateSessionCatalogWrite: Send + Sync {
     ) -> Result<WorkoutSession>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait CompleteSessionCatalogWrite: Send + Sync {
     async fn complete_session(&self, access_token: &AccessToken, session_id: &Id) -> Result<()>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait UpdateSessionWrite: Send + Sync {
     async fn update_session(
         &self,
@@ -222,8 +201,7 @@ pub trait UpdateSessionWrite: Send + Sync {
     ) -> Result<()>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait UpsertSessionExerciseFeedbackCatalogWrite: Send + Sync {
     async fn upsert_session_exercise_feedback(
         &self,
@@ -236,8 +214,7 @@ pub trait UpsertSessionExerciseFeedbackCatalogWrite: Send + Sync {
     ) -> Result<()>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait UncompleteSessionCatalogWrite: Send + Sync {
     async fn uncomplete_session(&self, access_token: &AccessToken, session_id: &Id) -> Result<()>;
 }

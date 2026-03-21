@@ -1,7 +1,5 @@
 use std::sync::{Arc, Mutex};
 
-use async_trait::async_trait;
-
 use domain::entities::WorkoutSession;
 use domain::error::Result;
 use domain::repositories::PatientSessionWriteRepository;
@@ -35,8 +33,7 @@ impl FakePatientSessionWrite {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl PatientSessionWriteRepository for FakePatientSessionWrite {
     async fn get_or_create_session(
         &self,

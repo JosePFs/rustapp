@@ -1,5 +1,3 @@
-use async_trait::async_trait;
-
 use domain::entities::SpecialistPatient;
 use domain::error::Result;
 use domain::repositories::{AddSpecialistPatientWrite, GetPatientIdByEmailRead};
@@ -19,8 +17,7 @@ impl FakeOnboardSpecialistPatient {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl GetPatientIdByEmailRead for FakeOnboardSpecialistPatient {
     async fn get_patient_id_by_email(
         &self,
@@ -31,8 +28,7 @@ impl GetPatientIdByEmailRead for FakeOnboardSpecialistPatient {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl AddSpecialistPatientWrite for FakeOnboardSpecialistPatient {
     async fn add_specialist_patient(
         &self,

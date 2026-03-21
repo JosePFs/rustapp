@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use domain::entities::{Exercise, PatientProgram, Program, SpecialistPatient};
 use domain::entities::{ProgramScheduleItem, Workout};
 use domain::error::Result;
@@ -91,8 +90,7 @@ where
     pub workout_editor_data_uc: Arc<WorkoutEditorDataUseCase<D>>,
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl<D, A> BackofficeApi for BackofficeFacade<D, A>
 where
     D: SpecialistCatalogReadRepository + SpecialistCatalogWriteRepository + Send + Sync,

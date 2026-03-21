@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-use async_trait::async_trait;
-
 use serde::de::DeserializeOwned;
 
 use crate::api::dtos::{
@@ -55,8 +53,7 @@ impl SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl GetProfilesByIdsRead for SupabaseRestRepository {
     async fn get_profiles_by_ids(
         &self,
@@ -81,8 +78,7 @@ impl GetProfilesByIdsRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl GetPatientIdByEmailRead for SupabaseRestRepository {
     async fn get_patient_id_by_email(
         &self,
@@ -104,8 +100,7 @@ impl GetPatientIdByEmailRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl ListSpecialistPatientsRead for SupabaseRestRepository {
     async fn list_specialist_patients(
         &self,
@@ -123,8 +118,7 @@ impl ListSpecialistPatientsRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl ListProgramsRead for SupabaseRestRepository {
     async fn list_programs(&self, access_token: &AccessToken) -> Result<Vec<Program>> {
         let body = self
@@ -139,8 +133,7 @@ impl ListProgramsRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl GetProgramRead for SupabaseRestRepository {
     async fn get_program(
         &self,
@@ -160,8 +153,7 @@ impl GetProgramRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl ListWorkoutLibraryRead for SupabaseRestRepository {
     async fn list_workout_library(
         &self,
@@ -190,8 +182,7 @@ impl ListWorkoutLibraryRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl GetWorkoutsByIdsRead for SupabaseRestRepository {
     async fn get_workouts_by_ids(
         &self,
@@ -216,8 +207,7 @@ impl GetWorkoutsByIdsRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl ListWorkoutsForProgramRead for SupabaseRestRepository {
     async fn list_workouts_for_program(
         &self,
@@ -234,8 +224,7 @@ impl ListWorkoutsForProgramRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl ListProgramScheduleRead for SupabaseRestRepository {
     async fn list_program_schedule(
         &self,
@@ -255,8 +244,7 @@ impl ListProgramScheduleRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl ListExercisesForWorkoutRead for SupabaseRestRepository {
     async fn list_exercises_for_workout(
         &self,
@@ -286,8 +274,7 @@ impl ListExercisesForWorkoutRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl ListExerciseLibraryRead for SupabaseRestRepository {
     async fn list_exercise_library(
         &self,
@@ -316,8 +303,7 @@ impl ListExerciseLibraryRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl ListPatientProgramsForSpecialistRead for SupabaseRestRepository {
     async fn list_patient_programs_for_specialist(
         &self,
@@ -335,8 +321,7 @@ impl ListPatientProgramsForSpecialistRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl GetPatientProgramByIdRead for SupabaseRestRepository {
     async fn get_patient_program_by_id(
         &self,
@@ -356,8 +341,7 @@ impl GetPatientProgramByIdRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl ListWorkoutSessionsRead for SupabaseRestRepository {
     async fn list_workout_sessions(
         &self,
@@ -377,8 +361,7 @@ impl ListWorkoutSessionsRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl ListSessionExerciseFeedbackRead for SupabaseRestRepository {
     async fn list_session_exercise_feedback(
         &self,
@@ -398,8 +381,7 @@ impl ListSessionExerciseFeedbackRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl ListSessionExerciseFeedbackForProgramRead for SupabaseRestRepository {
     async fn list_session_exercise_feedback_for_program(
         &self,
@@ -418,8 +400,7 @@ impl ListSessionExerciseFeedbackForProgramRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl ListActivePatientProgramsRead for SupabaseRestRepository {
     async fn list_active_patient_programs(
         &self,
@@ -435,8 +416,7 @@ impl ListActivePatientProgramsRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl GetWorkoutWithExercisesRead for SupabaseRestRepository {
     async fn get_workout_with_exercises(
         &self,
@@ -455,8 +435,7 @@ impl GetWorkoutWithExercisesRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl GetProgramWithAgendaRead for SupabaseRestRepository {
     async fn get_program_with_agenda(
         &self,
@@ -475,8 +454,7 @@ impl GetProgramWithAgendaRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl GetPatientProgramFullRead for SupabaseRestRepository {
     async fn get_patient_program_full(
         &self,
@@ -495,8 +473,7 @@ impl GetPatientProgramFullRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl GetSpecialistDashboardRead for SupabaseRestRepository {
     async fn get_specialist_dashboard(
         &self,
@@ -515,8 +492,7 @@ impl GetSpecialistDashboardRead for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl AddSpecialistPatientWrite for SupabaseRestRepository {
     async fn add_specialist_patient(
         &self,
@@ -545,8 +521,7 @@ impl AddSpecialistPatientWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl CreateProgramWrite for SupabaseRestRepository {
     async fn create_program(
         &self,
@@ -573,8 +548,7 @@ impl CreateProgramWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl CreateWorkoutWrite for SupabaseRestRepository {
     async fn create_workout(
         &self,
@@ -602,8 +576,7 @@ impl CreateWorkoutWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl UpdateWorkoutWrite for SupabaseRestRepository {
     async fn update_workout(
         &self,
@@ -637,8 +610,7 @@ impl UpdateWorkoutWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl DeleteWorkoutWrite for SupabaseRestRepository {
     async fn delete_workout(&self, access_token: &AccessToken, workout_id: &Id) -> Result<()> {
         let path = format!("/workouts?id=eq.{}", workout_id.to_string());
@@ -649,8 +621,7 @@ impl DeleteWorkoutWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl CreateProgramScheduleItemWrite for SupabaseRestRepository {
     async fn create_program_schedule_item(
         &self,
@@ -683,8 +654,7 @@ impl CreateProgramScheduleItemWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl DeleteProgramScheduleItemWrite for SupabaseRestRepository {
     async fn delete_program_schedule_item(
         &self,
@@ -699,8 +669,7 @@ impl DeleteProgramScheduleItemWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl CreateExerciseWrite for SupabaseRestRepository {
     async fn create_exercise(
         &self,
@@ -733,8 +702,7 @@ impl CreateExerciseWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl AddExerciseToWorkoutWrite for SupabaseRestRepository {
     async fn add_exercise_to_workout(
         &self,
@@ -759,8 +727,7 @@ impl AddExerciseToWorkoutWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl UpdateWorkoutExerciseWrite for SupabaseRestRepository {
     async fn update_workout_exercise(
         &self,
@@ -790,8 +757,7 @@ impl UpdateWorkoutExerciseWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl RemoveExerciseFromWorkoutWrite for SupabaseRestRepository {
     async fn remove_exercise_from_workout(
         &self,
@@ -811,8 +777,7 @@ impl RemoveExerciseFromWorkoutWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl UpdateExerciseWrite for SupabaseRestRepository {
     async fn update_exercise(
         &self,
@@ -850,8 +815,7 @@ impl UpdateExerciseWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl SoftDeleteExerciseWrite for SupabaseRestRepository {
     async fn soft_delete_exercise(
         &self,
@@ -869,8 +833,7 @@ impl SoftDeleteExerciseWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl RestoreExerciseWrite for SupabaseRestRepository {
     async fn restore_exercise(&self, access_token: &AccessToken, exercise_id: &Id) -> Result<()> {
         let payload = serde_json::json!({ "deleted_at": serde_json::Value::Null });
@@ -882,8 +845,7 @@ impl RestoreExerciseWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl AssignProgramToPatientWrite for SupabaseRestRepository {
     async fn assign_program_to_patient(
         &self,
@@ -909,8 +871,7 @@ impl AssignProgramToPatientWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl UnassignProgramFromPatientWrite for SupabaseRestRepository {
     async fn unassign_program_from_patient(
         &self,
@@ -925,8 +886,7 @@ impl UnassignProgramFromPatientWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl GetOrCreateSessionCatalogWrite for SupabaseRestRepository {
     async fn get_or_create_session(
         &self,
@@ -966,8 +926,7 @@ impl GetOrCreateSessionCatalogWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl CompleteSessionCatalogWrite for SupabaseRestRepository {
     async fn complete_session(&self, access_token: &AccessToken, session_id: &Id) -> Result<()> {
         let payload = serde_json::json!({
@@ -981,8 +940,7 @@ impl CompleteSessionCatalogWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl UpdateSessionWrite for SupabaseRestRepository {
     async fn update_session(
         &self,
@@ -1002,8 +960,7 @@ impl UpdateSessionWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl UpsertSessionExerciseFeedbackCatalogWrite for SupabaseRestRepository {
     async fn upsert_session_exercise_feedback(
         &self,
@@ -1041,8 +998,7 @@ impl UpsertSessionExerciseFeedbackCatalogWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl UncompleteSessionCatalogWrite for SupabaseRestRepository {
     async fn uncomplete_session(&self, access_token: &AccessToken, session_id: &Id) -> Result<()> {
         let payload = serde_json::json!({ "completed_at": serde_json::Value::Null });
@@ -1054,8 +1010,7 @@ impl UncompleteSessionCatalogWrite for SupabaseRestRepository {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl PatientSessionWriteRepository for SupabaseRestRepository {
     async fn get_or_create_session(
         &self,

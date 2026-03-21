@@ -125,6 +125,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
+ "common",
  "domain",
  "futures",
  "serde",
@@ -601,6 +602,14 @@ checksum = "ba5a308b75df32fe02788e748662718f03fde005016435c444eea572398219fd"
 dependencies = [
  "bytes",
  "memchr",
+]
+
+[[package]]
+name = "common"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
 ]
 
 [[package]]
@@ -1677,6 +1686,7 @@ name = "domain"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "common",
  "regex",
  "uuid",
 ]
@@ -2844,6 +2854,7 @@ dependencies = [
  "application",
  "async-trait",
  "chrono",
+ "common",
  "domain",
  "gloo-net",
  "gloo-utils",

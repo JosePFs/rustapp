@@ -1,5 +1,3 @@
-use async_trait::async_trait;
-
 use crate::use_cases::add_exercise_to_workout::AddExerciseToWorkoutArgs;
 use crate::use_cases::add_specialist_patient::AddSpecialistPatientArgs;
 use crate::use_cases::assign_program_to_patient::AssignProgramToPatientArgs;
@@ -38,8 +36,7 @@ use domain::entities::Workout;
 use domain::entities::{Exercise, PatientProgram, Program, SpecialistPatient};
 use domain::error::Result;
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait BackofficeApi {
     async fn login(&self, args: LoginUseCaseArgs) -> Result<LoginUseCaseResult>;
 
@@ -117,8 +114,7 @@ pub trait BackofficeApi {
     ) -> Result<WorkoutEditorDataResult>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 pub trait MobileApi {
     async fn login(&self, args: LoginUseCaseArgs) -> Result<LoginUseCaseResult>;
 

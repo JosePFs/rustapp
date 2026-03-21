@@ -1,7 +1,5 @@
 use std::sync::{Arc, Mutex};
 
-use async_trait::async_trait;
-
 use domain::aggregates::{PatientProgramFull, SpecialistDashboard};
 use domain::entities::{Exercise, PatientProgram, SpecialistPatient, Workout};
 use domain::error::Result;
@@ -28,8 +26,7 @@ impl FakeGetProfilesByIds {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl GetProfilesByIdsRead for FakeGetProfilesByIds {
     async fn get_profiles_by_ids(
         &self,
@@ -55,8 +52,7 @@ impl FakeSpecialistPatientsAndProfiles {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl ListSpecialistPatientsRead for FakeSpecialistPatientsAndProfiles {
     async fn list_specialist_patients(
         &self,
@@ -66,8 +62,7 @@ impl ListSpecialistPatientsRead for FakeSpecialistPatientsAndProfiles {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl GetProfilesByIdsRead for FakeSpecialistPatientsAndProfiles {
     async fn get_profiles_by_ids(
         &self,
@@ -91,8 +86,7 @@ impl FakeListExerciseLibrary {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl ListExerciseLibraryRead for FakeListExerciseLibrary {
     async fn list_exercise_library(
         &self,
@@ -107,8 +101,7 @@ impl ListExerciseLibraryRead for FakeListExerciseLibrary {
 #[derive(Clone, Default)]
 pub struct FakePatientProgressCatalog;
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl GetProfilesByIdsRead for FakePatientProgressCatalog {
     async fn get_profiles_by_ids(
         &self,
@@ -119,8 +112,7 @@ impl GetProfilesByIdsRead for FakePatientProgressCatalog {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl ListPatientProgramsForSpecialistRead for FakePatientProgressCatalog {
     async fn list_patient_programs_for_specialist(
         &self,
@@ -130,8 +122,7 @@ impl ListPatientProgramsForSpecialistRead for FakePatientProgressCatalog {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl GetPatientProgramFullRead for FakePatientProgressCatalog {
     async fn get_patient_program_full(
         &self,
@@ -155,8 +146,7 @@ impl FakeSpecialistDashboardRead {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl GetSpecialistDashboardRead for FakeSpecialistDashboardRead {
     async fn get_specialist_dashboard(
         &self,
@@ -180,8 +170,7 @@ impl FakeListWorkoutLibrary {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl ListWorkoutLibraryRead for FakeListWorkoutLibrary {
     async fn list_workout_library(
         &self,

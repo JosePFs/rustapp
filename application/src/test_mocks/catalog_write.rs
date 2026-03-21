@@ -1,7 +1,5 @@
 use std::sync::{Arc, Mutex};
 
-use async_trait::async_trait;
-
 use domain::entities::{PatientProgram, Program, Workout};
 use domain::error::Result;
 use domain::repositories::{
@@ -36,8 +34,7 @@ impl FakeDeleteWorkout {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl DeleteWorkoutWrite for FakeDeleteWorkout {
     async fn delete_workout(&self, _access_token: &AccessToken, workout_id: &Id) -> Result<()> {
         *self.last_workout_id.lock().unwrap() = Some(workout_id.clone());
@@ -60,8 +57,7 @@ impl FakeDeleteProgramScheduleItem {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl DeleteProgramScheduleItemWrite for FakeDeleteProgramScheduleItem {
     async fn delete_program_schedule_item(
         &self,
@@ -103,8 +99,7 @@ impl FakeCreateWorkout {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl CreateWorkoutWrite for FakeCreateWorkout {
     async fn create_workout(
         &self,
@@ -118,8 +113,7 @@ impl CreateWorkoutWrite for FakeCreateWorkout {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl CreateProgramWrite for FakeCreateProgram {
     async fn create_program(
         &self,
@@ -148,8 +142,7 @@ impl FakeSoftDeleteExercise {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl SoftDeleteExerciseWrite for FakeSoftDeleteExercise {
     async fn soft_delete_exercise(
         &self,
@@ -176,8 +169,7 @@ impl FakeAssignProgramToPatient {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl AssignProgramToPatientWrite for FakeAssignProgramToPatient {
     async fn assign_program_to_patient(
         &self,
@@ -205,8 +197,7 @@ impl FakeRestoreExercise {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl RestoreExerciseWrite for FakeRestoreExercise {
     async fn restore_exercise(&self, _access_token: &AccessToken, exercise_id: &Id) -> Result<()> {
         *self.last_exercise_id.lock().unwrap() = Some(exercise_id.clone());
@@ -229,8 +220,7 @@ impl FakeRemoveExerciseFromWorkout {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl RemoveExerciseFromWorkoutWrite for FakeRemoveExerciseFromWorkout {
     async fn remove_exercise_from_workout(
         &self,
@@ -258,8 +248,7 @@ impl FakeAddExerciseToWorkout {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl AddExerciseToWorkoutWrite for FakeAddExerciseToWorkout {
     async fn add_exercise_to_workout(
         &self,

@@ -1,7 +1,5 @@
 use std::sync::{Arc, Mutex};
 
-use async_trait::async_trait;
-
 use crate::ports::auth::auth::AuthService;
 use crate::ports::auth::{credentials::Credentials, session::Session};
 use domain::error::{DomainError, Result};
@@ -43,8 +41,7 @@ impl FakeAuthService {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[common::async_trait_platform]
 impl AuthService for FakeAuthService {
     async fn sign_in(&self, _credentials: &Credentials) -> Result<Session> {
         self.inner
