@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-use futures::try_join;
-
 use crate::ports::Backend;
 use domain::entities::{PatientProgram, Program, SpecialistPatient};
 use domain::error::Result;
@@ -10,6 +8,7 @@ use domain::vos::profile::Profile;
 #[derive(Clone)]
 pub struct SpecialistProgramsDataArgs {
     pub token: String,
+    pub specialist_id: String,
 }
 
 #[derive(Clone, Debug)]
@@ -33,19 +32,16 @@ impl<B: Backend> SpecialistProgramsDataUseCase<B> {
         &self,
         args: SpecialistProgramsDataArgs,
     ) -> Result<SpecialistProgramsDataResult> {
-        let token = args.token;
-        let (links, programs, assignments) = try_join!(
-            self.backend.list_specialist_patients(&token),
-            self.backend.list_programs(&token),
-            self.backend.list_patient_programs_for_specialist(&token),
-        )?;
-        let ids: Vec<String> = links.iter().map(|l| l.patient_id.clone()).collect();
-        let profiles = self.backend.get_profiles_by_ids(&ids, &token).await?;
+        let dashboard = self
+            .backend
+            .get_specialist_dashboard(&args.token, &args.specialist_id)
+            .await?;
+
         Ok(SpecialistProgramsDataResult {
-            links,
-            profiles,
-            programs,
-            assignments,
+            links: dashboard.links,
+            profiles: dashboard.profiles,
+            programs: dashboard.programs,
+            assignments: dashboard.assignments,
         })
     }
 }

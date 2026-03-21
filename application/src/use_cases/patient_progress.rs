@@ -4,6 +4,7 @@ use futures::stream::{self, StreamExt};
 use futures::try_join;
 
 use crate::ports::Backend;
+use domain::aggregates::PatientProgramFull;
 use domain::entities::{
     PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession,
 };
@@ -24,6 +25,19 @@ pub struct ProgramWithSessions {
     pub program_feedback: Vec<SessionExerciseFeedback>,
     pub schedule: Vec<ProgramScheduleItem>,
     pub workouts: Vec<Workout>,
+}
+
+impl From<PatientProgramFull> for ProgramWithSessions {
+    fn from(full: PatientProgramFull) -> Self {
+        ProgramWithSessions {
+            program: full.program,
+            assignment: full.patient_program,
+            sessions: full.sessions,
+            program_feedback: full.feedback,
+            schedule: full.schedule,
+            workouts: full.workouts.into_iter().map(|w| w.workout).collect(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -69,27 +83,9 @@ impl<B: Backend> PatientProgressUseCase<B> {
                 let token = token.clone();
 
                 async move {
-                    let (prog, sessions, program_feedback, workouts, schedule) = try_join!(
-                        backend.get_program(&token, &ass.program_id),
-                        backend.list_workout_sessions(&token, &ass.id),
-                        backend.list_session_exercise_feedback_for_program(&token, &ass.id),
-                        backend.list_workouts_for_program(&token, &ass.program_id),
-                        backend.list_program_schedule(&token, &ass.program_id),
-                    )?;
+                    let full = backend.get_patient_program_full(&token, &ass.id).await?;
 
-                    let program = match prog {
-                        Some(p) => p,
-                        None => return Ok(None),
-                    };
-
-                    Ok(Some(ProgramWithSessions {
-                        program,
-                        assignment: ass,
-                        sessions,
-                        program_feedback,
-                        schedule,
-                        workouts,
-                    }))
+                    Ok(full.map(ProgramWithSessions::from))
                 }
             })
             .buffer_unordered(Self::MAX_CONCURRENT_PROGRAM_REQUESTS)
@@ -98,7 +94,7 @@ impl<B: Backend> PatientProgressUseCase<B> {
             .into_iter()
             .collect::<Result<Vec<Option<ProgramWithSessions>>>>()?
             .into_iter()
-            .filter_map(|o| o)
+            .flatten()
             .collect();
 
         Ok(PatientProgressResult {

@@ -30,7 +30,13 @@ pub fn use_specialist_programs() -> UseSpecialistPrograms {
                 return Err(DomainError::SessionNotFound);
             };
             let token = session.access_token().to_string();
-            use_case.execute(SpecialistProgramsDataArgs { token }).await
+            let specialist_id = session.user_id().to_string();
+            use_case
+                .execute(SpecialistProgramsDataArgs {
+                    token,
+                    specialist_id,
+                })
+                .await
         }
     });
 

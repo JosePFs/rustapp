@@ -6,6 +6,7 @@ pub mod api;
 pub mod auth;
 pub mod client;
 pub mod config;
+pub mod repositories;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod native_api;
 #[cfg(target_arch = "wasm32")]

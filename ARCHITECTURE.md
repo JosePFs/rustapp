@@ -125,23 +125,22 @@ impl<B: Backend> UseCase<B> {
 
 #### Ports (`ports/`)
 
-Trait abstractions define boundaries between application and infrastructure:
+Application **re-exports** domain repository traits and adds thin marker traits + blanket impls:
 
-| Port                                                     | Methods                                                 | Used By              |
-| -------------------------------------------------------- | ------------------------------------------------------- | -------------------- |
-| `AuthService`                                            | `sign_in(&credentials) -> Session`                      | Login use cases      |
-| `DataProvider`                                           | `get_profiles_by_ids()`, `get_patient_programs()`, etc. | All read operations  |
-| `DataMutator`                                            | `save_program()`, `update_exercise()`, etc.             | All write operations |
-| `AuthServiceSend`, `DataProviderSend`, `DataMutatorSend` | Same methods with `Send` bounds                         | Mobile use cases     |
+| Application marker       | Domain repository (source of truth) | Notes                                      |
+| ------------------------ | ----------------------------------- | ------------------------------------------ |
+| `SpecialistDataProvider` | `SpecialistCatalogReadRepository`   | Backoffice reads                           |
+| `SpecialistDataMutator`  | `SpecialistCatalogWriteRepository`  | Backoffice writes                          |
+| `PatientDataProvider`    | `SpecialistCatalogReadRepository`   | Mobile reads (same contract, `Send` stack) |
+| `PatientDataMutator`     | `PatientSessionWriteRepository`     | Mobile session / feedback writes           |
 
-**Rationale for Send Variants:**
-Flutter's Rust bridge requires `Send` for cross-thread safety. Mobile use cases use send-bounded ports; web (Dioxus) uses non-Send ports for performance.
+`Backend` / `MobileBackend` unify markers for use-case generics (blanket impls in `ports/mod.rs`).
 
 #### Backend Trait
 
 ```rust
-pub trait Backend: AuthService + DataMutator + DataProvider + Send + Sync {}
-pub trait MobileBackend: AuthServiceSend + DataProviderSend + DataMutatorSend + Send + Sync {}
+pub trait Backend: SpecialistDataMutator + SpecialistDataProvider + Send + Sync {}
+pub trait MobileBackend: PatientDataProvider + PatientDataMutator + Send + Sync {}
 ```
 
 Unifies ports into a single dependency for use cases.
@@ -161,40 +160,17 @@ Unifies ports into a single dependency for use cases.
 
 #### Supabase Adapter (`supabase/`)
 
-Implements all ports against PostgreSQL via Supabase REST API.
+Domain repository traits are implemented by **`SupabaseRestRepository`** in `repositories/supabase_rest_repository.rs` (REST + RPC). `Api` and `NativeApi` are type aliases to that type; builders live in `api.rs` and `native_api.rs`. DTOs remain in `infrastructure/src/api/dtos.rs`.
 
-| Module          | Purpose                                   |
-| --------------- | ----------------------------------------- |
-| `client.rs`     | HTTP client for Supabase REST API         |
-| `config.rs`     | Configuration (URL, anon key)             |
-| `api.rs`        | DTOs (Data Transfer Objects) and mappers  |
-| `native_api.rs` | `NativeApi` struct implementing all ports |
+| Module          | Purpose                                |
+| --------------- | -------------------------------------- |
+| `client.rs`     | HTTP client for Supabase REST API      |
+| `config.rs`     | Configuration (URL, anon key)          |
+| `repositories/` | `SupabaseRestRepository` (trait impls) |
+| `api.rs`        | `Api` alias + `ApiBuilder`             |
+| `native_api.rs` | `NativeApi` alias + `NativeApiBuilder` |
 
-**Example: `NativeApi`**
-
-```rust
-pub struct NativeApi {
-    client: SupabaseClient,
-}
-
-#[async_trait]
-impl AuthServiceSend for NativeApi {
-    async fn sign_in(&self, credentials: &Credentials) -> Result<Session> {
-        // 1. Call Supabase auth endpoint
-        // 2. Map SupabaseSession to domain Session
-        // 3. Return or error
-    }
-}
-
-#[async_trait]
-impl DataProviderSend for NativeApi {
-    async fn get_patient_programs(&self, token: &str) -> Result<Vec<PatientProgram>> {
-        // 1. Call REST endpoint: GET /programs?patient_id=...
-        // 2. Map ProgramDto[] to PatientProgram[]
-        // 3. Return or error
-    }
-}
-```
+**RPC example:** migration `014_rpc_session_feedback_by_patient_program.sql` exposes `list_session_exercise_feedback_for_patient_program` so the app loads program-wide feedback in one call instead of two round-trips.
 
 #### Database Schema (`../supabase/migrations/`)
 

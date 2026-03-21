@@ -85,3 +85,37 @@ CREATE POLICY "session_exercise_feedback_select_for_specialist"
             WHERE sp.specialist_id = auth.uid()
         )
     );
+
+-- =============================================================================
+-- RPC: feedback por patient_program en una sola llamada (evita 2 round-trips REST)
+-- =============================================================================
+CREATE OR REPLACE FUNCTION public.list_session_exercise_feedback_for_patient_program(
+    p_patient_program_id uuid
+)
+RETURNS TABLE (
+    workout_session_id uuid,
+    exercise_id uuid,
+    effort integer,
+    pain integer,
+    comment text
+)
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path = public
+AS $$
+    SELECT
+        f.workout_session_id,
+        f.exercise_id,
+        f.effort,
+        f.pain,
+        f.comment
+    FROM session_exercise_feedback f
+    INNER JOIN workout_sessions s ON s.id = f.workout_session_id
+    WHERE s.patient_program_id = p_patient_program_id;
+$$;
+
+COMMENT ON FUNCTION public.list_session_exercise_feedback_for_patient_program(uuid) IS
+    'Returns all session exercise feedback rows for sessions under the given patient_program; RLS applies via join to workout_sessions.';
+
+GRANT EXECUTE ON FUNCTION public.list_session_exercise_feedback_for_patient_program(uuid) TO authenticated;

@@ -30,7 +30,7 @@ use application::{
     use_cases::workout_editor_data::WorkoutEditorDataUseCase,
 };
 use domain::error::Result;
-use infrastructure::supabase::api::Api;
+use infrastructure::supabase::api::{Api, ApiBuilder};
 use infrastructure::supabase::auth::SupabaseAuth;
 
 #[derive(Clone)]
@@ -61,7 +61,7 @@ impl AppContext {
 
 pub fn build_app_context() -> Result<AppContext> {
     let auth = Arc::new(SupabaseAuth::builder().build());
-    let backend = Arc::new(Api::builder().build());
+    let backend = Arc::new(ApiBuilder::new().build());
 
     let add_specialist_patient_use_case =
         Arc::new(AddSpecialistPatientUseCase::<Api>::new(backend.clone()));

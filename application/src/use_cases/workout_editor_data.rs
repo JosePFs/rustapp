@@ -34,17 +34,18 @@ impl<B: Backend> WorkoutEditorDataUseCase<B> {
     pub async fn execute(&self, args: WorkoutEditorDataArgs) -> Result<WorkoutEditorDataResult> {
         let token = args.token;
         let specialist_id = args.specialist_id;
-        let workout_id = args.workout_id.clone();
-        let workout_ids = [workout_id.clone()];
+        let workout_id = args.workout_id;
 
-        let (workouts, exercises, library) = try_join!(
-            self.backend.get_workouts_by_ids(&token, &workout_ids),
-            self.backend.list_exercises_for_workout(&token, &workout_id),
+        let (workout_with_exercises, library) = try_join!(
+            self.backend.get_workout_with_exercises(&token, &workout_id),
             self.backend
                 .list_exercise_library(&token, &specialist_id, None),
         )?;
 
-        let workout = workouts.into_iter().next();
+        let (workout, exercises) = workout_with_exercises
+            .map(|w| (Some(w.workout), w.exercises))
+            .unwrap_or((None, vec![]));
+
         Ok(WorkoutEditorDataResult {
             workout,
             exercises,

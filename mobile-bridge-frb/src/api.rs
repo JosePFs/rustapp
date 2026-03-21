@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use application::{
     ports::auth::auth::AuthService,
-    ports::DataProviderSend,
+    ports::SpecialistCatalogReadRepository,
     use_cases::{
         login::{LoginUseCaseArgs, UserProfileType},
         mobile_get_patient_programs::{
@@ -19,10 +19,13 @@ use application::{
         },
     },
 };
-use infrastructure::supabase::{auth::SupabaseAuth, native_api::NativeApi};
+use infrastructure::supabase::{
+    auth::SupabaseAuth,
+    native_api::{NativeApi, NativeApiBuilder},
+};
 
 static NATIVE_API: LazyLock<Arc<NativeApi>> =
-    LazyLock::new(|| Arc::new(NativeApi::builder().build()));
+    LazyLock::new(|| Arc::new(NativeApiBuilder::new().build()));
 
 static SUPABASE_AUTH: LazyLock<Arc<SupabaseAuth>> =
     LazyLock::new(|| Arc::new(SupabaseAuth::builder().build()));
