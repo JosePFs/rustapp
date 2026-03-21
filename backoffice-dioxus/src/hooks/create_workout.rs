@@ -1,8 +1,8 @@
 use dioxus::prelude::*;
 
-use crate::app_context::CreateWorkoutUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::use_cases::create_workout::{CreateWorkoutArgs, CreateWorkoutUseCase};
+use application::ports::BackofficeApi;
+use application::use_cases::create_workout::CreateWorkoutArgs;
 use domain::error::DomainError;
 
 #[derive(Clone)]
@@ -13,15 +13,15 @@ pub struct UseCreateWorkout {
 
 pub fn use_create_workout() -> UseCreateWorkout {
     let app_context = use_app_context();
-    let use_case = app_context.use_case::<CreateWorkoutUseCaseType>();
+    let facade = app_context.backoffice_facade();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
 
-    let use_case_for_action = use_case.clone();
+    let facade_for_action = facade.clone();
     let session_signal_for_action = session_signal.clone();
 
     let action = use_action(move |(name, description): (String, String)| {
-        let use_case = use_case_for_action.clone();
+        let facade = facade_for_action.clone();
         let session_signal = session_signal_for_action.clone();
         let mut state = state.clone();
 
@@ -48,8 +48,8 @@ pub fn use_create_workout() -> UseCreateWorkout {
                 },
             };
 
-            use_case
-                .execute(args)
+            facade
+                .create_workout(args)
                 .await
                 .map(|_| {
                     state.set(AsyncState::Ready(()));

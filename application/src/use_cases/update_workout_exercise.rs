@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
-use crate::ports::Backend;
 use domain::error::Result;
+use domain::repositories::UpdateWorkoutExerciseWrite;
+use domain::vos::id::Id;
+use domain::vos::{AccessToken, Reps, ScheduleOrderIndex, Sets};
 
 #[derive(Clone)]
 pub struct UpdateWorkoutExerciseArgs {
@@ -13,25 +15,27 @@ pub struct UpdateWorkoutExerciseArgs {
     pub order_index: Option<i32>,
 }
 
-pub struct UpdateWorkoutExerciseUseCase<B: Backend> {
-    backend: Arc<B>,
+pub struct UpdateWorkoutExerciseUseCase<W: UpdateWorkoutExerciseWrite> {
+    catalog_write: Arc<W>,
 }
 
-impl<B: Backend> UpdateWorkoutExerciseUseCase<B> {
-    pub fn new(backend: Arc<B>) -> Self {
-        Self { backend }
+impl<W: UpdateWorkoutExerciseWrite> UpdateWorkoutExerciseUseCase<W> {
+    pub fn new(catalog_write: Arc<W>) -> Self {
+        Self { catalog_write }
     }
 
     pub async fn execute(&self, args: UpdateWorkoutExerciseArgs) -> Result<()> {
-        self.backend
-            .update_workout_exercise(
-                &args.token,
-                &args.workout_id,
-                &args.exercise_id,
-                args.sets,
-                args.reps,
-                args.order_index,
-            )
+        let access = AccessToken::try_from(args.token)?;
+        let workout_id = Id::try_from(args.workout_id)?;
+        let exercise_id = Id::try_from(args.exercise_id)?;
+        let sets = Sets::try_from(args.sets)?;
+        let reps = Reps::try_from(args.reps)?;
+        let order_index = args
+            .order_index
+            .map(ScheduleOrderIndex::try_from)
+            .transpose()?;
+        self.catalog_write
+            .update_workout_exercise(&access, &workout_id, &exercise_id, sets, reps, order_index)
             .await
     }
 }

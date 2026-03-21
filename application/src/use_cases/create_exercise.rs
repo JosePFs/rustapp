@@ -1,8 +1,10 @@
 use std::sync::Arc;
 
-use crate::ports::Backend;
 use domain::entities::Exercise;
 use domain::error::Result;
+use domain::repositories::CreateExerciseWrite;
+use domain::vos::id::Id;
+use domain::vos::{AccessToken, Description, ExerciseName, ScheduleOrderIndex, VideoUrl};
 
 #[derive(Clone)]
 pub struct CreateExerciseArgs {
@@ -14,24 +16,40 @@ pub struct CreateExerciseArgs {
     pub video_url: Option<String>,
 }
 
-pub struct CreateExerciseUseCase<B: Backend> {
-    backend: Arc<B>,
+pub struct CreateExerciseUseCase<W: CreateExerciseWrite> {
+    catalog_write: Arc<W>,
 }
 
-impl<B: Backend> CreateExerciseUseCase<B> {
-    pub fn new(backend: Arc<B>) -> Self {
-        Self { backend }
+impl<W: CreateExerciseWrite> CreateExerciseUseCase<W> {
+    pub fn new(catalog_write: Arc<W>) -> Self {
+        Self { catalog_write }
     }
 
     pub async fn execute(&self, args: CreateExerciseArgs) -> Result<Exercise> {
-        self.backend
+        let access = AccessToken::try_from(args.token)?;
+        let specialist_id = Id::try_from(args.specialist_id)?;
+        let name = ExerciseName::try_from(args.name)?;
+        let description = args
+            .description
+            .as_ref()
+            .map(|s| Description::try_from(s.as_str()))
+            .transpose()?;
+        let description_ref = description.as_ref();
+        let order_index = ScheduleOrderIndex::try_from(args.order_index)?;
+        let video_url = args
+            .video_url
+            .as_ref()
+            .map(|s| VideoUrl::try_from(s.as_str()))
+            .transpose()?;
+        let video_url_ref = video_url.as_ref();
+        self.catalog_write
             .create_exercise(
-                &args.token,
-                &args.specialist_id,
-                &args.name,
-                args.description.as_deref(),
-                args.order_index,
-                args.video_url.as_deref(),
+                &access,
+                &specialist_id,
+                &name,
+                description_ref,
+                order_index,
+                video_url_ref,
             )
             .await
     }

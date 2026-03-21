@@ -2,41 +2,47 @@ use std::sync::{Arc, LazyLock};
 
 use serde::{Deserialize, Serialize};
 
-use application::{
-    ports::auth::auth::AuthService,
-    ports::SpecialistCatalogReadRepository,
-    use_cases::{
-        login::{LoginUseCaseArgs, UserProfileType},
-        mobile_get_patient_programs::{
-            GetPatientProgramsUseCaseArgs, MobileGetPatientProgramsUseCase,
-        },
-        mobile_login::MobileLoginUseCase,
-        mobile_submit_patient_workout_feedback::{
-            MobileSubmitPatientWorkoutFeedbackArgs, MobileSubmitPatientWorkoutFeedbackUseCase,
-        },
-        uncomplete_patient_workout_session::{
-            UncompletePatientWorkoutSessionArgs, UncompletePatientWorkoutSessionUseCase,
-        },
+use application::facade::MobileFacade;
+use application::ports::api::MobileApi;
+use application::use_cases::{
+    get_patient_programs::{GetPatientProgramsUseCase, GetPatientProgramsUseCaseArgs},
+    login::LoginUseCaseArgs,
+    mobile_login::MobileLoginUseCase,
+    refresh_session::{RefreshSessionArgs, RefreshSessionUseCase},
+    submit_patient_workout_feedback::{
+        SubmitPatientWorkoutFeedbackArgs, SubmitPatientWorkoutFeedbackUseCase,
+    },
+    uncomplete_patient_workout_session::{
+        UncompletePatientWorkoutSessionArgs, UncompletePatientWorkoutSessionUseCase,
     },
 };
 use infrastructure::supabase::{
     auth::SupabaseAuth,
-    native_api::{NativeApi, NativeApiBuilder},
+    repositories::{SupabaseRestRepository, SupabaseRestRepositoryBuilder},
 };
 
-static NATIVE_API: LazyLock<Arc<NativeApi>> =
-    LazyLock::new(|| Arc::new(NativeApiBuilder::new().build()));
+static NATIVE_API: LazyLock<Arc<SupabaseRestRepository>> =
+    LazyLock::new(|| Arc::new(SupabaseRestRepositoryBuilder::new().build()));
 
 static SUPABASE_AUTH: LazyLock<Arc<SupabaseAuth>> =
     LazyLock::new(|| Arc::new(SupabaseAuth::builder().build()));
 
-fn get_api() -> Arc<NativeApi> {
-    NATIVE_API.clone()
-}
-
-fn get_auth() -> Arc<SupabaseAuth> {
-    SUPABASE_AUTH.clone()
-}
+static MOBILE_FACADE: LazyLock<Arc<MobileFacade<SupabaseRestRepository, SupabaseAuth>>> =
+    LazyLock::new(|| {
+        let repo = NATIVE_API.clone();
+        let auth = SUPABASE_AUTH.clone();
+        Arc::new(MobileFacade {
+            login_uc: Arc::new(MobileLoginUseCase::new(repo.clone(), auth.clone())),
+            refresh_session_uc: Arc::new(RefreshSessionUseCase::new(repo.clone(), auth.clone())),
+            get_patient_programs_uc: Arc::new(GetPatientProgramsUseCase::new(repo.clone())),
+            submit_patient_workout_feedback_uc: Arc::new(SubmitPatientWorkoutFeedbackUseCase::new(
+                repo.clone(),
+            )),
+            uncomplete_patient_workout_session_uc: Arc::new(
+                UncompletePatientWorkoutSessionUseCase::new(repo),
+            ),
+        })
+    });
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LoginRequest {
@@ -112,9 +118,8 @@ pub struct PatientProgramSummary {
 }
 
 pub async fn login(request: LoginRequest) -> Result<LoginResponse, String> {
-    let use_case = MobileLoginUseCase::<NativeApi, SupabaseAuth>::new(get_api(), get_auth());
-    let result = use_case
-        .execute(LoginUseCaseArgs::from(&request.email, &request.password))
+    let result = MOBILE_FACADE
+        .login(LoginUseCaseArgs::from(&request.email, &request.password))
         .await
         .map_err(|error| error.to_string())?;
 
@@ -127,34 +132,22 @@ pub async fn login(request: LoginRequest) -> Result<LoginResponse, String> {
 }
 
 pub async fn refresh_session(refresh_token: String) -> Result<LoginResponse, String> {
-    let auth = get_auth();
-    let api = get_api();
-    let session = auth
-        .refresh_session(&refresh_token)
+    let result = MOBILE_FACADE
+        .refresh_session(RefreshSessionArgs::from_refresh_token(refresh_token))
         .await
-        .map_err(|e| e.to_string())?;
-
-    let profiles = api
-        .get_profiles_by_ids(&[session.user_id().to_string()], &session.access_token())
-        .await
-        .ok();
-    let user_profile_type = profiles
-        .and_then(|profiles| profiles.into_iter().next().map(|p| p.role().clone()))
-        .map(|role| UserProfileType::from(&role))
-        .unwrap_or_default();
+        .map_err(|error| error.to_string())?;
 
     Ok(LoginResponse {
-        access_token: session.access_token().to_string(),
-        refresh_token: session.refresh_token().map(|t| t.to_string()),
-        user_id: session.user_id().to_string(),
-        user_profile_type: user_profile_type.to_string(),
+        access_token: result.session.access_token().to_string(),
+        refresh_token: result.session.refresh_token().map(|t| t.to_string()),
+        user_id: result.session.user_id().to_string(),
+        user_profile_type: result.user_profile_type.to_string(),
     })
 }
 
 pub async fn get_patient_programs(token: String) -> Result<Vec<PatientProgramSummary>, String> {
-    let use_case = MobileGetPatientProgramsUseCase::<NativeApi>::new(get_api());
-    let result = use_case
-        .execute(GetPatientProgramsUseCaseArgs { token })
+    let result = MOBILE_FACADE
+        .get_patient_programs(GetPatientProgramsUseCaseArgs { token })
         .await
         .map_err(|error| error.to_string())?;
 
@@ -206,7 +199,6 @@ pub async fn mark_day_as_completed(
     token: String,
     request: MarkDayAsCompletedRequest,
 ) -> Result<(), String> {
-    let use_case = MobileSubmitPatientWorkoutFeedbackUseCase::<NativeApi>::new(get_api());
     let feedback_map = request
         .feedback
         .into_iter()
@@ -225,8 +217,8 @@ pub async fn mark_day_as_completed(
         ..
     } = request;
 
-    use_case
-        .execute(MobileSubmitPatientWorkoutFeedbackArgs {
+    MOBILE_FACADE
+        .submit_patient_workout_feedback(SubmitPatientWorkoutFeedbackArgs {
             token,
             patient_program_id,
             day_index,
@@ -242,9 +234,8 @@ pub async fn mark_day_as_uncompleted(
     token: String,
     request: MarkDayAsUncompletedRequest,
 ) -> Result<(), String> {
-    let use_case = UncompletePatientWorkoutSessionUseCase::<NativeApi>::new(get_api());
-    use_case
-        .execute(UncompletePatientWorkoutSessionArgs {
+    MOBILE_FACADE
+        .uncomplete_patient_workout_session(UncompletePatientWorkoutSessionArgs {
             token,
             workout_session_id: request.workout_session_id,
         })

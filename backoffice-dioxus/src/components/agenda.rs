@@ -3,22 +3,24 @@ use dioxus::prelude::*;
 use dioxus_i18n::t;
 
 use crate::components::{Progress, ProgressIndicator};
-use application::use_cases::agenda_schedule::build_agenda_schedule;
-use domain::entities::{ProgramScheduleItem, SessionExerciseFeedback, Workout, WorkoutSession};
+use application::use_cases::agenda_schedule::{
+    build_agenda_schedule_rows, AgendaSessionFeedback, AgendaWorkoutSession, ProgramScheduleRow,
+    WorkoutSummaryRow,
+};
 
 #[component]
 pub fn Agenda(
-    sessions: Vec<WorkoutSession>,
-    program_feedback: Vec<SessionExerciseFeedback>,
-    schedule: Vec<ProgramScheduleItem>,
-    workouts: Vec<Workout>,
+    sessions: Vec<AgendaWorkoutSession>,
+    program_feedback: Vec<AgendaSessionFeedback>,
+    schedule: Vec<ProgramScheduleRow>,
+    workouts: Vec<WorkoutSummaryRow>,
     title: String,
     patient_program_id: Option<String>,
     write_selected_for_feedback: Option<Signal<Option<(String, i32)>>>,
 ) -> Element {
     let mut selected_day_index = use_signal(|| Option::<i32>::None);
 
-    let day_schedule = build_agenda_schedule(&schedule, &workouts);
+    let day_schedule = build_agenda_schedule_rows(&schedule, &workouts);
     let training_day_indexes: std::collections::HashSet<i32> = day_schedule
         .iter()
         .filter(|(_, wid, _)| wid.is_some())
@@ -56,15 +58,17 @@ pub fn Agenda(
         (e, p)
     };
 
-    let feedback_by_session: std::collections::HashMap<String, Vec<&SessionExerciseFeedback>> =
+    let feedback_by_session: std::collections::HashMap<String, Vec<&AgendaSessionFeedback>> =
         program_feedback
             .iter()
             .fold(std::collections::HashMap::new(), |mut m, f| {
-                m.entry(f.workout_session_id.clone()).or_default().push(f);
+                m.entry(f.workout_session_id.clone())
+                    .or_default()
+                    .push(f);
                 m
             });
 
-    let sessions_by_day: std::collections::HashMap<i32, WorkoutSession> =
+    let sessions_by_day: std::collections::HashMap<i32, AgendaWorkoutSession> =
         sessions.iter().map(|s| (s.day_index, s.clone())).collect();
 
     let day_rows: Vec<Element> = day_schedule

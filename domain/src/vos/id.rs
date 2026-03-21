@@ -64,14 +64,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_id_new() {
+    fn id_new() {
         let id = Id::new(Uuid::new_v4());
 
         assert_eq!(id.value(), id.value());
     }
 
     #[test]
-    fn test_id_to_string() {
+    fn id_to_string() {
         let id = Id::new(Uuid::new_v4());
         let string = id.to_string();
 
@@ -79,7 +79,7 @@ mod tests {
     }
 
     #[test]
-    fn test_id_eq() {
+    fn id_eq() {
         let uuid = Uuid::new_v4();
         let uuid_one = uuid.clone();
         let uuid_two = uuid.clone();
@@ -91,7 +91,7 @@ mod tests {
     }
 
     #[test]
-    fn test_id_eq_str() {
+    fn id_eq_str() {
         let id = Id::new(Uuid::new_v4());
         let str = id.value().to_string();
 
@@ -99,7 +99,7 @@ mod tests {
     }
 
     #[test]
-    fn test_id_eq_string() {
+    fn id_eq_string() {
         let id = Id::new(Uuid::new_v4());
         let string = id.value().to_string();
 
@@ -107,7 +107,7 @@ mod tests {
     }
 
     #[test]
-    fn test_id_try_from_str() {
+    fn id_try_from_str() {
         let uuid_str = "123e4567-e89b-12d3-a456-426614174000";
         let id = Id::try_from(uuid_str).unwrap();
 
@@ -115,7 +115,7 @@ mod tests {
     }
 
     #[test]
-    fn test_id_try_from_string() {
+    fn id_try_from_string() {
         let uuid_str = "123e4567-e89b-12d3-a456-426614174000";
         let id = Id::try_from(uuid_str.to_string()).unwrap();
 
@@ -123,7 +123,7 @@ mod tests {
     }
 
     #[test]
-    fn test_id_try_from_empty_string() {
+    fn id_try_from_empty_string() {
         let result = Id::try_from("".to_string());
 
         assert!(result.is_err());
@@ -134,7 +134,7 @@ mod tests {
     }
 
     #[test]
-    fn test_id_try_from_invalid_string() {
+    fn id_try_from_invalid_string() {
         let result = Id::try_from("invalid".to_string());
 
         assert!(result.is_err());

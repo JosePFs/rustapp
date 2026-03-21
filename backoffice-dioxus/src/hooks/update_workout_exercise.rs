@@ -1,10 +1,8 @@
 use dioxus::prelude::*;
 
-use crate::app_context::UpdateWorkoutExerciseUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::use_cases::update_workout_exercise::{
-    UpdateWorkoutExerciseArgs, UpdateWorkoutExerciseUseCase,
-};
+use application::ports::BackofficeApi;
+use application::use_cases::update_workout_exercise::UpdateWorkoutExerciseArgs;
 use domain::error::DomainError;
 
 #[derive(Clone)]
@@ -15,11 +13,11 @@ pub struct UseUpdateWorkoutExercise {
 
 pub fn use_update_workout_exercise() -> UseUpdateWorkoutExercise {
     let app_context = use_app_context();
-    let use_case = app_context.use_case::<UpdateWorkoutExerciseUseCaseType>();
+    let facade = app_context.backoffice_facade();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
 
-    let use_case_for_action = use_case.clone();
+    let facade_for_action = facade.clone();
     let session_signal_for_action = session_signal.clone();
 
     let action = use_action(
@@ -30,7 +28,7 @@ pub fn use_update_workout_exercise() -> UseUpdateWorkoutExercise {
             i32,
             Option<i32>,
         )| {
-            let use_case = use_case_for_action.clone();
+            let facade = facade_for_action.clone();
             let session_signal = session_signal_for_action.clone();
             let mut state = state.clone();
 
@@ -54,8 +52,8 @@ pub fn use_update_workout_exercise() -> UseUpdateWorkoutExercise {
                     order_index,
                 };
 
-                use_case
-                    .execute(args)
+                facade
+                    .update_workout_exercise(args)
                     .await
                     .map(|_| {
                         state.set(AsyncState::Ready(()));

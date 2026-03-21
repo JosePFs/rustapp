@@ -144,9 +144,9 @@ impl From<ProfileDto> for Profile {
 impl From<SpecialistPatientDto> for SpecialistPatient {
     fn from(dto: SpecialistPatientDto) -> Self {
         SpecialistPatient {
-            id: dto.id,
-            specialist_id: dto.specialist_id,
-            patient_id: dto.patient_id,
+            id: Id::try_from(dto.id).unwrap(),
+            specialist_id: Id::try_from(dto.specialist_id).unwrap(),
+            patient_id: Id::try_from(dto.patient_id).unwrap(),
             created_at: dto.created_at,
         }
     }
@@ -155,8 +155,8 @@ impl From<SpecialistPatientDto> for SpecialistPatient {
 impl From<ProgramDto> for Program {
     fn from(dto: ProgramDto) -> Self {
         Program {
-            id: dto.id,
-            specialist_id: dto.specialist_id,
+            id: Id::try_from(dto.id).unwrap(),
+            specialist_id: Id::try_from(dto.specialist_id).unwrap(),
             name: dto.name,
             description: dto.description,
         }
@@ -166,8 +166,8 @@ impl From<ProgramDto> for Program {
 impl From<WorkoutDto> for Workout {
     fn from(dto: WorkoutDto) -> Self {
         Workout {
-            id: dto.id,
-            specialist_id: dto.specialist_id,
+            id: Id::try_from(dto.id).unwrap(),
+            specialist_id: Id::try_from(dto.specialist_id).unwrap(),
             name: dto.name,
             description: dto.description,
             order_index: dto.order_index,
@@ -180,10 +180,10 @@ impl From<WorkoutDto> for Workout {
 impl From<ProgramScheduleItemDto> for ProgramScheduleItem {
     fn from(dto: ProgramScheduleItemDto) -> Self {
         ProgramScheduleItem {
-            id: dto.id,
-            program_id: dto.program_id,
+            id: Id::try_from(dto.id).unwrap(),
+            program_id: Id::try_from(dto.program_id).unwrap(),
             order_index: dto.order_index,
-            workout_id: dto.workout_id,
+            workout_id: dto.workout_id.map(|s| Id::try_from(s).unwrap()),
             days_count: dto.days_count,
             created_at: dto.created_at,
         }
@@ -193,8 +193,8 @@ impl From<ProgramScheduleItemDto> for ProgramScheduleItem {
 impl From<ExerciseDto> for Exercise {
     fn from(dto: ExerciseDto) -> Self {
         Exercise {
-            id: dto.id,
-            specialist_id: dto.specialist_id,
+            id: Id::try_from(dto.id).unwrap(),
+            specialist_id: Id::try_from(dto.specialist_id).unwrap(),
             name: dto.name,
             description: dto.description,
             order_index: dto.order_index,
@@ -208,9 +208,9 @@ impl From<ExerciseDto> for Exercise {
 impl From<PatientProgramDto> for PatientProgram {
     fn from(dto: PatientProgramDto) -> Self {
         PatientProgram {
-            id: dto.id,
-            patient_id: dto.patient_id,
-            program_id: dto.program_id,
+            id: Id::try_from(dto.id).unwrap(),
+            patient_id: Id::try_from(dto.patient_id).unwrap(),
+            program_id: Id::try_from(dto.program_id).unwrap(),
             status: dto.status,
         }
     }
@@ -219,8 +219,8 @@ impl From<PatientProgramDto> for PatientProgram {
 impl From<WorkoutSessionDto> for WorkoutSession {
     fn from(dto: WorkoutSessionDto) -> Self {
         WorkoutSession {
-            id: dto.id,
-            patient_program_id: dto.patient_program_id,
+            id: Id::try_from(dto.id).unwrap(),
+            patient_program_id: Id::try_from(dto.patient_program_id).unwrap(),
             day_index: dto.day_index,
             session_date: dto.session_date,
             completed_at: dto.completed_at,
@@ -233,8 +233,8 @@ impl From<WorkoutSessionDto> for WorkoutSession {
 impl From<SessionExerciseFeedbackDto> for SessionExerciseFeedback {
     fn from(dto: SessionExerciseFeedbackDto) -> Self {
         SessionExerciseFeedback {
-            workout_session_id: dto.workout_session_id,
-            exercise_id: dto.exercise_id,
+            workout_session_id: Id::try_from(dto.workout_session_id).unwrap(),
+            exercise_id: Id::try_from(dto.exercise_id).unwrap(),
             effort: dto.effort,
             pain: dto.pain,
             comment: dto.comment,
@@ -354,8 +354,8 @@ mod tests {
 
     fn sample_workout_dto() -> WorkoutDto {
         WorkoutDto {
-            id: "w1".to_string(),
-            specialist_id: "s1".to_string(),
+            id: "11111111-1111-1111-1111-111111111111".to_string(),
+            specialist_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa".to_string(),
             name: "Workout A".to_string(),
             description: Some("Description".to_string()),
             order_index: 0,
@@ -366,8 +366,8 @@ mod tests {
 
     fn sample_exercise_dto() -> ExerciseDto {
         ExerciseDto {
-            id: "e1".to_string(),
-            specialist_id: "s1".to_string(),
+            id: "22222222-2222-2222-2222-222222222222".to_string(),
+            specialist_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa".to_string(),
             name: "Exercise A".to_string(),
             description: None,
             order_index: 0,
@@ -379,8 +379,8 @@ mod tests {
 
     fn sample_program_dto() -> ProgramDto {
         ProgramDto {
-            id: "p1".to_string(),
-            specialist_id: "s1".to_string(),
+            id: "33333333-3333-3333-3333-333333333333".to_string(),
+            specialist_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa".to_string(),
             name: "Program A".to_string(),
             description: None,
             created_at: None,
@@ -401,7 +401,7 @@ mod tests {
         };
 
         let aggregate: WorkoutWithExercises = dto.into();
-        assert_eq!(aggregate.workout.id, "w1");
+        assert_eq!(aggregate.workout.id, "11111111-1111-1111-1111-111111111111");
         assert_eq!(aggregate.exercises.len(), 1);
         assert_eq!(aggregate.exercises[0].sets, 3);
         assert_eq!(aggregate.exercises[0].reps, 10);
@@ -412,10 +412,10 @@ mod tests {
         let dto = ProgramWithAgendaRpcDto {
             program: sample_program_dto(),
             schedule: vec![ProgramScheduleItemDto {
-                id: "ps1".to_string(),
-                program_id: "p1".to_string(),
+                id: "44444444-4444-4444-4444-444444444444".to_string(),
+                program_id: "33333333-3333-3333-3333-333333333333".to_string(),
                 order_index: 0,
-                workout_id: Some("w1".to_string()),
+                workout_id: Some("11111111-1111-1111-1111-111111111111".to_string()),
                 days_count: 1,
                 created_at: None,
             }],
@@ -426,7 +426,7 @@ mod tests {
         };
 
         let aggregate: ProgramWithAgenda = dto.into();
-        assert_eq!(aggregate.program.id, "p1");
+        assert_eq!(aggregate.program.id, "33333333-3333-3333-3333-333333333333");
         assert_eq!(aggregate.schedule.len(), 1);
         assert_eq!(aggregate.workouts.len(), 1);
     }
@@ -435,9 +435,9 @@ mod tests {
     fn specialist_dashboard_rpc_dto_converts_correctly() {
         let dto = SpecialistDashboardRpcDto {
             links: vec![SpecialistPatientDto {
-                id: "sp1".to_string(),
-                specialist_id: "s1".to_string(),
-                patient_id: "pat1".to_string(),
+                id: "55555555-5555-5555-5555-555555555555".to_string(),
+                specialist_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa".to_string(),
+                patient_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb".to_string(),
                 created_at: None,
             }],
             profiles: vec![ProfileDto {
@@ -450,9 +450,9 @@ mod tests {
             }],
             programs: vec![sample_program_dto()],
             assignments: vec![PatientProgramDto {
-                id: "pp1".to_string(),
-                patient_id: "pat1".to_string(),
-                program_id: "p1".to_string(),
+                id: "66666666-6666-6666-6666-666666666666".to_string(),
+                patient_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb".to_string(),
+                program_id: "33333333-3333-3333-3333-333333333333".to_string(),
                 status: "active".to_string(),
                 assigned_at: None,
                 created_at: None,
@@ -471,9 +471,9 @@ mod tests {
     fn patient_program_full_rpc_dto_converts_correctly() {
         let dto = PatientProgramFullRpcDto {
             patient_program: PatientProgramDto {
-                id: "pp1".to_string(),
-                patient_id: "pat1".to_string(),
-                program_id: "p1".to_string(),
+                id: "66666666-6666-6666-6666-666666666666".to_string(),
+                patient_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb".to_string(),
+                program_id: "33333333-3333-3333-3333-333333333333".to_string(),
                 status: "active".to_string(),
                 assigned_at: None,
                 created_at: None,
@@ -483,8 +483,8 @@ mod tests {
             schedule: vec![],
             workouts: vec![],
             sessions: vec![WorkoutSessionDto {
-                id: "ws1".to_string(),
-                patient_program_id: "pp1".to_string(),
+                id: "77777777-7777-7777-7777-777777777777".to_string(),
+                patient_program_id: "66666666-6666-6666-6666-666666666666".to_string(),
                 day_index: 0,
                 session_date: "2024-01-01".to_string(),
                 completed_at: None,
@@ -492,8 +492,8 @@ mod tests {
                 updated_at: None,
             }],
             feedback: vec![SessionExerciseFeedbackDto {
-                workout_session_id: "ws1".to_string(),
-                exercise_id: "e1".to_string(),
+                workout_session_id: "77777777-7777-7777-7777-777777777777".to_string(),
+                exercise_id: "22222222-2222-2222-2222-222222222222".to_string(),
                 effort: Some(7),
                 pain: Some(2),
                 comment: Some("Good session".to_string()),
@@ -501,8 +501,11 @@ mod tests {
         };
 
         let aggregate: PatientProgramFull = dto.into();
-        assert_eq!(aggregate.patient_program.id, "pp1");
-        assert_eq!(aggregate.program.id, "p1");
+        assert_eq!(
+            aggregate.patient_program.id,
+            "66666666-6666-6666-6666-666666666666"
+        );
+        assert_eq!(aggregate.program.id, "33333333-3333-3333-3333-333333333333");
         assert_eq!(aggregate.sessions.len(), 1);
         assert_eq!(aggregate.feedback.len(), 1);
         assert_eq!(aggregate.feedback[0].effort, Some(7));

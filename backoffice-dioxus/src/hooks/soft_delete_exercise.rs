@@ -1,10 +1,8 @@
 use dioxus::prelude::*;
 
-use crate::app_context::SoftDeleteExerciseUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::use_cases::soft_delete_exercise::{
-    SoftDeleteExerciseArgs, SoftDeleteExerciseUseCase,
-};
+use application::ports::BackofficeApi;
+use application::use_cases::soft_delete_exercise::SoftDeleteExerciseArgs;
 use domain::error::DomainError;
 
 #[derive(Clone)]
@@ -15,15 +13,15 @@ pub struct UseSoftDeleteExercise {
 
 pub fn use_soft_delete_exercise() -> UseSoftDeleteExercise {
     let app_context = use_app_context();
-    let use_case = app_context.use_case::<SoftDeleteExerciseUseCaseType>();
+    let facade = app_context.backoffice_facade();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
 
-    let use_case_for_action = use_case.clone();
+    let facade_for_action = facade.clone();
     let session_signal_for_action = session_signal.clone();
 
     let action = use_action(move |(exercise_id,): (String,)| {
-        let use_case = use_case_for_action.clone();
+        let facade = facade_for_action.clone();
         let session_signal = session_signal_for_action.clone();
         let mut state = state.clone();
 
@@ -40,8 +38,8 @@ pub fn use_soft_delete_exercise() -> UseSoftDeleteExercise {
 
             let args = SoftDeleteExerciseArgs { token, exercise_id };
 
-            use_case
-                .execute(args)
+            facade
+                .soft_delete_exercise(args)
                 .await
                 .map(|_| {
                     state.set(AsyncState::Ready(()));

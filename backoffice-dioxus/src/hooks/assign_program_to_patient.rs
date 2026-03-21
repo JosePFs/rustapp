@@ -1,10 +1,8 @@
 use dioxus::prelude::*;
 
-use crate::app_context::AssignProgramToPatientUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::use_cases::assign_program_to_patient::{
-    AssignProgramToPatientArgs, AssignProgramToPatientUseCase,
-};
+use application::ports::BackofficeApi;
+use application::use_cases::assign_program_to_patient::AssignProgramToPatientArgs;
 use domain::error::DomainError;
 
 #[derive(Clone)]
@@ -15,16 +13,16 @@ pub struct UseAssignProgramToPatient {
 
 pub fn use_assign_program_to_patient() -> UseAssignProgramToPatient {
     let app_context = use_app_context();
-    let use_case = app_context.use_case::<AssignProgramToPatientUseCaseType>();
+    let facade = app_context.backoffice_facade();
     let session_signal = app_context.session();
     let state = use_signal(|| AsyncState::Idle);
 
-    let use_case_for_action = use_case.clone();
+    let facade_for_action = facade.clone();
     let session_signal_for_action = session_signal.clone();
 
     let action = use_action(
         move |(patient_ids, program_ids): (Vec<String>, Vec<String>)| {
-            let use_case = use_case_for_action.clone();
+            let facade = facade_for_action.clone();
             let session_signal = session_signal_for_action.clone();
             let mut state = state.clone();
 
@@ -47,7 +45,7 @@ pub fn use_assign_program_to_patient() -> UseAssignProgramToPatient {
                             patient_id: patient_id.clone(),
                             program_id: program_id.clone(),
                         };
-                        if let Err(e) = use_case.execute(args).await {
+                        if let Err(e) = facade.assign_program_to_patient(args).await {
                             any_error = Some(e);
                             break;
                         }

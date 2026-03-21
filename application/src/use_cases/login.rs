@@ -2,9 +2,11 @@ use std::sync::Arc;
 
 use crate::ports::auth::auth::AuthService;
 use crate::ports::auth::{credentials::Credentials, session::Session};
-use crate::ports::Backend;
 use domain::error::Result;
+use domain::repositories::GetProfilesByIdsRead;
+use domain::vos::id::Id;
 use domain::vos::role::Role;
+use domain::vos::AccessToken;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LoginUseCaseArgs {
@@ -65,34 +67,96 @@ impl LoginUseCaseResult {
     }
 }
 
-pub struct LoginUseCase<B: Backend, A: AuthService> {
-    backend: Arc<B>,
+pub struct LoginUseCase<R: GetProfilesByIdsRead, A: AuthService> {
+    catalog_read: Arc<R>,
     auth: Arc<A>,
 }
 
-impl<B: Backend, A: AuthService> LoginUseCase<B, A> {
-    pub fn new(backend: Arc<B>, auth: Arc<A>) -> Self {
-        Self { backend, auth }
+impl<R: GetProfilesByIdsRead, A: AuthService> LoginUseCase<R, A> {
+    pub fn new(catalog_read: Arc<R>, auth: Arc<A>) -> Self {
+        Self { catalog_read, auth }
     }
 
     pub async fn execute(&self, args: LoginUseCaseArgs) -> Result<LoginUseCaseResult> {
         let session = self.auth.sign_in(&args.credentials).await?;
+        login_result_from_session(&*self.catalog_read, session).await
+    }
+}
 
-        let profiles = self
-            .backend
-            .get_profiles_by_ids(&[session.user_id().to_string()], session.access_token())
+pub(crate) async fn login_result_from_session<R>(
+    catalog_read: &R,
+    session: Session,
+) -> Result<LoginUseCaseResult>
+where
+    R: GetProfilesByIdsRead,
+{
+    let user_id = Id::try_from(session.user_id().to_string())?;
+    let access = AccessToken::try_from(session.access_token().to_string())?;
+    let profiles = catalog_read
+        .get_profiles_by_ids(&[user_id], &access)
+        .await
+        .ok();
+
+    let user_profile_type = profiles
+        .and_then(|profiles| profiles.into_iter().next())
+        .map(|p| UserProfileType::from(p.role()))
+        .unwrap_or_default();
+
+    Ok(LoginUseCaseResult {
+        session,
+        user_profile_type,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use super::*;
+    use crate::ports::auth::session::Session;
+    use crate::test_mocks::{FakeAuthService, FakeGetProfilesByIds};
+    use domain::error::DomainError;
+    use domain::vos::email::Email;
+    use domain::vos::fullname::FullName;
+    use domain::vos::id::Id;
+    use domain::vos::profile::Profile;
+    use domain::vos::role::Role;
+
+    #[tokio::test]
+    async fn login_propagates_auth_error() {
+        let auth = FakeAuthService::new().with_sign_in_err(DomainError::Login("bad".into()));
+        let catalog = FakeGetProfilesByIds::new_ok(vec![]);
+        let uc = LoginUseCase::new(Arc::new(catalog), Arc::new(auth));
+
+        let err = uc
+            .execute(LoginUseCaseArgs::from("a@b.com", "pw"))
             .await
-            .ok();
+            .unwrap_err();
 
-        let user_profile_type = profiles
-            .map(|profiles| profiles.into_iter().next().map(|p| p.role().clone()))
-            .flatten()
-            .map(|role| UserProfileType::from(&role))
-            .unwrap_or_default();
+        assert_eq!(err, DomainError::Login("bad".into()));
+    }
 
-        Ok(LoginUseCaseResult {
-            session,
-            user_profile_type,
-        })
+    #[tokio::test]
+    async fn login_patient_profile_from_catalog() {
+        let uid = "550e8400-e29b-41d4-a716-446655440020";
+        let session = Session::new("at".into(), None, uid.to_string());
+        let auth = FakeAuthService::new().with_sign_in_ok(session);
+        let catalog = FakeGetProfilesByIds::new_ok(vec![patient_profile(uid)]);
+        let uc = LoginUseCase::new(Arc::new(catalog), Arc::new(auth));
+
+        let res = uc
+            .execute(LoginUseCaseArgs::from("a@b.com", "pw"))
+            .await
+            .unwrap();
+
+        assert!(res.is_login_as_patient());
+    }
+
+    fn patient_profile(user_id: &str) -> Profile {
+        let id = Id::try_from(user_id).unwrap();
+        let email = Email::try_from("u@example.com").unwrap();
+        let full_name = FullName::try_from("Test User").unwrap();
+        let role = Role::try_from("patient").unwrap();
+        Profile::new(id, email, full_name, role)
     }
 }

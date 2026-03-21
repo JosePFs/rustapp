@@ -112,38 +112,66 @@ Each file represents a specific user workflow:
 
 **Use Case Pattern:**
 
+Use cases depend on **domain repository traits** (outbound/driven ports), with the smallest bound that matches their calls—e.g. read-only flows use only `SpecialistCatalogReadRepository`; mutations use `SpecialistCatalogWriteRepository`; patient session flows use `PatientSessionWriteRepository`. A single concrete adapter (`Api` / `NativeApi` → `SupabaseRestRepository`) implements all of them.
+
 ```rust
-pub struct UseCase<B: Backend> {
-    backend: Arc<B>,
+pub struct ExampleReadUseCase<R: SpecialistCatalogReadRepository> {
+    catalog_read: Arc<R>,
 }
 
-impl<B: Backend> UseCase<B> {
-    pub fn new(backend: Arc<B>) -> Self { Self { backend } }
-    pub async fn execute(&self, args: Args) -> Result<Output> { /* orchestration */ }
+pub struct ExampleWriteUseCase<W: SpecialistCatalogWriteRepository> {
+    catalog_write: Arc<W>,
 }
 ```
 
 #### Ports (`ports/`)
 
-Application **re-exports** domain repository traits and adds thin marker traits + blanket impls:
+Application **ports** split into **driven (outbound)** and **driving (inbound)** concerns:
 
-| Application marker       | Domain repository (source of truth) | Notes                                      |
-| ------------------------ | ----------------------------------- | ------------------------------------------ |
-| `SpecialistDataProvider` | `SpecialistCatalogReadRepository`   | Backoffice reads                           |
-| `SpecialistDataMutator`  | `SpecialistCatalogWriteRepository`  | Backoffice writes                          |
-| `PatientDataProvider`    | `SpecialistCatalogReadRepository`   | Mobile reads (same contract, `Send` stack) |
-| `PatientDataMutator`     | `PatientSessionWriteRepository`     | Mobile session / feedback writes           |
+| Kind                      | Where defined                                                        | Who implements                                   | Who consumes                                                   |
+| ------------------------- | -------------------------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------- |
+| **Driven**                | `domain::repositories::*` (read/write/patient session)               | `infrastructure` (e.g. `SupabaseRestRepository`) | **Use cases**                                                  |
+| **Driving (inbound API)** | `application/src/ports/api.rs` — traits `BackofficeApi`, `MobileApi` | **`application`** via facades                    | **Inbound adapters**: `backoffice-dioxus`, `mobile-bridge-frb` |
 
-`Backend` / `MobileBackend` unify markers for use-case generics (blanket impls in `ports/mod.rs`).
+**Inbound traits (`api.rs`):** Each async method mirrors a use case’s `execute` surface (same `*Args` / result types from `use_cases::…`). Dioxus and the FRB bridge, and any new, call into the application through these APIs (or equivalently through the same operations on a facade type).
 
-#### Backend Trait
+**`ports/auth/`:** Session/credentials types and the **`AuthService`** driven port (sign-in / refresh). Infrastructure provides the Supabase-backed implementation.
 
-```rust
-pub trait Backend: SpecialistDataMutator + SpecialistDataProvider + Send + Sync {}
-pub trait MobileBackend: PatientDataProvider + PatientDataMutator + Send + Sync {}
+#### Facades (`facade/`)
+
+**`BackofficeFacade<D, A>`** and **`MobileFacade<D, A>`** hold `Arc` of each relevant use case and **`impl BackofficeApi` / `impl MobileApi`** by delegating to `execute`. Generic bounds use only domain repository traits + `AuthService` (e.g. backoffice: read + write catalog; mobile: read catalog + patient session write where needed).
+
+**Composition roots** wire concrete `D` / `A` (e.g. `SupabaseRestRepository`, `SupabaseAuth`), build one `Arc<BackofficeFacade<…>>` or `Arc<MobileFacade<…>>`, and pass it to the UI layer:
+
+- [`backoffice-dioxus/src/app_context.rs`](backoffice-dioxus/src/app_context.rs): `AppContext` stores `BackofficeFacadeHandle`; hooks use `backoffice_facade()` and **`BackofficeApi`** in scope for trait methods.
+- [`mobile-bridge-frb/src/api.rs`](mobile-bridge-frb/src/api.rs): a lazy `MobileFacade` drives the exported async FFI functions.
+
+```mermaid
+flowchart LR
+  subgraph inbound [Inbound adapters]
+    Dioxus[backoffice_dioxus]
+    FRB[mobile_bridge_frb]
+  end
+  subgraph app [application]
+    ApiTraits[BackofficeApi MobileApi]
+    Facades[BackofficeFacade MobileFacade]
+    UC[Use cases]
+    ApiTraits --> Facades
+    Facades --> UC
+  end
+  subgraph driven [Driven ports]
+    Repo[domain repositories]
+    AuthP[AuthService]
+  end
+  subgraph infra [infrastructure]
+    Supa[SupabaseRestRepository etc]
+  end
+  Dioxus --> ApiTraits
+  FRB --> ApiTraits
+  UC --> Repo
+  UC --> AuthP
+  Supa --> Repo
 ```
-
-Unifies ports into a single dependency for use cases.
 
 ### Infrastructure Layer (`infrastructure/`)
 
@@ -233,7 +261,7 @@ pub async fn update_day_completion(token: String, request: UpdateDayCompletionRe
 
 1. Receive Flutter request
 2. Instantiate `NativeApi` with config
-3. Create use case (e.g., `MobileLoginUseCase<NativeApi>`)
+3. Create use case (e.g., `MobileLoginUseCase<NativeApi>`, `MobileRefreshSessionUseCase<NativeApi, SupabaseAuth>` for token refresh)
 4. Execute use case and map domain result to Dart-friendly DTO
 5. Return `Result<T, String>` (Dart cannot represent Rust error enums)
 
@@ -276,7 +304,7 @@ void main() {
 - **Views** (container components): Pages with routing
 - **Hooks** (custom): Wrapper around use cases
 - **Components** (presentation): Reusable UI elements
-- **app_context.rs**: Dependency container, injects `Backend` into hooks
+- **app_context.rs**: Dependency container; wires `Arc<Api>` into each use case (the API type implements the domain repository traits)
 
 **Key Entry Point:** `src/main.rs`
 
@@ -380,12 +408,11 @@ sequenceDiagram
 ### Web (Dioxus)
 
 ```rust
-// backoffice-dioxus/src/app_context.rs
-pub fn build_app_context() -> Arc<impl Backend> {
-    let config = SupabaseConfig::from_env();
-    let client = SupabaseClient::new(config);
-    let api = NativeApi::new(client);
-    Arc::new(api)
+// backoffice-dioxus/src/app_context.rs (simplified)
+pub fn build_app_context() -> Result<AppContext> {
+    let backend = Arc::new(ApiBuilder::new().build());
+    // Arc::new(SomeUseCase::<Api>::new(backend.clone(), …))
+    // …
 }
 ```
 
@@ -423,17 +450,17 @@ backoffice-dioxus/   → Web UI (pure presentation)
 
 ### 2. Ports for Abstraction
 
-Instead of direct database calls, use cases depend on traits:
+Instead of direct database calls, use cases depend on **domain repository traits** and `AuthService` where needed:
 
+- `SpecialistCatalogReadRepository` / `SpecialistCatalogWriteRepository` → catalog and programs
+- `PatientSessionWriteRepository` → patient workout sessions and feedback
 - `AuthService` → Supabase auth
-- `DataProvider` → Supabase queries
-- `DataMutator` → Supabase mutations
 
-**Benefit:** Easy to mock or swap adapters without touching use cases.
+**Benefit:** Easy to mock or swap adapters without touching use cases; each use case declares only the outbound ports it uses.
 
 ### 3. Send-Bounded Variants for Mobile
 
-Mobile use cases (`MobileLoginUseCase`, `MobileGetPatientProgramsUseCase`) require `Send` bounds because:
+Mobile use cases (`MobileLoginUseCase`, `MobileRefreshSessionUseCase`, `GetPatientProgramsUseCase`, etc.) use the same domain repository traits; repository traits already require `Send + Sync` where needed because:
 
 - Flutter's Rust bridge runs async calls on a thread pool
 - Domain futures must be `Send`
@@ -482,7 +509,7 @@ Pure Rust tests; no external dependencies required.
 
 ### Application Testing
 
-Mock `Backend` trait; test orchestration logic.
+Mock the relevant **repository traits** or `AuthService`; test orchestration logic.
 
 ### Integration Testing
 
@@ -540,7 +567,7 @@ app-flutter
 ### Adding a New Use Case
 
 1. **Define** in `application/src/use_cases/your_use_case.rs`
-2. **Depend on** `Backend` trait (or `MobileBackend` for mobile)
+2. **Depend on** the relevant **domain repository trait(s)** from `application::ports` (e.g. `SpecialistCatalogReadRepository`, `SpecialistCatalogWriteRepository`, `PatientSessionWriteRepository`) plus `AuthService` if applicable
 3. **Implement ports** in `infrastructure/src/supabase/native_api.rs` if needed
 4. **Call from UI:**
    - Dioxus: Create hook in `backoffice-dioxus/src/hooks/`, call use case

@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 
-use crate::app_context::PatientProgressUseCaseType;
 use crate::hooks::{app_context::use_app_context, AsyncState};
+use application::ports::BackofficeApi;
 use application::use_cases::patient_progress::{PatientProgressArgs, PatientProgressResult};
 use domain::error::DomainError;
 
@@ -13,13 +13,13 @@ pub struct UsePatientProgress {
 pub fn use_patient_progress(patient_id: String) -> UsePatientProgress {
     let app_context = use_app_context();
     let app_session = app_context.session();
-    let use_case = app_context.use_case::<PatientProgressUseCaseType>();
+    let facade = app_context.backoffice_facade();
     let mut state = use_signal(|| AsyncState::<PatientProgressResult>::Loading);
 
-    let use_case = use_case.clone();
+    let facade = facade.clone();
     let resource = use_resource(move || {
         let maybe_session_ref = app_session.read().clone();
-        let use_case = use_case.clone();
+        let facade = facade.clone();
         let patient_id = patient_id.clone();
 
         async move {
@@ -29,8 +29,8 @@ pub fn use_patient_progress(patient_id: String) -> UsePatientProgress {
 
             let token = session.access_token().to_string();
 
-            use_case
-                .execute(PatientProgressArgs { token, patient_id })
+            facade
+                .patient_progress(PatientProgressArgs { token, patient_id })
                 .await
         }
     });

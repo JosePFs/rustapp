@@ -1,9 +1,9 @@
 use dioxus::prelude::*;
 
-use crate::app_context::LoginUseCaseType;
 use crate::hooks::app_context::use_app_context;
 use crate::hooks::AsyncState;
 use application::ports::auth::credentials::Credentials;
+use application::ports::BackofficeApi;
 use application::use_cases::login::{LoginUseCaseArgs, LoginUseCaseResult};
 
 #[derive(Debug, Clone)]
@@ -14,19 +14,19 @@ pub struct UseLogin {
 
 pub fn use_login() -> UseLogin {
     let app_context = use_app_context();
-    let login_use_case = app_context.use_case::<LoginUseCaseType>();
+    let facade = app_context.backoffice_facade();
     let mut app_session = app_context.session();
     let mut state = use_signal(|| AsyncState::<LoginUseCaseResult>::Idle);
 
-    let login_use_case_for_action = login_use_case.clone();
+    let facade_for_action = facade.clone();
     let action = use_action(move |(email, password): (String, String)| {
-        let login_use_case = login_use_case_for_action.clone();
+        let facade = facade_for_action.clone();
 
         async move {
             state.set(AsyncState::<LoginUseCaseResult>::Loading);
 
-            login_use_case
-                .execute(LoginUseCaseArgs {
+            facade
+                .login(LoginUseCaseArgs {
                     credentials: Credentials::from(&email, &password),
                 })
                 .await

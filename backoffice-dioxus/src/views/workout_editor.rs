@@ -11,7 +11,7 @@ use crate::hooks::{
     AsyncState,
 };
 use crate::Route;
-use domain::entities::Exercise;
+use application::use_cases::workout_editor_data::WorkoutEditorExerciseItem;
 
 #[component]
 pub fn WorkoutEditor(id: String) -> Element {
@@ -43,7 +43,7 @@ pub fn WorkoutEditor(id: String) -> Element {
     };
     let ex_ids_in_workout: std::collections::HashSet<String> =
         exs.iter().map(|we| we.exercise.id.clone()).collect();
-    let available_to_add: Vec<&Exercise> = library_list
+    let available_to_add: Vec<&WorkoutEditorExerciseItem> = library_list
         .iter()
         .filter(|e| !ex_ids_in_workout.contains(&e.id) && e.deleted_at.is_none())
         .collect();

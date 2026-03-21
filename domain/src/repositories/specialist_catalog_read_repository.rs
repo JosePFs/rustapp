@@ -1,119 +1,51 @@
-use async_trait::async_trait;
+use super::catalog_read::*;
 
-use crate::aggregates::{PatientProgramFull, ProgramWithAgenda, SpecialistDashboard, WorkoutWithExercises};
-use crate::entities::{
-    Exercise, PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback,
-    SpecialistPatient, Workout, WorkoutExercise, WorkoutSession,
-};
-use crate::error::Result;
-use crate::vos::profile::Profile;
+pub trait SpecialistCatalogReadRepository:
+    GetProfilesByIdsRead
+    + GetPatientIdByEmailRead
+    + ListSpecialistPatientsRead
+    + ListProgramsRead
+    + GetProgramRead
+    + ListWorkoutLibraryRead
+    + GetWorkoutsByIdsRead
+    + ListWorkoutsForProgramRead
+    + ListProgramScheduleRead
+    + ListExercisesForWorkoutRead
+    + ListExerciseLibraryRead
+    + ListPatientProgramsForSpecialistRead
+    + GetPatientProgramByIdRead
+    + ListWorkoutSessionsRead
+    + ListSessionExerciseFeedbackRead
+    + ListSessionExerciseFeedbackForProgramRead
+    + ListActivePatientProgramsRead
+    + GetWorkoutWithExercisesRead
+    + GetProgramWithAgendaRead
+    + GetPatientProgramFullRead
+    + GetSpecialistDashboardRead
+{
+}
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-pub trait SpecialistCatalogReadRepository: Send + Sync {
-    async fn get_profiles_by_ids(&self, ids: &[String], access_token: &str)
-        -> Result<Vec<Profile>>;
-
-    async fn get_patient_id_by_email(
-        &self,
-        access_token: &str,
-        email: &str,
-    ) -> Result<Option<String>>;
-
-    async fn list_specialist_patients(&self, access_token: &str) -> Result<Vec<SpecialistPatient>>;
-
-    async fn list_programs(&self, access_token: &str) -> Result<Vec<Program>>;
-
-    async fn get_program(&self, access_token: &str, program_id: &str) -> Result<Option<Program>>;
-
-    async fn list_workout_library(
-        &self,
-        access_token: &str,
-        specialist_id: &str,
-        name_filter: Option<&str>,
-    ) -> Result<Vec<Workout>>;
-
-    async fn get_workouts_by_ids(&self, access_token: &str, ids: &[String])
-        -> Result<Vec<Workout>>;
-
-    async fn list_workouts_for_program(
-        &self,
-        access_token: &str,
-        program_id: &str,
-    ) -> Result<Vec<Workout>>;
-
-    async fn list_program_schedule(
-        &self,
-        access_token: &str,
-        program_id: &str,
-    ) -> Result<Vec<ProgramScheduleItem>>;
-
-    async fn list_exercises_for_workout(
-        &self,
-        access_token: &str,
-        workout_id: &str,
-    ) -> Result<Vec<WorkoutExercise>>;
-
-    async fn list_exercise_library(
-        &self,
-        access_token: &str,
-        specialist_id: &str,
-        name_filter: Option<&str>,
-    ) -> Result<Vec<Exercise>>;
-
-    async fn list_patient_programs_for_specialist(
-        &self,
-        access_token: &str,
-    ) -> Result<Vec<PatientProgram>>;
-
-    async fn get_patient_program_by_id(
-        &self,
-        access_token: &str,
-        id: &str,
-    ) -> Result<Option<PatientProgram>>;
-
-    async fn list_workout_sessions(
-        &self,
-        access_token: &str,
-        patient_program_id: &str,
-    ) -> Result<Vec<WorkoutSession>>;
-
-    async fn list_session_exercise_feedback(
-        &self,
-        access_token: &str,
-        workout_session_id: &str,
-    ) -> Result<Vec<SessionExerciseFeedback>>;
-
-    async fn list_session_exercise_feedback_for_program(
-        &self,
-        access_token: &str,
-        patient_program_id: &str,
-    ) -> Result<Vec<SessionExerciseFeedback>>;
-
-    async fn list_active_patient_programs(&self, access_token: &str)
-        -> Result<Vec<PatientProgram>>;
-
-    async fn get_workout_with_exercises(
-        &self,
-        access_token: &str,
-        workout_id: &str,
-    ) -> Result<Option<WorkoutWithExercises>>;
-
-    async fn get_program_with_agenda(
-        &self,
-        access_token: &str,
-        program_id: &str,
-    ) -> Result<Option<ProgramWithAgenda>>;
-
-    async fn get_patient_program_full(
-        &self,
-        access_token: &str,
-        patient_program_id: &str,
-    ) -> Result<Option<PatientProgramFull>>;
-
-    async fn get_specialist_dashboard(
-        &self,
-        access_token: &str,
-        specialist_id: &str,
-    ) -> Result<SpecialistDashboard>;
+impl<T> SpecialistCatalogReadRepository for T where
+    T: GetProfilesByIdsRead
+        + GetPatientIdByEmailRead
+        + ListSpecialistPatientsRead
+        + ListProgramsRead
+        + GetProgramRead
+        + ListWorkoutLibraryRead
+        + GetWorkoutsByIdsRead
+        + ListWorkoutsForProgramRead
+        + ListProgramScheduleRead
+        + ListExercisesForWorkoutRead
+        + ListExerciseLibraryRead
+        + ListPatientProgramsForSpecialistRead
+        + GetPatientProgramByIdRead
+        + ListWorkoutSessionsRead
+        + ListSessionExerciseFeedbackRead
+        + ListSessionExerciseFeedbackForProgramRead
+        + ListActivePatientProgramsRead
+        + GetWorkoutWithExercisesRead
+        + GetProgramWithAgendaRead
+        + GetPatientProgramFullRead
+        + GetSpecialistDashboardRead
+{
 }

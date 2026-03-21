@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use crate::app_context::SpecialistProgramsDataUseCaseType;
+use application::ports::BackofficeApi;
 use application::use_cases::specialist_programs_data::{
     SpecialistProgramsDataArgs, SpecialistProgramsDataResult,
 };
@@ -17,13 +17,13 @@ pub struct UseSpecialistPrograms {
 pub fn use_specialist_programs() -> UseSpecialistPrograms {
     let app_context = use_app_context();
     let app_session = app_context.session();
-    let use_case = app_context.use_case::<SpecialistProgramsDataUseCaseType>();
+    let facade = app_context.backoffice_facade();
     let mut state = use_signal(|| AsyncState::<SpecialistProgramsDataResult>::Loading);
 
-    let use_case = use_case.clone();
+    let facade = facade.clone();
     let resource = use_resource(move || {
         let maybe_session_ref = app_session.read().clone();
-        let use_case = use_case.clone();
+        let facade = facade.clone();
 
         async move {
             let Some(session) = maybe_session_ref.as_ref() else {
@@ -31,8 +31,8 @@ pub fn use_specialist_programs() -> UseSpecialistPrograms {
             };
             let token = session.access_token().to_string();
             let specialist_id = session.user_id().to_string();
-            use_case
-                .execute(SpecialistProgramsDataArgs {
+            facade
+                .specialist_programs_data(SpecialistProgramsDataArgs {
                     token,
                     specialist_id,
                 })

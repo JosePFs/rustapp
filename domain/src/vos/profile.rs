@@ -61,7 +61,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_profile_new() {
+    fn profile_new() {
         let profile = default_profile(None);
 
         assert_eq!(profile.id(), &default_id());
@@ -71,7 +71,7 @@ mod tests {
     }
 
     #[test]
-    fn test_profile_eq() {
+    fn profile_eq() {
         let profile_one = default_profile(None);
         let profile_two = default_profile(None);
 
@@ -79,7 +79,7 @@ mod tests {
     }
 
     #[test]
-    fn test_profile_not_eq() {
+    fn profile_not_eq() {
         let profile_one = default_profile(None);
         let profile_two = default_profile(Some(
             Id::try_from("123e4567-e89b-12d3-a456-426614174001").unwrap(),
@@ -89,7 +89,7 @@ mod tests {
     }
 
     #[test]
-    fn test_profile_to_string() {
+    fn profile_to_string() {
         let profile = default_profile(None);
 
         assert_eq!(profile.to_string(), "Profile(id: 123e4567-e89b-12d3-a456-426614174000, email: test@example.com, full_name: John Doe, role: specialist)");

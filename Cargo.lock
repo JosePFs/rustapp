@@ -120,12 +120,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
-name = "anymap2"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d301b3b94cb4b2f23d7917810addbbaff90738e0ca2be692bd027e70d7e0330c"
-
-[[package]]
 name = "application"
 version = "0.1.0"
 dependencies = [
@@ -133,6 +127,8 @@ dependencies = [
  "chrono",
  "domain",
  "futures",
+ "serde",
+ "tokio",
 ]
 
 [[package]]
@@ -278,7 +274,6 @@ name = "backoffice-dioxus"
 version = "0.1.0"
 dependencies = [
  "android_logger",
- "anymap2",
  "application",
  "chrono",
  "clap",

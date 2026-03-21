@@ -23,7 +23,6 @@ log = "0.4"
 wasm-logger = "0.2"
 clap = { version = "4", features = ["derive"] }
 notify = "8"
-anymap2 = "0.13.0"
 
 [features]
 default = ["web"]

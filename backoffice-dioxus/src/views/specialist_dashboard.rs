@@ -13,7 +13,6 @@ use crate::hooks::{
     specialist_patients::use_specialist_patients, AsyncState,
 };
 use crate::Route;
-use domain::vos::profile::Profile;
 
 #[component]
 pub fn SpecialistPatients() -> Element {
@@ -51,7 +50,6 @@ pub fn SpecialistPatients() -> Element {
             div {
                 class: "content min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
                 {
-                    // Navbar desplegable: actúa como título de la página.
                     let mut nav_open = use_signal(|| false);
                     rsx! {
                         nav { class: "relative mb-6",
@@ -105,15 +103,15 @@ pub fn SpecialistPatients() -> Element {
                             AsyncState::Ready(data) => rsx! {
                                 ul { class: "list-none p-0 m-0 mb-4",
                                     for link in data.links.iter() {
-                                        li { key: "{link.id}", class: "mb-1",
+                                        li { key: "{link.link_id}", class: "mb-1",
                                             Link {
                                                 to: Route::PatientProgress { id: link.patient_id.clone() },
                                                 class: "block p-4 min-h-11 text-primary no-underline rounded-md border border-border bg-surface hover:bg-gray-50 hover:border-primary",
                                                 {
                                                     data.profiles
                                                         .iter()
-                                                        .find(|p| p.id() == &link.patient_id)
-                                                        .map(|p: &Profile| rsx! { "{p.full_name()} ({p.email()})" })
+                                                        .find(|p| p.patient_id == link.patient_id)
+                                                        .map(|p| rsx! { "{p.full_name} ({p.email})" })
                                                         .unwrap_or(rsx! { "{link.patient_id}" })
                                                 }
                                             }

@@ -271,7 +271,7 @@ pub fn SpecialistPrograms() -> Element {
                                     let rows: Vec<dioxus::prelude::Element> = links
                                         .iter()
                                         .filter_map(|link| {
-                                            let profile = profiles.iter().find(|p| p.id() == &link.patient_id)?.clone();
+                                            let profile = profiles.iter().find(|p| p.patient_id == link.patient_id)?.clone();
                                             let has_any = selected_prog_ids
                                                 .iter()
                                                 .any(|prog_id| existing.contains(&(link.patient_id.clone(), prog_id.clone())));
@@ -279,10 +279,10 @@ pub fn SpecialistPrograms() -> Element {
                                                 return None;
                                             }
 
-                                            let label = format!("{} ({})", profile.full_name(), profile.email());
+                                            let label = format!("{} ({})", profile.full_name, profile.email);
                                             if !filter_pat.is_empty()
-                                                && !profile.full_name().value().to_lowercase().contains(&filter_pat)
-                                                && !profile.email().value().to_lowercase().contains(&filter_pat)
+                                                && !profile.full_name.to_lowercase().contains(&filter_pat)
+                                                && !profile.email.to_lowercase().contains(&filter_pat)
                                             {
                                                 return None;
                                             }
@@ -328,7 +328,7 @@ pub fn SpecialistPrograms() -> Element {
                                                         let ids: HashSet<String> = links
                                                             .iter()
                                                             .filter_map(|link| {
-                                                                let profile = profiles.iter().find(|p| p.id() == &link.patient_id)?;
+                                                                let profile = profiles.iter().find(|p| p.patient_id == link.patient_id)?;
                                                                 let has_any = selected_prog_ids
                                                                     .iter()
                                                                     .any(|prog_id| existing.contains(&(link.patient_id.clone(), prog_id.clone())));
@@ -336,8 +336,8 @@ pub fn SpecialistPrograms() -> Element {
                                                                     return None;
                                                                 }
                                                                 if !filter_pat.is_empty()
-                                                                    && !profile.full_name().value().to_lowercase().contains(&filter_pat)
-                                                                    && !profile.email().value().to_lowercase().contains(&filter_pat)
+                                                                    && !profile.full_name.to_lowercase().contains(&filter_pat)
+                                                                    && !profile.email.to_lowercase().contains(&filter_pat)
                                                                 {
                                                                     return None;
                                                                 }

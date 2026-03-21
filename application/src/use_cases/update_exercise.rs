@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
-use crate::ports::Backend;
 use domain::error::Result;
+use domain::repositories::UpdateExerciseWrite;
+use domain::vos::id::Id;
+use domain::vos::{AccessToken, Description, ExerciseName, Patch, ScheduleOrderIndex, VideoUrl};
 
 #[derive(Clone)]
 pub struct UpdateExerciseArgs {
@@ -13,24 +15,47 @@ pub struct UpdateExerciseArgs {
     pub video_url: Option<String>,
 }
 
-pub struct UpdateExerciseUseCase<B: Backend> {
-    backend: Arc<B>,
+pub struct UpdateExerciseUseCase<W: UpdateExerciseWrite> {
+    catalog_write: Arc<W>,
 }
 
-impl<B: Backend> UpdateExerciseUseCase<B> {
-    pub fn new(backend: Arc<B>) -> Self {
-        Self { backend }
+impl<W: UpdateExerciseWrite> UpdateExerciseUseCase<W> {
+    pub fn new(catalog_write: Arc<W>) -> Self {
+        Self { catalog_write }
     }
 
     pub async fn execute(&self, args: UpdateExerciseArgs) -> Result<()> {
-        self.backend
+        let access = AccessToken::try_from(args.token)?;
+        let exercise_id = Id::try_from(args.exercise_id)?;
+        let name = args
+            .name
+            .as_ref()
+            .map(|s| ExerciseName::try_from(s.as_str()))
+            .transpose()?;
+        let name_ref = name.as_ref();
+        let description = args
+            .description
+            .as_ref()
+            .map(|s| Description::try_from(s.as_str()))
+            .transpose()?;
+        let description_ref = description.as_ref();
+        let order_index = args
+            .order_index
+            .map(ScheduleOrderIndex::try_from)
+            .transpose()?;
+        let video_url = match &args.video_url {
+            None => Patch::Omit,
+            Some(s) if s.trim().is_empty() => Patch::Clear,
+            Some(s) => Patch::Set(VideoUrl::try_from(s.as_str())?),
+        };
+        self.catalog_write
             .update_exercise(
-                &args.token,
-                &args.exercise_id,
-                args.name.as_deref(),
-                args.description.as_ref().map(|s| s.as_str()),
-                args.order_index,
-                args.video_url.as_ref().map(|s| Some(s.as_str())),
+                &access,
+                &exercise_id,
+                name_ref,
+                description_ref,
+                order_index,
+                video_url,
             )
             .await
     }

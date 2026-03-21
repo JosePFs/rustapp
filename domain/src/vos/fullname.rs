@@ -67,14 +67,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_fullname_new() {
+    fn fullname_new() {
         let fullname = FullName::new("John Doe".to_string());
 
         assert_eq!(fullname.value(), "John Doe");
     }
 
     #[test]
-    fn test_fullname_eq() {
+    fn fullname_eq() {
         let fullname = FullName::new("John Doe".to_string());
         let fullname2 = FullName::new("John Doe".to_string());
 
@@ -82,7 +82,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fullname_eq_str() {
+    fn fullname_eq_str() {
         let fullname = FullName::new("John Doe".to_string());
         let str = "John Doe";
 
@@ -90,7 +90,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fullname_eq_string() {
+    fn fullname_eq_string() {
         let fullname = FullName::new("John Doe".to_string());
         let string = "John Doe".to_string();
 
@@ -98,28 +98,28 @@ mod tests {
     }
 
     #[test]
-    fn test_fullname_to_string() {
+    fn fullname_to_string() {
         let fullname = FullName::new("John Doe".to_string());
 
         assert_eq!(fullname.to_string(), "John Doe");
     }
 
     #[test]
-    fn test_fullname_try_from_str() {
+    fn fullname_try_from_str() {
         let fullname = FullName::try_from("John Doe").unwrap();
 
         assert_eq!(fullname.value(), "John Doe");
     }
 
     #[test]
-    fn test_fullname_try_from_string() {
+    fn fullname_try_from_string() {
         let fullname = FullName::try_from("John Doe".to_string()).unwrap();
 
         assert_eq!(fullname.value(), "John Doe");
     }
 
     #[test]
-    fn test_fullname_try_from_empty_string() {
+    fn fullname_try_from_empty_string() {
         let result = FullName::try_from("".to_string());
 
         assert!(result.is_err());

@@ -1,8 +1,8 @@
 use dioxus::prelude::*;
 
-use crate::app_context::ListProgramScheduleUseCaseType;
 use crate::hooks::app_context::use_app_context;
-use application::use_cases::list_program_schedule::{ListProgramScheduleArgs, ListProgramScheduleUseCase, ProgramScheduleData};
+use application::ports::BackofficeApi;
+use application::use_cases::list_program_schedule::{ListProgramScheduleArgs, ProgramScheduleData};
 use domain::error::DomainError;
 
 #[derive(Clone)]
@@ -12,15 +12,15 @@ pub struct UseProgramScheduleData {
 
 pub fn use_program_schedule_data(program_id: String) -> UseProgramScheduleData {
     let app_context = use_app_context();
-    let use_case = app_context.use_case::<ListProgramScheduleUseCaseType>();
+    let facade = app_context.backoffice_facade();
     let session_signal = app_context.session();
 
-    let use_case_clone = use_case.clone();
+    let facade_clone = facade.clone();
     let session_clone = session_signal.clone();
     let program_id_clone = program_id.clone();
 
     let resource = use_resource(move || {
-        let use_case = use_case_clone.clone();
+        let facade = facade_clone.clone();
         let session = session_clone.clone();
         let program_id = program_id_clone.clone();
         async move {
@@ -34,7 +34,7 @@ pub fn use_program_schedule_data(program_id: String) -> UseProgramScheduleData {
                 program_id,
             };
 
-            use_case.execute(args).await
+            facade.list_program_schedule(args).await
         }
     });
 

@@ -1,26 +1,25 @@
 use dioxus::prelude::*;
 
-use crate::app_context::ListWorkoutLibraryUseCaseType;
 use crate::hooks::app_context::use_app_context;
-use application::use_cases::list_workout_library::{ListWorkoutLibraryArgs, ListWorkoutLibraryUseCase};
+use application::ports::BackofficeApi;
+use application::use_cases::list_workout_library::{ListWorkoutLibraryArgs, WorkoutLibraryItem};
 use domain::error::DomainError;
-use domain::entities::Workout;
 
 #[derive(Clone)]
 pub struct UseWorkoutLibraryData {
-    pub resource: Resource<Result<Vec<Workout>, DomainError>>,
+    pub resource: Resource<Result<Vec<WorkoutLibraryItem>, DomainError>>,
 }
 
 pub fn use_workout_library_data() -> UseWorkoutLibraryData {
     let app_context = use_app_context();
-    let use_case = app_context.use_case::<ListWorkoutLibraryUseCaseType>();
+    let facade = app_context.backoffice_facade();
     let session_signal = app_context.session();
 
-    let use_case_clone = use_case.clone();
+    let facade_clone = facade.clone();
     let session_clone = session_signal.clone();
 
     let resource = use_resource(move || {
-        let use_case = use_case_clone.clone();
+        let facade = facade_clone.clone();
         let session = session_clone.clone();
         async move {
             let sess_opt = session.read().clone();
@@ -36,7 +35,7 @@ pub fn use_workout_library_data() -> UseWorkoutLibraryData {
                 name_filter: None,
             };
 
-            use_case.execute(args).await
+            facade.list_workout_library(args).await
         }
     });
 

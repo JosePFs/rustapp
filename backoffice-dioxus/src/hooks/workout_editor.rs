@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 
-use crate::app_context::WorkoutEditorDataUseCaseType;
 use crate::{hooks::app_context::use_app_context, hooks::AsyncState};
+use application::ports::BackofficeApi;
 use application::use_cases::workout_editor_data::{WorkoutEditorDataArgs, WorkoutEditorDataResult};
 use domain::error::{DomainError, Result};
 
@@ -14,13 +14,13 @@ pub struct UseWorkoutEditor {
 pub fn use_workout_editor(workout_id: String) -> UseWorkoutEditor {
     let app_context = use_app_context();
     let app_session = app_context.session();
-    let use_case = app_context.use_case::<WorkoutEditorDataUseCaseType>();
+    let facade = app_context.backoffice_facade();
     let mut state = use_signal(|| AsyncState::<WorkoutEditorDataResult>::Loading);
 
-    let use_case = use_case.clone();
+    let facade = facade.clone();
     let resource = use_resource(move || {
         let maybe_session_ref = app_session.read().clone();
-        let use_case = use_case.clone();
+        let facade = facade.clone();
         let workout_id = workout_id.clone();
 
         async move {
@@ -29,8 +29,8 @@ pub fn use_workout_editor(workout_id: String) -> UseWorkoutEditor {
             };
             let token = session.access_token().to_string();
             let specialist_id = session.user_id().to_string();
-            use_case
-                .execute(WorkoutEditorDataArgs {
+            facade
+                .workout_editor_data(WorkoutEditorDataArgs {
                     token,
                     specialist_id,
                     workout_id,

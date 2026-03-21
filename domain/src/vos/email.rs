@@ -79,14 +79,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_email_new() {
+    fn email_new() {
         let email = Email::new("test@example.com".to_string());
 
         assert_eq!(email.value(), "test@example.com");
     }
 
     #[test]
-    fn test_email_eq() {
+    fn email_eq() {
         let email = Email::new("test@example.com".to_string());
         let email2 = Email::new("test@example.com".to_string());
 
@@ -94,7 +94,7 @@ mod tests {
     }
 
     #[test]
-    fn test_email_eq_str() {
+    fn email_eq_str() {
         let email = Email::new("test@example.com".to_string());
         let str = "test@example.com";
 
@@ -102,7 +102,7 @@ mod tests {
     }
 
     #[test]
-    fn test_email_eq_string() {
+    fn email_eq_string() {
         let email = Email::new("test@example.com".to_string());
         let string = "test@example.com".to_string();
 
@@ -110,34 +110,34 @@ mod tests {
     }
 
     #[test]
-    fn test_email_to_string() {
+    fn email_to_string() {
         let email = Email::new("test@example.com".to_string());
 
         assert_eq!(email.to_string(), "test@example.com");
     }
 
     #[test]
-    fn test_email_is_valid_email() {
+    fn email_is_valid_email() {
         assert!(Email::is_valid_email("test@example.com"));
         assert!(!Email::is_valid_email("invalid"));
     }
 
     #[test]
-    fn test_email_try_from_str() {
+    fn email_try_from_str() {
         let email = Email::try_from("test@example.com").unwrap();
 
         assert_eq!(email.value(), "test@example.com");
     }
 
     #[test]
-    fn test_email_try_from_string() {
+    fn email_try_from_string() {
         let email = Email::try_from("test@example.com".to_string()).unwrap();
 
         assert_eq!(email.value(), "test@example.com");
     }
 
     #[test]
-    fn test_email_try_from_empty_string() {
+    fn email_try_from_empty_string() {
         let result = Email::try_from("".to_string());
 
         assert!(result.is_err());
@@ -148,7 +148,7 @@ mod tests {
     }
 
     #[test]
-    fn test_email_try_from_invalid_str() {
+    fn email_try_from_invalid_str() {
         let result = Email::try_from("invalid");
 
         assert!(result.is_err());

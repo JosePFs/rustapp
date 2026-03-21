@@ -76,14 +76,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_role_new() {
+    fn role_new() {
         let role = Role::try_from("specialist").unwrap();
 
         assert_eq!(role, Role::Specialist);
     }
 
     #[test]
-    fn test_role_eq() {
+    fn role_eq() {
         let role = Role::try_from("specialist").unwrap();
         let role2 = Role::try_from("specialist").unwrap();
 
@@ -91,7 +91,7 @@ mod tests {
     }
 
     #[test]
-    fn test_role_eq_str() {
+    fn role_eq_str() {
         let role = Role::try_from("specialist").unwrap();
         let str = "specialist";
 
@@ -99,7 +99,7 @@ mod tests {
     }
 
     #[test]
-    fn test_role_eq_string() {
+    fn role_eq_string() {
         let role = Role::try_from("specialist").unwrap();
         let string = "specialist".to_string();
 
@@ -107,21 +107,21 @@ mod tests {
     }
 
     #[test]
-    fn test_role_try_from_str() {
+    fn role_try_from_str() {
         let role = Role::try_from("specialist").unwrap();
 
         assert_eq!(role, Role::Specialist);
     }
 
     #[test]
-    fn test_role_try_from_string() {
+    fn role_try_from_string() {
         let role = Role::try_from("specialist".to_string()).unwrap();
 
         assert_eq!(role, Role::Specialist);
     }
 
     #[test]
-    fn test_role_try_from_empty_string() {
+    fn role_try_from_empty_string() {
         let result = Role::try_from("".to_string());
 
         assert!(result.is_err());
@@ -132,7 +132,7 @@ mod tests {
     }
 
     #[test]
-    fn test_role_try_from_invalid_string() {
+    fn role_try_from_invalid_string() {
         let result = Role::try_from("invalid".to_string());
 
         assert!(result.is_err());

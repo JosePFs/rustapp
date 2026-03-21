@@ -1,5 +1,26 @@
+pub mod access_token;
+pub mod bounded_label;
+pub mod description;
 pub mod email;
+pub mod feedback_comment;
 pub mod fullname;
 pub mod id;
+pub mod library_name_filter;
+pub mod patch;
 pub mod profile;
 pub mod role;
+pub mod session_date;
+pub mod session_feedback_scores;
+pub mod training_counts;
+pub mod video_url;
+
+pub use access_token::AccessToken;
+pub use bounded_label::{ExerciseName, ProgramName, WorkoutName};
+pub use description::Description;
+pub use feedback_comment::FeedbackComment;
+pub use library_name_filter::LibraryNameFilter;
+pub use patch::Patch;
+pub use session_date::SessionDate;
+pub use session_feedback_scores::{EffortScore, PainScore};
+pub use training_counts::{DayIndex, DaysInBlock, Reps, ScheduleOrderIndex, Sets};
+pub use video_url::VideoUrl;

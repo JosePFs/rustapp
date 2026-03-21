@@ -1,28 +1,27 @@
 use dioxus::prelude::*;
 
-use crate::app_context::ListWorkoutLibraryUseCaseType;
 use crate::{hooks::app_context::use_app_context, hooks::AsyncState};
-use application::use_cases::list_workout_library::ListWorkoutLibraryArgs;
-use domain::entities::Workout;
+use application::ports::BackofficeApi;
+use application::use_cases::list_workout_library::{ListWorkoutLibraryArgs, WorkoutLibraryItem};
 use domain::error::{DomainError, Result};
 
 #[derive(Clone)]
 pub struct UseWorkoutLibrary {
-    pub state: Signal<AsyncState<Vec<Workout>>>,
-    pub resource: Resource<Result<Vec<Workout>>>,
+    pub state: Signal<AsyncState<Vec<WorkoutLibraryItem>>>,
+    pub resource: Resource<Result<Vec<WorkoutLibraryItem>>>,
 }
 
 pub fn use_workout_library(filter: Signal<String>) -> UseWorkoutLibrary {
     let app_context = use_app_context();
     let app_session = app_context.session();
-    let use_case = app_context.use_case::<ListWorkoutLibraryUseCaseType>();
-    let mut state = use_signal(|| AsyncState::<Vec<Workout>>::Loading);
+    let facade = app_context.backoffice_facade();
+    let mut state = use_signal(|| AsyncState::<Vec<WorkoutLibraryItem>>::Loading);
 
-    let use_case = use_case.clone();
+    let facade = facade.clone();
     let resource = use_resource(move || {
         let filter_val = filter();
         let maybe_session_ref = app_session.read().clone();
-        let use_case = use_case.clone();
+        let facade = facade.clone();
 
         async move {
             let Some(session) = maybe_session_ref.as_ref() else {
@@ -30,8 +29,8 @@ pub fn use_workout_library(filter: Signal<String>) -> UseWorkoutLibrary {
             };
             let token = session.access_token().to_string();
             let specialist_id = session.user_id().to_string();
-            use_case
-                .execute(ListWorkoutLibraryArgs {
+            facade
+                .list_workout_library(ListWorkoutLibraryArgs {
                     token,
                     specialist_id,
                     name_filter: Some(filter_val).filter(|s| !s.is_empty()),

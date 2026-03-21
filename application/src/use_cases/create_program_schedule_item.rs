@@ -1,8 +1,10 @@
 use std::sync::Arc;
 
-use crate::ports::Backend;
 use domain::entities::ProgramScheduleItem;
 use domain::error::Result;
+use domain::repositories::CreateProgramScheduleItemWrite;
+use domain::vos::id::Id;
+use domain::vos::{AccessToken, DaysInBlock, ScheduleOrderIndex};
 
 #[derive(Clone)]
 pub struct CreateProgramScheduleItemArgs {
@@ -13,26 +15,34 @@ pub struct CreateProgramScheduleItemArgs {
     pub days_count: i32,
 }
 
-pub struct CreateProgramScheduleItemUseCase<B: Backend> {
-    backend: Arc<B>,
+pub struct CreateProgramScheduleItemUseCase<W: CreateProgramScheduleItemWrite> {
+    catalog_write: Arc<W>,
 }
 
-impl<B: Backend> CreateProgramScheduleItemUseCase<B> {
-    pub fn new(backend: Arc<B>) -> Self {
-        Self { backend }
+impl<W: CreateProgramScheduleItemWrite> CreateProgramScheduleItemUseCase<W> {
+    pub fn new(catalog_write: Arc<W>) -> Self {
+        Self { catalog_write }
     }
 
     pub async fn execute(
         &self,
         args: CreateProgramScheduleItemArgs,
     ) -> Result<ProgramScheduleItem> {
-        self.backend
+        let program_id = Id::try_from(args.program_id)?;
+        let access = AccessToken::try_from(args.token)?;
+        let workout_id = match args.workout_id {
+            Some(w) => Some(Id::try_from(w)?),
+            None => None,
+        };
+        let order_index = ScheduleOrderIndex::try_from(args.order_index)?;
+        let days_count = DaysInBlock::try_from(args.days_count)?;
+        self.catalog_write
             .create_program_schedule_item(
-                &args.token,
-                &args.program_id,
-                args.order_index,
-                args.workout_id.as_deref(),
-                args.days_count,
+                &access,
+                &program_id,
+                order_index,
+                workout_id.as_ref(),
+                days_count,
             )
             .await
     }
