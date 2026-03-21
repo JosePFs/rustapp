@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use domain::{entities::entities::WorkoutSession, error::Result};
 
 #[async_trait]
-pub trait DataMutatorSend: Send + Sync {
+pub trait DataMutatorSend {
     async fn get_or_create_session(
         &self,
         access_token: &str,

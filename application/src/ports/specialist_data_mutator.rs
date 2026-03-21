@@ -7,7 +7,7 @@ use domain::entities::{
 use domain::error::Result;
 
 #[async_trait(?Send)]
-pub trait DataMutator: Send + Sync {
+pub trait SpecialistDataMutator {
     async fn add_specialist_patient(
         &self,
         access_token: &str,

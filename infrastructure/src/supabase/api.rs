@@ -10,7 +10,7 @@ use crate::api::dtos::{
     WorkoutSessionDto,
 };
 use crate::supabase::config::SupabaseConfig;
-use application::ports::{Backend, DataMutator, DataProvider};
+use application::ports::{Backend, DataProvider, SpecialistDataMutator};
 use domain::entities::SessionExerciseFeedback;
 use domain::{
     entities::{
@@ -337,7 +337,7 @@ impl DataProvider for Api {
 }
 
 #[async_trait(?Send)]
-impl DataMutator for Api {
+impl SpecialistDataMutator for Api {
     async fn add_specialist_patient(
         &self,
         access_token: &str,

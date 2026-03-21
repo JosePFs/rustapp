@@ -1,14 +1,14 @@
 pub mod auth;
-pub mod data_mutator;
-pub mod data_mutator_send;
-pub mod data_provider;
-pub mod data_provider_send;
+pub mod patient_data_mutator;
+pub mod patient_data_provider;
+pub mod specialist_data_mutator;
+pub mod specialist_data_provider;
 
-pub use data_mutator::DataMutator;
-pub use data_mutator_send::DataMutatorSend;
-pub use data_provider::DataProvider;
-pub use data_provider_send::DataProviderSend;
+pub use patient_data_mutator::DataMutatorSend;
+pub use patient_data_provider::DataProviderSend;
+pub use specialist_data_mutator::SpecialistDataMutator;
+pub use specialist_data_provider::DataProvider;
 
-pub trait Backend: DataMutator + DataProvider + Send + Sync {}
+pub trait Backend: SpecialistDataMutator + DataProvider + Send + Sync {}
 
 pub trait MobileBackend: DataProviderSend + DataMutatorSend + Send + Sync {}

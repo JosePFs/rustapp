@@ -7,7 +7,7 @@ use domain::entities::{
 use domain::{error::Result, vos::profile::Profile};
 
 #[async_trait]
-pub trait DataProviderSend: Send + Sync {
+pub trait DataProviderSend {
     async fn get_profiles_by_ids(&self, ids: &[String], access_token: &str)
         -> Result<Vec<Profile>>;
 
