@@ -112,3 +112,129 @@ impl<R: GetWorkoutWithExercisesRead + ListExerciseLibraryRead> WorkoutEditorData
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::sync::{Arc, Mutex};
+
+    use super::*;
+    use domain::aggregates::WorkoutWithExercises;
+    use domain::entities::{Exercise, Workout};
+    use domain::error::Result;
+    use domain::repositories::{GetWorkoutWithExercisesRead, ListExerciseLibraryRead};
+    use domain::vos::library_name_filter::LibraryNameFilter;
+    use domain::vos::AccessToken;
+
+    const TOKEN: &str = "t";
+    const SPEC: &str = "550e8400-e29b-41d4-a716-446655440360";
+    const WID: &str = "550e8400-e29b-41d4-a716-446655440361";
+
+    #[tokio::test]
+    async fn workout_editor_empty_when_workout_missing() {
+        let fake = MockWorkoutEditorRead::new(Ok(None), Ok(vec![]));
+        let uc = WorkoutEditorDataUseCase::new(Arc::new(fake));
+
+        let res = uc
+            .execute(WorkoutEditorDataArgs {
+                token: TOKEN.to_string(),
+                specialist_id: SPEC.to_string(),
+                workout_id: WID.to_string(),
+            })
+            .await
+            .unwrap();
+
+        assert!(res.workout.is_none());
+        assert!(res.exercises.is_empty());
+        assert!(res.library.is_empty());
+    }
+
+    #[tokio::test]
+    async fn workout_editor_maps_workout_and_library() {
+        let spec = Id::try_from(SPEC).unwrap();
+        let wid = Id::try_from(WID).unwrap();
+        let workout = Workout {
+            id: wid.clone(),
+            specialist_id: spec.clone(),
+            name: "Edit me".to_string(),
+            description: Some("desc".to_string()),
+            order_index: 2,
+            created_at: None,
+            updated_at: None,
+        };
+        let lib_row = Exercise {
+            id: Id::try_from("550e8400-e29b-41d4-a716-446655440362").unwrap(),
+            specialist_id: spec,
+            name: "Lib ex".to_string(),
+            description: None,
+            order_index: 0,
+            video_url: None,
+            deleted_at: None,
+            created_at: None,
+        };
+        let fake = MockWorkoutEditorRead::new(
+            Ok(Some(WorkoutWithExercises {
+                workout: workout.clone(),
+                exercises: vec![],
+            })),
+            Ok(vec![lib_row.clone()]),
+        );
+        let uc = WorkoutEditorDataUseCase::new(Arc::new(fake));
+
+        let res = uc
+            .execute(WorkoutEditorDataArgs {
+                token: TOKEN.to_string(),
+                specialist_id: SPEC.to_string(),
+                workout_id: WID.to_string(),
+            })
+            .await
+            .unwrap();
+
+        assert_eq!(
+            res.workout.as_ref().map(|w| w.name.as_str()),
+            Some("Edit me")
+        );
+        assert_eq!(res.library.len(), 1);
+        assert_eq!(res.library[0].name, "Lib ex");
+    }
+
+    #[derive(Clone)]
+    struct MockWorkoutEditorRead {
+        workout: Arc<Mutex<Result<Option<WorkoutWithExercises>>>>,
+        library: Arc<Mutex<Result<Vec<Exercise>>>>,
+    }
+
+    impl MockWorkoutEditorRead {
+        fn new(
+            workout: Result<Option<WorkoutWithExercises>>,
+            library: Result<Vec<Exercise>>,
+        ) -> Self {
+            Self {
+                workout: Arc::new(Mutex::new(workout)),
+                library: Arc::new(Mutex::new(library)),
+            }
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl GetWorkoutWithExercisesRead for MockWorkoutEditorRead {
+        async fn get_workout_with_exercises(
+            &self,
+            _access_token: &AccessToken,
+            _workout_id: &Id,
+        ) -> Result<Option<WorkoutWithExercises>> {
+            self.workout.lock().unwrap().clone()
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl ListExerciseLibraryRead for MockWorkoutEditorRead {
+        async fn list_exercise_library(
+            &self,
+            _access_token: &AccessToken,
+            _specialist_id: &Id,
+            _name_filter: Option<&LibraryNameFilter>,
+        ) -> Result<Vec<Exercise>> {
+            self.library.lock().unwrap().clone()
+        }
+    }
+}

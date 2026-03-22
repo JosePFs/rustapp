@@ -54,3 +54,109 @@ impl<W: CreateExerciseWrite> CreateExerciseUseCase<W> {
             .await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::sync::{Arc, Mutex};
+
+    use super::*;
+    use domain::error::DomainError;
+    use domain::error::Result;
+    use domain::repositories::CreateExerciseWrite;
+    use domain::vos::AccessToken;
+
+    const TOKEN: &str = "tok";
+    const SPEC: &str = "550e8400-e29b-41d4-a716-446655440310";
+
+    #[tokio::test]
+    async fn create_exercise_invalid_name() {
+        let ex = Exercise {
+            id: Id::try_from("550e8400-e29b-41d4-a716-446655440311").unwrap(),
+            specialist_id: Id::try_from(SPEC).unwrap(),
+            name: "X".to_string(),
+            description: None,
+            order_index: 0,
+            video_url: None,
+            deleted_at: None,
+            created_at: None,
+        };
+        let fake = MockCreateExerciseWrite::new_ok(ex);
+        let uc = CreateExerciseUseCase::new(Arc::new(fake));
+
+        let err = uc
+            .execute(CreateExerciseArgs {
+                token: TOKEN.to_string(),
+                specialist_id: SPEC.to_string(),
+                name: "".to_string(),
+                description: None,
+                order_index: 0,
+                video_url: None,
+            })
+            .await
+            .unwrap_err();
+
+        assert!(matches!(err, DomainError::InvalidParameter(_, _)));
+    }
+
+    #[tokio::test]
+    async fn create_exercise_forwards_name() {
+        let ex = Exercise {
+            id: Id::try_from("550e8400-e29b-41d4-a716-446655440312").unwrap(),
+            specialist_id: Id::try_from(SPEC).unwrap(),
+            name: "Push-up".to_string(),
+            description: None,
+            order_index: 1,
+            video_url: None,
+            deleted_at: None,
+            created_at: None,
+        };
+        let fake = MockCreateExerciseWrite::new_ok(ex.clone());
+        let uc = CreateExerciseUseCase::new(Arc::new(fake.clone()));
+
+        let got = uc
+            .execute(CreateExerciseArgs {
+                token: TOKEN.to_string(),
+                specialist_id: SPEC.to_string(),
+                name: "Push-up".to_string(),
+                description: None,
+                order_index: 1,
+                video_url: None,
+            })
+            .await
+            .unwrap();
+
+        assert_eq!(got.name, ex.name);
+        assert_eq!(fake.last_name.lock().unwrap().as_deref(), Some("Push-up"));
+    }
+
+    #[derive(Clone)]
+    struct MockCreateExerciseWrite {
+        last_name: Arc<Mutex<Option<String>>>,
+        outcome: Arc<Mutex<Result<Exercise>>>,
+    }
+
+    impl MockCreateExerciseWrite {
+        fn new_ok(exercise: Exercise) -> Self {
+            Self {
+                last_name: Arc::new(Mutex::new(None)),
+                outcome: Arc::new(Mutex::new(Ok(exercise))),
+            }
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl CreateExerciseWrite for MockCreateExerciseWrite {
+        async fn create_exercise(
+            &self,
+            _access_token: &AccessToken,
+            _specialist_id: &Id,
+            name: &ExerciseName,
+            _description: Option<&Description>,
+            _order_index: ScheduleOrderIndex,
+            _video_url: Option<&VideoUrl>,
+        ) -> Result<Exercise> {
+            *self.last_name.lock().unwrap() = Some(name.value().to_string());
+            self.outcome.lock().unwrap().clone()
+        }
+    }
+}

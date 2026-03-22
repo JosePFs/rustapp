@@ -39,17 +39,19 @@ impl<W: AddExerciseToWorkoutWrite> AddExerciseToWorkoutUseCase<W> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex};
 
     use super::*;
-    use crate::test_mocks::FakeAddExerciseToWorkout;
+    use domain::error::Result;
+    use domain::repositories::AddExerciseToWorkoutWrite;
+    use domain::vos::{AccessToken, Reps, ScheduleOrderIndex, Sets};
 
     const W: &str = "550e8400-e29b-41d4-a716-446655440140";
     const E: &str = "550e8400-e29b-41d4-a716-446655440141";
 
     #[tokio::test]
     async fn add_exercise_forwards_ids() {
-        let fake = FakeAddExerciseToWorkout::new_ok();
+        let fake = MockAddExerciseToWorkoutWrite::new_ok();
         let uc = AddExerciseToWorkoutUseCase::new(Arc::new(fake.clone()));
 
         uc.execute(AddExerciseToWorkoutArgs {
@@ -66,5 +68,36 @@ mod tests {
 
         assert_eq!(key.0.to_string(), W);
         assert_eq!(key.1.to_string(), E);
+    }
+
+    #[derive(Clone)]
+    struct MockAddExerciseToWorkoutWrite {
+        last_key: Arc<Mutex<Option<(Id, Id)>>>,
+        outcome: Arc<Mutex<Result<()>>>,
+    }
+
+    impl MockAddExerciseToWorkoutWrite {
+        fn new_ok() -> Self {
+            Self {
+                last_key: Arc::new(Mutex::new(None)),
+                outcome: Arc::new(Mutex::new(Ok(()))),
+            }
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl AddExerciseToWorkoutWrite for MockAddExerciseToWorkoutWrite {
+        async fn add_exercise_to_workout(
+            &self,
+            _access_token: &AccessToken,
+            workout_id: &Id,
+            exercise_id: &Id,
+            _order_index: ScheduleOrderIndex,
+            _sets: Sets,
+            _reps: Reps,
+        ) -> Result<()> {
+            *self.last_key.lock().unwrap() = Some((workout_id.clone(), exercise_id.clone()));
+            self.outcome.lock().unwrap().clone()
+        }
     }
 }

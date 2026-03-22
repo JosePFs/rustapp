@@ -3,11 +3,11 @@ use std::sync::Arc;
 
 use futures::stream::{self, StreamExt};
 
-use domain::repositories::{GetPatientProgramFullRead, ListActivePatientProgramsRead};
 use crate::use_cases::agenda_schedule::build_agenda_schedule;
 use domain::aggregates::PatientProgramFull;
 use domain::entities::SessionExerciseFeedback;
 use domain::error::Result;
+use domain::repositories::{GetPatientProgramFullRead, ListActivePatientProgramsRead};
 use domain::vos::id::Id;
 use domain::vos::AccessToken;
 
@@ -251,6 +251,89 @@ impl<R: GetPatientProgramFullRead + ListActivePatientProgramsRead> GetPatientPro
             progress_percent,
             average_effort,
             average_pain,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::{Arc, Mutex};
+
+    use super::*;
+    use domain::aggregates::PatientProgramFull;
+    use domain::entities::PatientProgram;
+    use domain::error::Result;
+    use domain::repositories::{GetPatientProgramFullRead, ListActivePatientProgramsRead};
+    use domain::vos::id::Id;
+    use domain::vos::AccessToken;
+
+    #[tokio::test]
+    async fn get_patient_programs_invalid_token() {
+        let fake = MockGetPatientProgramsRead::new(Ok(vec![]));
+        let uc = GetPatientProgramsUseCase::new(Arc::new(fake));
+
+        let res = uc
+            .execute(GetPatientProgramsUseCaseArgs {
+                token: "  ".to_string(),
+            })
+            .await;
+
+        assert!(matches!(
+            res,
+            Err(domain::error::DomainError::InvalidParameter(_, _))
+        ));
+    }
+
+    #[tokio::test]
+    async fn get_patient_programs_empty_when_no_active_programs() {
+        let fake = MockGetPatientProgramsRead::new(Ok(vec![]));
+        let uc = GetPatientProgramsUseCase::new(Arc::new(fake.clone()));
+
+        let res = uc
+            .execute(GetPatientProgramsUseCaseArgs {
+                token: "tok".to_string(),
+            })
+            .await
+            .unwrap();
+
+        assert!(res.patient_programs.is_empty());
+        assert_eq!(*fake.full_calls.lock().unwrap(), 0);
+    }
+
+    #[derive(Clone)]
+    struct MockGetPatientProgramsRead {
+        active: Arc<Mutex<Result<Vec<PatientProgram>>>>,
+        full_calls: Arc<Mutex<usize>>,
+    }
+
+    impl MockGetPatientProgramsRead {
+        fn new(active: Result<Vec<PatientProgram>>) -> Self {
+            Self {
+                active: Arc::new(Mutex::new(active)),
+                full_calls: Arc::new(Mutex::new(0)),
+            }
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl ListActivePatientProgramsRead for MockGetPatientProgramsRead {
+        async fn list_active_patient_programs(
+            &self,
+            _access_token: &AccessToken,
+        ) -> Result<Vec<PatientProgram>> {
+            self.active.lock().unwrap().clone()
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl GetPatientProgramFullRead for MockGetPatientProgramsRead {
+        async fn get_patient_program_full(
+            &self,
+            _access_token: &AccessToken,
+            _patient_program_id: &Id,
+        ) -> Result<Option<PatientProgramFull>> {
+            *self.full_calls.lock().unwrap() += 1;
+            Ok(None)
         }
     }
 }

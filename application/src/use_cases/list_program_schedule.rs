@@ -80,3 +80,113 @@ impl<R: ListProgramScheduleRead + GetWorkoutsByIdsRead> ListProgramScheduleUseCa
         Ok(ProgramScheduleData { schedule, workouts })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::sync::{Arc, Mutex};
+
+    use super::*;
+    use domain::entities::{ProgramScheduleItem, Workout};
+    use domain::error::Result;
+    use domain::repositories::{GetWorkoutsByIdsRead, ListProgramScheduleRead};
+    use domain::vos::AccessToken;
+
+    const TOKEN: &str = "t";
+    const PRG: &str = "550e8400-e29b-41d4-a716-446655440350";
+    const SID: &str = "550e8400-e29b-41d4-a716-446655440351";
+    const WID: &str = "550e8400-e29b-41d4-a716-446655440352";
+
+    #[tokio::test]
+    async fn list_program_schedule_invalid_token() {
+        let fake = MockListProgramScheduleRead::new(Ok(vec![]), Ok(vec![]));
+        let uc = ListProgramScheduleUseCase::new(Arc::new(fake));
+
+        let err = uc
+            .execute(ListProgramScheduleArgs {
+                token: "".to_string(),
+                program_id: PRG.to_string(),
+            })
+            .await
+            .unwrap_err();
+
+        assert!(matches!(
+            err,
+            domain::error::DomainError::InvalidParameter(_, _)
+        ));
+    }
+
+    #[tokio::test]
+    async fn list_program_schedule_maps_rows_and_workouts() {
+        let pid = Id::try_from(PRG).unwrap();
+        let wid = Id::try_from(WID).unwrap();
+        let sched = ProgramScheduleItem {
+            id: Id::try_from(SID).unwrap(),
+            program_id: pid,
+            order_index: 0,
+            workout_id: Some(wid.clone()),
+            days_count: 2,
+            created_at: None,
+        };
+        let w = Workout {
+            id: wid.clone(),
+            specialist_id: Id::try_from("550e8400-e29b-41d4-a716-446655440353").unwrap(),
+            name: "Leg day".to_string(),
+            description: None,
+            order_index: 0,
+            created_at: None,
+            updated_at: None,
+        };
+        let fake = MockListProgramScheduleRead::new(Ok(vec![sched]), Ok(vec![w.clone()]));
+        let uc = ListProgramScheduleUseCase::new(Arc::new(fake));
+
+        let res = uc
+            .execute(ListProgramScheduleArgs {
+                token: TOKEN.to_string(),
+                program_id: PRG.to_string(),
+            })
+            .await
+            .unwrap();
+
+        assert_eq!(res.schedule.len(), 1);
+        assert_eq!(res.schedule[0].workout_id.as_deref(), Some(WID));
+        assert_eq!(res.workouts.len(), 1);
+        assert_eq!(res.workouts[0].name, "Leg day");
+    }
+
+    #[derive(Clone)]
+    struct MockListProgramScheduleRead {
+        schedule: Arc<Mutex<Result<Vec<ProgramScheduleItem>>>>,
+        workouts: Arc<Mutex<Result<Vec<Workout>>>>,
+    }
+
+    impl MockListProgramScheduleRead {
+        fn new(schedule: Result<Vec<ProgramScheduleItem>>, workouts: Result<Vec<Workout>>) -> Self {
+            Self {
+                schedule: Arc::new(Mutex::new(schedule)),
+                workouts: Arc::new(Mutex::new(workouts)),
+            }
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl ListProgramScheduleRead for MockListProgramScheduleRead {
+        async fn list_program_schedule(
+            &self,
+            _access_token: &AccessToken,
+            _program_id: &Id,
+        ) -> Result<Vec<ProgramScheduleItem>> {
+            self.schedule.lock().unwrap().clone()
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl GetWorkoutsByIdsRead for MockListProgramScheduleRead {
+        async fn get_workouts_by_ids(
+            &self,
+            _access_token: &AccessToken,
+            _ids: &[Id],
+        ) -> Result<Vec<Workout>> {
+            self.workouts.lock().unwrap().clone()
+        }
+    }
+}

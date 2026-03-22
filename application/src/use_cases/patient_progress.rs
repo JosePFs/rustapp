@@ -169,10 +169,18 @@ fn map_program_block(full: PatientProgramFull) -> PatientProgressProgramBlock {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use domain::aggregates::PatientProgramFull;
+    use domain::entities::PatientProgram;
+    use domain::error::Result;
+    use domain::repositories::{
+        GetPatientProgramFullRead, GetProfilesByIdsRead, ListPatientProgramsForSpecialistRead,
+    };
     use domain::vos::email::Email;
     use domain::vos::fullname::FullName;
     use domain::vos::id::Id;
+    use domain::vos::profile::Profile;
     use domain::vos::role::Role;
+    use domain::vos::AccessToken;
 
     #[test]
     fn map_profile_maps_full_name_and_email_to_strings() {
@@ -194,7 +202,7 @@ mod tests {
 
         use domain::error::DomainError;
 
-        let catalog = crate::test_mocks::FakePatientProgressCatalog::default();
+        let catalog = MockPatientProgressRead::default();
         let uc = PatientProgressUseCase::new(Arc::new(catalog));
 
         let err = uc
@@ -206,5 +214,40 @@ mod tests {
             .unwrap_err();
 
         assert!(matches!(err, DomainError::InvalidParameter(_, _)));
+    }
+
+    #[derive(Clone, Default)]
+    struct MockPatientProgressRead;
+
+    #[common::async_trait_platform]
+    impl GetProfilesByIdsRead for MockPatientProgressRead {
+        async fn get_profiles_by_ids(
+            &self,
+            _ids: &[Id],
+            _access_token: &AccessToken,
+        ) -> Result<Vec<Profile>> {
+            Ok(vec![])
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl ListPatientProgramsForSpecialistRead for MockPatientProgressRead {
+        async fn list_patient_programs_for_specialist(
+            &self,
+            _access_token: &AccessToken,
+        ) -> Result<Vec<PatientProgram>> {
+            Ok(vec![])
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl GetPatientProgramFullRead for MockPatientProgressRead {
+        async fn get_patient_program_full(
+            &self,
+            _access_token: &AccessToken,
+            _patient_program_id: &Id,
+        ) -> Result<Option<PatientProgramFull>> {
+            Ok(None)
+        }
     }
 }

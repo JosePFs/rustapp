@@ -118,11 +118,14 @@ impl<R: GetSpecialistDashboardRead> SpecialistProgramsDataUseCase<R> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex};
 
     use super::*;
-    use crate::test_mocks::FakeSpecialistDashboardRead;
     use domain::aggregates::SpecialistDashboard;
+    use domain::error::Result;
+    use domain::repositories::GetSpecialistDashboardRead;
+    use domain::vos::id::Id;
+    use domain::vos::AccessToken;
 
     #[tokio::test]
     async fn maps_empty_dashboard() {
@@ -132,7 +135,7 @@ mod tests {
             programs: vec![],
             assignments: vec![],
         };
-        let fake = FakeSpecialistDashboardRead::new_ok(dash);
+        let fake = MockGetSpecialistDashboardRead::new_ok(dash);
         let uc = SpecialistProgramsDataUseCase::new(Arc::new(fake));
 
         let res = uc
@@ -145,5 +148,29 @@ mod tests {
 
         assert!(res.links.is_empty());
         assert!(res.programs.is_empty());
+    }
+
+    #[derive(Clone)]
+    struct MockGetSpecialistDashboardRead {
+        dashboard: Arc<Mutex<Result<SpecialistDashboard>>>,
+    }
+
+    impl MockGetSpecialistDashboardRead {
+        fn new_ok(dashboard: SpecialistDashboard) -> Self {
+            Self {
+                dashboard: Arc::new(Mutex::new(Ok(dashboard))),
+            }
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl GetSpecialistDashboardRead for MockGetSpecialistDashboardRead {
+        async fn get_specialist_dashboard(
+            &self,
+            _access_token: &AccessToken,
+            _specialist_id: &Id,
+        ) -> Result<SpecialistDashboard> {
+            self.dashboard.lock().unwrap().clone()
+        }
     }
 }

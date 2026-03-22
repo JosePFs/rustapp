@@ -61,11 +61,14 @@ impl<R: ListExerciseLibraryRead> ListExerciseLibraryUseCase<R> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex};
 
     use super::*;
-    use crate::test_mocks::FakeListExerciseLibrary;
     use domain::entities::Exercise;
+    use domain::error::Result;
+    use domain::repositories::ListExerciseLibraryRead;
+    use domain::vos::library_name_filter::LibraryNameFilter;
+    use domain::vos::AccessToken;
 
     const TOKEN: &str = "t";
     const SPEC: &str = "550e8400-e29b-41d4-a716-446655440050";
@@ -82,7 +85,7 @@ mod tests {
             deleted_at: None,
             created_at: None,
         };
-        let fake = FakeListExerciseLibrary::new_ok(vec![ex.clone()]);
+        let fake = MockListExerciseLibraryRead::new_ok(vec![ex.clone()]);
         let uc = ListExerciseLibraryUseCase::new(Arc::new(fake));
 
         let rows = uc
@@ -96,5 +99,30 @@ mod tests {
 
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].name, ex.name);
+    }
+
+    #[derive(Clone)]
+    struct MockListExerciseLibraryRead {
+        exercises: Arc<Mutex<Result<Vec<Exercise>>>>,
+    }
+
+    impl MockListExerciseLibraryRead {
+        fn new_ok(exercises: Vec<Exercise>) -> Self {
+            Self {
+                exercises: Arc::new(Mutex::new(Ok(exercises))),
+            }
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl ListExerciseLibraryRead for MockListExerciseLibraryRead {
+        async fn list_exercise_library(
+            &self,
+            _access_token: &AccessToken,
+            _specialist_id: &Id,
+            _name_filter: Option<&LibraryNameFilter>,
+        ) -> Result<Vec<Exercise>> {
+            self.exercises.lock().unwrap().clone()
+        }
     }
 }

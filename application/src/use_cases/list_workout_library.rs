@@ -57,11 +57,15 @@ impl<R: ListWorkoutLibraryRead> ListWorkoutLibraryUseCase<R> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex};
 
     use super::*;
-    use crate::test_mocks::FakeListWorkoutLibrary;
     use domain::entities::Workout;
+    use domain::error::Result;
+    use domain::repositories::ListWorkoutLibraryRead;
+    use domain::vos::id::Id;
+    use domain::vos::library_name_filter::LibraryNameFilter;
+    use domain::vos::AccessToken;
 
     #[tokio::test]
     async fn maps_workout_rows() {
@@ -75,7 +79,7 @@ mod tests {
             created_at: None,
             updated_at: None,
         };
-        let fake = FakeListWorkoutLibrary::new_ok(vec![w.clone()]);
+        let fake = MockListWorkoutLibraryRead::new_ok(vec![w.clone()]);
         let uc = ListWorkoutLibraryUseCase::new(Arc::new(fake));
 
         let rows = uc
@@ -89,5 +93,30 @@ mod tests {
 
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].name, w.name);
+    }
+
+    #[derive(Clone)]
+    struct MockListWorkoutLibraryRead {
+        workouts: Arc<Mutex<Result<Vec<Workout>>>>,
+    }
+
+    impl MockListWorkoutLibraryRead {
+        fn new_ok(workouts: Vec<Workout>) -> Self {
+            Self {
+                workouts: Arc::new(Mutex::new(Ok(workouts))),
+            }
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl ListWorkoutLibraryRead for MockListWorkoutLibraryRead {
+        async fn list_workout_library(
+            &self,
+            _access_token: &AccessToken,
+            _specialist_id: &Id,
+            _name_filter: Option<&LibraryNameFilter>,
+        ) -> Result<Vec<Workout>> {
+            self.workouts.lock().unwrap().clone()
+        }
     }
 }

@@ -41,12 +41,14 @@ impl<W: CreateWorkoutWrite> CreateWorkoutUseCase<W> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex};
 
     use super::*;
-    use crate::test_mocks::FakeCreateWorkout;
     use domain::entities::Workout;
     use domain::error::DomainError;
+    use domain::error::Result;
+    use domain::repositories::CreateWorkoutWrite;
+    use domain::vos::{AccessToken, Description, WorkoutName};
 
     #[tokio::test]
     async fn create_workout_invalid_token() {
@@ -59,7 +61,7 @@ mod tests {
             created_at: None,
             updated_at: None,
         };
-        let fake = FakeCreateWorkout::new_ok(w);
+        let fake = MockCreateWorkoutWrite::new_ok(w);
         let uc = CreateWorkoutUseCase::new(Arc::new(fake));
 
         let err = uc
@@ -86,7 +88,7 @@ mod tests {
             created_at: None,
             updated_at: None,
         };
-        let fake = FakeCreateWorkout::new_ok(w.clone());
+        let fake = MockCreateWorkoutWrite::new_ok(w.clone());
         let uc = CreateWorkoutUseCase::new(Arc::new(fake.clone()));
 
         let got = uc
@@ -101,5 +103,34 @@ mod tests {
 
         assert_eq!(got.name, w.name);
         assert_eq!(fake.last_name.lock().unwrap().as_deref(), Some("Arms"));
+    }
+
+    #[derive(Clone)]
+    struct MockCreateWorkoutWrite {
+        last_name: Arc<Mutex<Option<String>>>,
+        outcome: Arc<Mutex<Result<Workout>>>,
+    }
+
+    impl MockCreateWorkoutWrite {
+        fn new_ok(workout: Workout) -> Self {
+            Self {
+                last_name: Arc::new(Mutex::new(None)),
+                outcome: Arc::new(Mutex::new(Ok(workout))),
+            }
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl CreateWorkoutWrite for MockCreateWorkoutWrite {
+        async fn create_workout(
+            &self,
+            _access_token: &AccessToken,
+            _specialist_id: &Id,
+            name: &WorkoutName,
+            _description: Option<&Description>,
+        ) -> Result<Workout> {
+            *self.last_name.lock().unwrap() = Some(name.value().to_string());
+            self.outcome.lock().unwrap().clone()
+        }
     }
 }

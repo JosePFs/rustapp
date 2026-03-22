@@ -31,17 +31,19 @@ impl<W: SoftDeleteExerciseWrite> SoftDeleteExerciseUseCase<W> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex};
 
     use super::*;
-    use crate::test_mocks::FakeSoftDeleteExercise;
+    use domain::error::Result;
+    use domain::repositories::SoftDeleteExerciseWrite;
+    use domain::vos::AccessToken;
 
     const TOKEN: &str = "t";
     const EID: &str = "550e8400-e29b-41d4-a716-446655440080";
 
     #[tokio::test]
     async fn soft_delete_records_exercise_id() {
-        let fake = FakeSoftDeleteExercise::new_ok();
+        let fake = MockSoftDeleteExerciseWrite::new_ok();
         let eid = Id::try_from(EID).unwrap();
         let uc = SoftDeleteExerciseUseCase::new(Arc::new(fake.clone()));
 
@@ -53,5 +55,32 @@ mod tests {
         .unwrap();
 
         assert_eq!(*fake.last_exercise_id.lock().unwrap(), Some(eid));
+    }
+
+    #[derive(Clone)]
+    struct MockSoftDeleteExerciseWrite {
+        last_exercise_id: Arc<Mutex<Option<Id>>>,
+        outcome: Arc<Mutex<Result<()>>>,
+    }
+
+    impl MockSoftDeleteExerciseWrite {
+        fn new_ok() -> Self {
+            Self {
+                last_exercise_id: Arc::new(Mutex::new(None)),
+                outcome: Arc::new(Mutex::new(Ok(()))),
+            }
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl SoftDeleteExerciseWrite for MockSoftDeleteExerciseWrite {
+        async fn soft_delete_exercise(
+            &self,
+            _access_token: &AccessToken,
+            exercise_id: &Id,
+        ) -> Result<()> {
+            *self.last_exercise_id.lock().unwrap() = Some(exercise_id.clone());
+            self.outcome.lock().unwrap().clone()
+        }
     }
 }

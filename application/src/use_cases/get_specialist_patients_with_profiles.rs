@@ -74,16 +74,18 @@ impl<R: GetProfilesByIdsRead + ListSpecialistPatientsRead>
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex};
 
     use super::*;
-    use crate::test_mocks::FakeSpecialistPatientsAndProfiles;
     use domain::entities::SpecialistPatient;
+    use domain::error::Result;
+    use domain::repositories::{GetProfilesByIdsRead, ListSpecialistPatientsRead};
     use domain::vos::email::Email;
     use domain::vos::fullname::FullName;
     use domain::vos::id::Id;
     use domain::vos::profile::Profile;
     use domain::vos::role::Role;
+    use domain::vos::AccessToken;
 
     #[tokio::test]
     async fn maps_links_and_profiles() {
@@ -100,7 +102,7 @@ mod tests {
         let full_name = FullName::try_from("Pat").unwrap();
         let role = Role::try_from("patient").unwrap();
         let profiles = vec![Profile::new(pid.clone(), email, full_name, role)];
-        let fake = FakeSpecialistPatientsAndProfiles::new_ok(patients, profiles);
+        let fake = MockListSpecialistPatientsRead::new_ok(patients, profiles);
         let uc = GetSpecialistPatientsWithProfilesUseCase::new(Arc::new(fake));
 
         let res = uc
@@ -114,5 +116,41 @@ mod tests {
         assert_eq!(res.profiles.len(), 1);
         assert_eq!(res.links[0].patient_id, pid.to_string());
         assert_eq!(res.profiles[0].email, "p@example.com");
+    }
+
+    #[derive(Clone)]
+    struct MockListSpecialistPatientsRead {
+        patients: Arc<Mutex<Result<Vec<SpecialistPatient>>>>,
+        profiles: Arc<Mutex<Result<Vec<Profile>>>>,
+    }
+
+    impl MockListSpecialistPatientsRead {
+        fn new_ok(patients: Vec<SpecialistPatient>, profiles: Vec<Profile>) -> Self {
+            Self {
+                patients: Arc::new(Mutex::new(Ok(patients))),
+                profiles: Arc::new(Mutex::new(Ok(profiles))),
+            }
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl ListSpecialistPatientsRead for MockListSpecialistPatientsRead {
+        async fn list_specialist_patients(
+            &self,
+            _access_token: &AccessToken,
+        ) -> Result<Vec<SpecialistPatient>> {
+            self.patients.lock().unwrap().clone()
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl GetProfilesByIdsRead for MockListSpecialistPatientsRead {
+        async fn get_profiles_by_ids(
+            &self,
+            _ids: &[Id],
+            _access_token: &AccessToken,
+        ) -> Result<Vec<Profile>> {
+            self.profiles.lock().unwrap().clone()
+        }
     }
 }

@@ -88,11 +88,16 @@ impl<P: PatientSessionWriteRepository> SubmitPatientWorkoutFeedbackUseCase<P> {
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex};
 
     use super::*;
-    use crate::test_mocks::FakePatientSessionWrite;
     use domain::entities::WorkoutSession;
+    use domain::error::Result;
+    use domain::repositories::PatientSessionWriteRepository;
+    use domain::vos::id::Id;
+    use domain::vos::{
+        AccessToken, DayIndex, EffortScore, FeedbackComment, PainScore, SessionDate,
+    };
 
     #[tokio::test]
     async fn submit_feedback_empty_map_still_completes_session() {
@@ -107,7 +112,7 @@ mod tests {
             created_at: None,
             updated_at: None,
         };
-        let fake = FakePatientSessionWrite::new(session);
+        let fake = MockPatientSessionWriteRepository::new(session);
         let uc = SubmitPatientWorkoutFeedbackUseCase::new(Arc::new(fake.clone()));
 
         uc.execute(SubmitPatientWorkoutFeedbackArgs {
@@ -124,5 +129,76 @@ mod tests {
         assert_eq!(*fake.get_or_create_calls.lock().unwrap(), 1);
         assert_eq!(*fake.complete_calls.lock().unwrap(), 1);
         assert_eq!(*fake.upsert_calls.lock().unwrap(), 0);
+    }
+
+    #[derive(Clone)]
+    struct MockPatientSessionWriteRepository {
+        session_to_return: Arc<Mutex<Result<WorkoutSession>>>,
+        get_or_create_calls: Arc<Mutex<usize>>,
+        complete_calls: Arc<Mutex<usize>>,
+        upsert_calls: Arc<Mutex<usize>>,
+        uncomplete_calls: Arc<Mutex<usize>>,
+        complete_outcome: Arc<Mutex<Result<()>>>,
+        upsert_outcome: Arc<Mutex<Result<()>>>,
+    }
+
+    impl MockPatientSessionWriteRepository {
+        fn new(session: WorkoutSession) -> Self {
+            Self {
+                session_to_return: Arc::new(Mutex::new(Ok(session))),
+                get_or_create_calls: Arc::new(Mutex::new(0)),
+                complete_calls: Arc::new(Mutex::new(0)),
+                upsert_calls: Arc::new(Mutex::new(0)),
+                uncomplete_calls: Arc::new(Mutex::new(0)),
+                complete_outcome: Arc::new(Mutex::new(Ok(()))),
+                upsert_outcome: Arc::new(Mutex::new(Ok(()))),
+            }
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl PatientSessionWriteRepository for MockPatientSessionWriteRepository {
+        async fn get_or_create_session(
+            &self,
+            _access_token: &AccessToken,
+            _patient_program_id: &Id,
+            _day_index: DayIndex,
+            _session_date: &SessionDate,
+        ) -> Result<WorkoutSession> {
+            *self.get_or_create_calls.lock().unwrap() += 1;
+            self.session_to_return.lock().unwrap().clone()
+        }
+
+        async fn complete_session(
+            &self,
+            _access_token: &AccessToken,
+            _session_id: &Id,
+            _session_date: &SessionDate,
+        ) -> Result<()> {
+            *self.complete_calls.lock().unwrap() += 1;
+            self.complete_outcome.lock().unwrap().clone()
+        }
+
+        async fn uncomplete_session(
+            &self,
+            _access_token: &AccessToken,
+            _session_id: &Id,
+        ) -> Result<()> {
+            *self.uncomplete_calls.lock().unwrap() += 1;
+            Ok(())
+        }
+
+        async fn upsert_session_exercise_feedback(
+            &self,
+            _access_token: &AccessToken,
+            _workout_session_id: &Id,
+            _exercise_id: &Id,
+            _effort: Option<EffortScore>,
+            _pain: Option<PainScore>,
+            _comment: Option<&FeedbackComment>,
+        ) -> Result<()> {
+            *self.upsert_calls.lock().unwrap() += 1;
+            self.upsert_outcome.lock().unwrap().clone()
+        }
     }
 }

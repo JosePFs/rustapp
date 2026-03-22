@@ -31,18 +31,20 @@ impl<W: DeleteWorkoutWrite> DeleteWorkoutUseCase<W> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex};
 
     use super::*;
-    use crate::test_mocks::FakeDeleteWorkout;
     use domain::error::DomainError;
+    use domain::error::Result;
+    use domain::repositories::DeleteWorkoutWrite;
+    use domain::vos::AccessToken;
 
     const TOKEN: &str = "valid-token";
     const WID: &str = "550e8400-e29b-41d4-a716-446655440001";
 
     #[tokio::test]
     async fn delete_workout_invalid_token() {
-        let fake = FakeDeleteWorkout::new_ok();
+        let fake = MockDeleteWorkoutWrite::new_ok();
         let uc = DeleteWorkoutUseCase::new(Arc::new(fake));
 
         let err = uc
@@ -58,7 +60,7 @@ mod tests {
 
     #[tokio::test]
     async fn delete_workout_invalid_workout_id() {
-        let fake = FakeDeleteWorkout::new_ok();
+        let fake = MockDeleteWorkoutWrite::new_ok();
         let uc = DeleteWorkoutUseCase::new(Arc::new(fake));
 
         let err = uc
@@ -74,7 +76,7 @@ mod tests {
 
     #[tokio::test]
     async fn delete_workout_happy_path_records_id() {
-        let fake = FakeDeleteWorkout::new_ok();
+        let fake = MockDeleteWorkoutWrite::new_ok();
         let wid = Id::try_from(WID).unwrap();
         let uc = DeleteWorkoutUseCase::new(Arc::new(fake.clone()));
 
@@ -91,7 +93,7 @@ mod tests {
 
     #[tokio::test]
     async fn delete_workout_propagates_repo_error() {
-        let fake = FakeDeleteWorkout::new_err(DomainError::Api("boom".into()));
+        let fake = MockDeleteWorkoutWrite::new_err(DomainError::Api("boom".into()));
         let uc = DeleteWorkoutUseCase::new(Arc::new(fake));
 
         let err = uc
@@ -103,5 +105,35 @@ mod tests {
             .unwrap_err();
 
         assert_eq!(err, DomainError::Api("boom".into()));
+    }
+
+    #[derive(Clone)]
+    struct MockDeleteWorkoutWrite {
+        last_workout_id: Arc<Mutex<Option<Id>>>,
+        outcome: Arc<Mutex<Result<()>>>,
+    }
+
+    impl MockDeleteWorkoutWrite {
+        fn new_ok() -> Self {
+            Self {
+                last_workout_id: Arc::new(Mutex::new(None)),
+                outcome: Arc::new(Mutex::new(Ok(()))),
+            }
+        }
+
+        fn new_err(e: domain::error::DomainError) -> Self {
+            Self {
+                last_workout_id: Arc::new(Mutex::new(None)),
+                outcome: Arc::new(Mutex::new(Err(e))),
+            }
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl DeleteWorkoutWrite for MockDeleteWorkoutWrite {
+        async fn delete_workout(&self, _access_token: &AccessToken, workout_id: &Id) -> Result<()> {
+            *self.last_workout_id.lock().unwrap() = Some(workout_id.clone());
+            self.outcome.lock().unwrap().clone()
+        }
     }
 }

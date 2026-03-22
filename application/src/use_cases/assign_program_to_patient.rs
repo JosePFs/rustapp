@@ -34,10 +34,12 @@ impl<W: AssignProgramToPatientWrite> AssignProgramToPatientUseCase<W> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex};
 
     use super::*;
-    use crate::test_mocks::FakeAssignProgramToPatient;
+    use domain::error::Result;
+    use domain::repositories::AssignProgramToPatientWrite;
+    use domain::vos::AccessToken;
 
     const TOKEN: &str = "t";
     const PAT: &str = "550e8400-e29b-41d4-a716-446655440070";
@@ -51,7 +53,7 @@ mod tests {
             program_id: Id::try_from(PRG).unwrap(),
             status: "active".to_string(),
         };
-        let fake = FakeAssignProgramToPatient::new_ok(pp.clone());
+        let fake = MockAssignProgramToPatientWrite::new_ok(pp.clone());
         let uc = AssignProgramToPatientUseCase::new(Arc::new(fake.clone()));
 
         let got = uc
@@ -68,5 +70,33 @@ mod tests {
         let pair = fake.last_pair.lock().unwrap().clone().unwrap();
         assert_eq!(pair.0.to_string(), PAT);
         assert_eq!(pair.1.to_string(), PRG);
+    }
+
+    #[derive(Clone)]
+    struct MockAssignProgramToPatientWrite {
+        last_pair: Arc<Mutex<Option<(Id, Id)>>>,
+        outcome: Arc<Mutex<Result<PatientProgram>>>,
+    }
+
+    impl MockAssignProgramToPatientWrite {
+        fn new_ok(pp: PatientProgram) -> Self {
+            Self {
+                last_pair: Arc::new(Mutex::new(None)),
+                outcome: Arc::new(Mutex::new(Ok(pp))),
+            }
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl AssignProgramToPatientWrite for MockAssignProgramToPatientWrite {
+        async fn assign_program_to_patient(
+            &self,
+            _access_token: &AccessToken,
+            patient_id: &Id,
+            program_id: &Id,
+        ) -> Result<PatientProgram> {
+            *self.last_pair.lock().unwrap() = Some((patient_id.clone(), program_id.clone()));
+            self.outcome.lock().unwrap().clone()
+        }
     }
 }

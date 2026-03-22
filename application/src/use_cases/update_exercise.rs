@@ -60,3 +60,89 @@ impl<W: UpdateExerciseWrite> UpdateExerciseUseCase<W> {
             .await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::sync::{Arc, Mutex};
+
+    use super::*;
+    use domain::error::DomainError;
+    use domain::error::Result;
+    use domain::repositories::UpdateExerciseWrite;
+    use domain::vos::AccessToken;
+    use domain::vos::Patch;
+
+    const TOKEN: &str = "t";
+    const EID: &str = "550e8400-e29b-41d4-a716-446655440340";
+
+    #[tokio::test]
+    async fn update_exercise_invalid_token() {
+        let fake = MockUpdateExerciseWrite::new_ok();
+        let uc = UpdateExerciseUseCase::new(Arc::new(fake));
+
+        let err = uc
+            .execute(UpdateExerciseArgs {
+                token: "".to_string(),
+                exercise_id: EID.to_string(),
+                name: None,
+                description: None,
+                order_index: None,
+                video_url: None,
+            })
+            .await
+            .unwrap_err();
+
+        assert!(matches!(err, DomainError::InvalidParameter(_, _)));
+    }
+
+    #[tokio::test]
+    async fn update_exercise_forwards_exercise_id() {
+        let fake = MockUpdateExerciseWrite::new_ok();
+        let eid = Id::try_from(EID).unwrap();
+        let uc = UpdateExerciseUseCase::new(Arc::new(fake.clone()));
+
+        uc.execute(UpdateExerciseArgs {
+            token: TOKEN.to_string(),
+            exercise_id: EID.to_string(),
+            name: None,
+            description: None,
+            order_index: None,
+            video_url: None,
+        })
+        .await
+        .unwrap();
+
+        assert_eq!(*fake.last_exercise_id.lock().unwrap(), Some(eid));
+    }
+
+    #[derive(Clone)]
+    struct MockUpdateExerciseWrite {
+        last_exercise_id: Arc<Mutex<Option<Id>>>,
+        outcome: Arc<Mutex<Result<()>>>,
+    }
+
+    impl MockUpdateExerciseWrite {
+        fn new_ok() -> Self {
+            Self {
+                last_exercise_id: Arc::new(Mutex::new(None)),
+                outcome: Arc::new(Mutex::new(Ok(()))),
+            }
+        }
+    }
+
+    #[common::async_trait_platform]
+    impl UpdateExerciseWrite for MockUpdateExerciseWrite {
+        async fn update_exercise(
+            &self,
+            _access_token: &AccessToken,
+            exercise_id: &Id,
+            _name: Option<&ExerciseName>,
+            _description: Option<&Description>,
+            _order_index: Option<ScheduleOrderIndex>,
+            _video_url: Patch<VideoUrl>,
+        ) -> Result<()> {
+            *self.last_exercise_id.lock().unwrap() = Some(exercise_id.clone());
+            self.outcome.lock().unwrap().clone()
+        }
+    }
+}
