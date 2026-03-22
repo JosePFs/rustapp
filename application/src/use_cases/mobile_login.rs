@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::ports::auth::auth::AuthService;
+use crate::ports::auth::AuthService;
 use crate::use_cases::login::{login_result_from_session, LoginUseCaseArgs, LoginUseCaseResult};
 use domain::error::Result;
 use domain::repositories::GetProfilesByIdsRead;
@@ -26,8 +26,7 @@ mod tests {
     use std::sync::{Arc, Mutex};
 
     use super::*;
-    use crate::ports::auth::auth::AuthService;
-    use crate::ports::auth::{credentials::Credentials, session::Session};
+    use crate::ports::auth::{AuthService, Credentials, Session};
     use crate::use_cases::login::LoginUseCaseArgs;
     use domain::error::{DomainError, Result};
     use domain::repositories::GetProfilesByIdsRead;
@@ -95,6 +94,15 @@ mod tests {
             Err(DomainError::Login(
                 "fake: refresh_session not used by mobile_login tests".into(),
             ))
+        }
+
+        fn get_session(&self) -> Option<Session> {
+            self.inner
+                .lock()
+                .unwrap()
+                .sign_in_result
+                .clone()
+                .map(|r| r.unwrap())
         }
     }
 

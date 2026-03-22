@@ -128,7 +128,7 @@ dependencies = [
  "common",
  "domain",
  "futures",
- "serde",
+ "log",
  "tokio",
 ]
 

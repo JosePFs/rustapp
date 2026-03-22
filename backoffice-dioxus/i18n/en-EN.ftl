@@ -60,8 +60,15 @@ add_patient_link = Link patient
 patient_not_found_by_email = No patient found with that email
 
 # Specialist programs
+specialist_programs_title = Programs
 assign_programs = Assign programs
 clear_selection = Clear selection
+specialist_programs_create_tooltip_1 = Create and edit programs.
+specialist_programs_create_tooltip_2 = Then you can assign them to your patients.
+specialist_programs_create_btn = Create program
+specialist_programs_assign_section = Assign programs to patients
+specialist_programs_assign_instructions = 1) Select one or more programs. 2) Select patients who do not yet have any of those programs. 3) Click Assign.
+specialist_programs_programs_section = Programs
 
 # Patient workout session
 workout_no_exercises = This workout has no exercises configured.

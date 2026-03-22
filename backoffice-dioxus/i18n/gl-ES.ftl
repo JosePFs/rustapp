@@ -60,8 +60,15 @@ add_patient_link = Vincular paciente
 patient_not_found_by_email = Non se atopou un paciente con ese email
 
 # Specialist programs
+specialist_programs_title = Programas
 assign_programs = Asignar programas
 clear_selection = Limpar selección
+specialist_programs_create_tooltip_1 = Crea e edita programas.
+specialist_programs_create_tooltip_2 = Despois poderás asignalos aos teus pacientes.
+specialist_programs_create_btn = Crear programa
+specialist_programs_assign_section = Asignar programas a pacientes
+specialist_programs_assign_instructions = 1) Selecciona un ou máis programas. 2) Selecciona pacientes que aínda non teñan ningún deses programas. 3) Pulsa Asignar.
+specialist_programs_programs_section = Programas
 
 # Patient workout session
 workout_no_exercises = Este adestramento non ten exercicios configurados.

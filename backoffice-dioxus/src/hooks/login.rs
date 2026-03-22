@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 
 use crate::hooks::app_context::use_app_context;
 use crate::hooks::AsyncState;
-use application::ports::auth::credentials::Credentials;
+use application::ports::auth::Credentials;
 use application::ports::BackofficeApi;
 use application::use_cases::login::{LoginUseCaseArgs, LoginUseCaseResult};
 

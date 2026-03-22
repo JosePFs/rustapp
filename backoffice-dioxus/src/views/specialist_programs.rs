@@ -51,7 +51,6 @@ pub fn SpecialistPrograms() -> Element {
             div {
                 class: "content min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
                 {
-                    // Navbar desplegable: actúa como título de la página.
                     let mut nav_open = use_signal(|| false);
                     rsx! {
                         nav { class: "relative mb-6",

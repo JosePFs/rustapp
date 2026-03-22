@@ -4,7 +4,7 @@ use domain::error::Result;
 use domain::repositories::{PatientSessionWriteRepository, SpecialistCatalogReadRepository};
 
 use crate::ports::api::MobileApi;
-use crate::ports::auth::auth::AuthService;
+use crate::ports::auth::AuthService;
 use crate::use_cases::get_patient_programs::{
     GetPatientProgramsUseCase, GetPatientProgramsUseCaseArgs, GetPatientProgramsUseCaseResult,
 };

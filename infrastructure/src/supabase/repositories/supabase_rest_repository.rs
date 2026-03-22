@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use application::ports::HttpRestClient;
 use serde::de::DeserializeOwned;
 
 use crate::api::dtos::{
@@ -8,9 +9,7 @@ use crate::api::dtos::{
     SpecialistDashboardRpcDto, SpecialistPatientDto, WorkoutDto, WorkoutExerciseRow,
     WorkoutSessionDto, WorkoutWithExercisesRpcDto,
 };
-use crate::supabase::client::SupabaseClient;
-use crate::supabase::config::SupabaseConfig;
-use crate::supabase::DEFAULT_CLIENT;
+use crate::supabase::{client::SupabaseClient, DEFAULT_CLIENT};
 use domain::aggregates::{
     PatientProgramFull, ProgramWithAgenda, SpecialistDashboard, WorkoutWithExercises,
 };
@@ -69,10 +68,7 @@ impl GetProfilesByIdsRead for SupabaseRestRepository {
             "/profiles?select=id,email,full_name,role,created_at,updated_at&{}",
             filter
         );
-        let body = self
-            .client
-            .rest_get(Some(access_token.as_ref()), &path)
-            .await?;
+        let body = self.client.get(&path).await?;
         let rows: Vec<ProfileDto> = parse_json(&body)?;
         Ok(rows.into_iter().map(|r| r.into()).collect())
     }
@@ -88,10 +84,7 @@ impl GetPatientIdByEmailRead for SupabaseRestRepository {
         let path = "/rpc/get_patient_id_by_email";
         let body = serde_json::json!({ "p_email": email.value() });
         let body_bytes = body.to_string().into_bytes();
-        let response = self
-            .client
-            .rest_request(Some(access_token.as_ref()), "POST", path, Some(&body_bytes))
-            .await?;
+        let response = self.client.post(path, &body.to_string()).await?;
         let id: Option<String> = serde_json::from_slice(&response).map_err(|e| e.to_string())?;
         match id {
             Some(s) => Ok(Some(Id::try_from(s)?)),
@@ -108,10 +101,7 @@ impl ListSpecialistPatientsRead for SupabaseRestRepository {
     ) -> Result<Vec<SpecialistPatient>> {
         let body = self
             .client
-            .rest_get(
-                Some(access_token.as_ref()),
-                "/specialist_patients?select=id,specialist_id,patient_id,created_at",
-            )
+            .get("/specialist_patients?select=id,specialist_id,patient_id,created_at")
             .await?;
         let rows: Vec<SpecialistPatientDto> = parse_json(&body)?;
         Ok(rows.into_iter().map(Into::into).collect())
@@ -123,10 +113,7 @@ impl ListProgramsRead for SupabaseRestRepository {
     async fn list_programs(&self, access_token: &AccessToken) -> Result<Vec<Program>> {
         let body = self
             .client
-            .rest_get(
-                Some(access_token.as_ref()),
-                "/programs?select=id,specialist_id,name,description,created_at,updated_at&order=created_at.desc",
-            )
+            .get("/programs?select=id,specialist_id,name,description,created_at,updated_at&order=created_at.desc")
             .await?;
         let rows: Vec<ProgramDto> = parse_json(&body)?;
         Ok(rows.into_iter().map(Into::into).collect())
@@ -144,10 +131,7 @@ impl GetProgramRead for SupabaseRestRepository {
             "/programs?id=eq.{}&select=id,specialist_id,name,description,created_at,updated_at",
             program_id.to_string()
         );
-        let body = self
-            .client
-            .rest_get(Some(access_token.as_ref()), &path)
-            .await?;
+        let body = self.client.get(&path).await?;
         let rows: Vec<ProgramDto> = parse_json(&body)?;
         Ok(rows.into_iter().next().map(Into::into))
     }
@@ -165,10 +149,7 @@ impl ListWorkoutLibraryRead for SupabaseRestRepository {
             "/workouts?specialist_id=eq.{}&select=id,specialist_id,name,description,order_index,created_at,updated_at&order=order_index.asc,name.asc",
             specialist_id.to_string()
         );
-        let body = self
-            .client
-            .rest_get(Some(access_token.as_ref()), &path)
-            .await?;
+        let body = self.client.get(&path).await?;
         let rows: Vec<WorkoutDto> = parse_json(&body)?;
         let filtered: Vec<WorkoutDto> = if let Some(f) = name_filter {
             let needle = f.value().to_lowercase();
@@ -198,10 +179,7 @@ impl GetWorkoutsByIdsRead for SupabaseRestRepository {
             "/workouts?id=in.({})&select=id,specialist_id,name,description,order_index,created_at,updated_at",
             ids_param
         );
-        let body = self
-            .client
-            .rest_get(Some(access_token.as_ref()), &path)
-            .await?;
+        let body = self.client.get(&path).await?;
         let rows: Vec<WorkoutDto> = parse_json(&body)?;
         Ok(rows.into_iter().map(Into::into).collect())
     }
@@ -235,10 +213,7 @@ impl ListProgramScheduleRead for SupabaseRestRepository {
             "/program_schedule?program_id=eq.{}&select=id,program_id,order_index,workout_id,days_count,created_at&order=order_index.asc",
             program_id.to_string()
         );
-        let body = self
-            .client
-            .rest_get(Some(access_token.as_ref()), &path)
-            .await?;
+        let body = self.client.get(&path).await?;
         let rows: Vec<ProgramScheduleItemDto> = parse_json(&body)?;
         Ok(rows.into_iter().map(Into::into).collect())
     }
@@ -255,10 +230,7 @@ impl ListExercisesForWorkoutRead for SupabaseRestRepository {
             "/workout_exercises?workout_id=eq.{}&select=order_index,exercise_id,sets,reps,exercises(id,specialist_id,name,description,order_index,video_url,deleted_at,created_at)&order=order_index.asc",
             workout_id.to_string()
         );
-        let body = self
-            .client
-            .rest_get(Some(access_token.as_ref()), &path)
-            .await?;
+        let body = self.client.get(&path).await?;
         let rows: Vec<WorkoutExerciseRow> = parse_json(&body)?;
         Ok(rows
             .into_iter()
@@ -286,10 +258,7 @@ impl ListExerciseLibraryRead for SupabaseRestRepository {
             "/exercises?specialist_id=eq.{}&select=id,specialist_id,name,description,order_index,video_url,deleted_at,created_at&order=name.asc",
             specialist_id.to_string()
         );
-        let body = self
-            .client
-            .rest_get(Some(access_token.as_ref()), &path)
-            .await?;
+        let body = self.client.get(&path).await?;
         let rows: Vec<ExerciseDto> = parse_json(&body)?;
         let filtered: Vec<ExerciseDto> = if let Some(f) = name_filter {
             let needle = f.value().to_lowercase();
@@ -309,13 +278,7 @@ impl ListPatientProgramsForSpecialistRead for SupabaseRestRepository {
         &self,
         access_token: &AccessToken,
     ) -> Result<Vec<PatientProgram>> {
-        let body = self
-            .client
-            .rest_get(
-                Some(access_token.as_ref()),
-                "/patient_programs?select=id,patient_id,program_id,status,assigned_at,created_at,updated_at&order=assigned_at.desc",
-            )
-            .await?;
+        let body = self.client.get("/patient_programs?select=id,patient_id,program_id,status,assigned_at,created_at,updated_at&order=assigned_at.desc").await?;
         let rows: Vec<PatientProgramDto> = parse_json(&body)?;
         Ok(rows.into_iter().map(Into::into).collect())
     }
@@ -332,10 +295,7 @@ impl GetPatientProgramByIdRead for SupabaseRestRepository {
             "/patient_programs?id=eq.{}&select=id,patient_id,program_id,status,assigned_at,created_at,updated_at&limit=1",
             id.to_string()
         );
-        let body = self
-            .client
-            .rest_get(Some(access_token.as_ref()), &path)
-            .await?;
+        let body = self.client.get(&path).await?;
         let rows: Vec<PatientProgramDto> = parse_json(&body)?;
         Ok(rows.into_iter().next().map(Into::into))
     }
@@ -352,10 +312,7 @@ impl ListWorkoutSessionsRead for SupabaseRestRepository {
             "/workout_sessions?patient_program_id=eq.{}&select=id,patient_program_id,day_index,session_date,completed_at,created_at,updated_at&order=day_index.asc",
             patient_program_id.to_string()
         );
-        let body = self
-            .client
-            .rest_get(Some(access_token.as_ref()), &path)
-            .await?;
+        let body = self.client.get(&path).await?;
         let rows: Vec<WorkoutSessionDto> = parse_json(&body)?;
         Ok(rows.into_iter().map(Into::into).collect())
     }
@@ -372,10 +329,7 @@ impl ListSessionExerciseFeedbackRead for SupabaseRestRepository {
             "/session_exercise_feedback?workout_session_id=eq.{}&select=workout_session_id,exercise_id,effort,pain,comment",
             workout_session_id.to_string()
         );
-        let body = self
-            .client
-            .rest_get(Some(access_token.as_ref()), &path)
-            .await?;
+        let body = self.client.get(&path).await?;
         let rows: Vec<SessionExerciseFeedbackDto> = parse_json(&body)?;
         Ok(rows.into_iter().map(Into::into).collect())
     }
@@ -391,10 +345,7 @@ impl ListSessionExerciseFeedbackForProgramRead for SupabaseRestRepository {
         let path = "/rpc/list_session_exercise_feedback_for_patient_program";
         let body = serde_json::json!({ "p_patient_program_id": patient_program_id.to_string() });
         let body_bytes = body.to_string().into_bytes();
-        let response = self
-            .client
-            .rest_request(Some(access_token.as_ref()), "POST", path, Some(&body_bytes))
-            .await?;
+        let response = self.client.post(path, &body.to_string()).await?;
         let rows: Vec<SessionExerciseFeedbackDto> = parse_json(&response)?;
         Ok(rows.into_iter().map(Into::into).collect())
     }
@@ -407,10 +358,7 @@ impl ListActivePatientProgramsRead for SupabaseRestRepository {
         access_token: &AccessToken,
     ) -> Result<Vec<PatientProgram>> {
         let path = "/patient_programs?status=eq.active&select=id,patient_id,program_id,status,assigned_at,created_at,updated_at&order=assigned_at.desc";
-        let body = self
-            .client
-            .rest_get(Some(access_token.as_ref()), path)
-            .await?;
+        let body = self.client.get(&path).await?;
         let rows: Vec<PatientProgramDto> = parse_json(&body)?;
         Ok(rows.into_iter().map(Into::into).collect())
     }
@@ -426,10 +374,7 @@ impl GetWorkoutWithExercisesRead for SupabaseRestRepository {
         let path = "/rpc/get_workout_with_exercises";
         let body = serde_json::json!({ "p_workout_id": workout_id.to_string() });
         let body_bytes = body.to_string().into_bytes();
-        let response = self
-            .client
-            .rest_request(Some(access_token.as_ref()), "POST", path, Some(&body_bytes))
-            .await?;
+        let response = self.client.post(path, &body.to_string()).await?;
         let dto: Option<WorkoutWithExercisesRpcDto> = parse_json(&response)?;
         Ok(dto.map(Into::into))
     }
@@ -445,10 +390,7 @@ impl GetProgramWithAgendaRead for SupabaseRestRepository {
         let path = "/rpc/get_program_with_agenda";
         let body = serde_json::json!({ "p_program_id": program_id.to_string() });
         let body_bytes = body.to_string().into_bytes();
-        let response = self
-            .client
-            .rest_request(Some(access_token.as_ref()), "POST", path, Some(&body_bytes))
-            .await?;
+        let response = self.client.post(path, &body.to_string()).await?;
         let dto: Option<ProgramWithAgendaRpcDto> = parse_json(&response)?;
         Ok(dto.map(Into::into))
     }
@@ -464,10 +406,7 @@ impl GetPatientProgramFullRead for SupabaseRestRepository {
         let path = "/rpc/get_patient_program_full";
         let body = serde_json::json!({ "p_patient_program_id": patient_program_id.to_string() });
         let body_bytes = body.to_string().into_bytes();
-        let response = self
-            .client
-            .rest_request(Some(access_token.as_ref()), "POST", path, Some(&body_bytes))
-            .await?;
+        let response = self.client.post(path, &body.to_string()).await?;
         let dto: Option<PatientProgramFullRpcDto> = parse_json(&response)?;
         Ok(dto.map(Into::into))
     }
@@ -483,10 +422,7 @@ impl GetSpecialistDashboardRead for SupabaseRestRepository {
         let path = "/rpc/get_specialist_dashboard";
         let body = serde_json::json!({ "p_specialist_id": specialist_id.to_string() });
         let body_bytes = body.to_string().into_bytes();
-        let response = self
-            .client
-            .rest_request(Some(access_token.as_ref()), "POST", path, Some(&body_bytes))
-            .await?;
+        let response = self.client.post(path, &body.to_string()).await?;
         let dto: SpecialistDashboardRpcDto = parse_json(&response)?;
         Ok(dto.into())
     }
@@ -506,11 +442,7 @@ impl AddSpecialistPatientWrite for SupabaseRestRepository {
         });
         let body = self
             .client
-            .rest_post(
-                Some(access_token.as_ref()),
-                "/specialist_patients",
-                &payload,
-            )
+            .post("/specialist_patients", &payload.to_string())
             .await?;
         let rows: Vec<SpecialistPatientDto> = parse_json(&body)?;
         rows.into_iter()
@@ -535,10 +467,7 @@ impl CreateProgramWrite for SupabaseRestRepository {
             "name": name.value(),
             "description": description.map(|d| d.value())
         });
-        let body = self
-            .client
-            .rest_post(Some(access_token.as_ref()), "/programs", &payload)
-            .await?;
+        let body = self.client.post("/programs", &payload.to_string()).await?;
         let rows: Vec<ProgramDto> = parse_json(&body)?;
         rows.into_iter()
             .next()
@@ -563,10 +492,7 @@ impl CreateWorkoutWrite for SupabaseRestRepository {
             "description": description.map(|d| d.value()),
             "order_index": 0
         });
-        let body = self
-            .client
-            .rest_post(Some(access_token.as_ref()), "/workouts", &payload)
-            .await?;
+        let body = self.client.post("/workouts", &payload.to_string()).await?;
         let rows: Vec<WorkoutDto> = parse_json(&body)?;
         rows.into_iter()
             .next()
@@ -603,9 +529,7 @@ impl UpdateWorkoutWrite for SupabaseRestRepository {
             payload["order_index"] = serde_json::Number::from(o.value()).into();
         }
         let path = format!("/workouts?id=eq.{}", workout_id.to_string());
-        self.client
-            .rest_patch(Some(access_token.as_ref()), &path, &payload)
-            .await?;
+        self.client.patch(&path, &payload.to_string()).await?;
         Ok(())
     }
 }
@@ -614,9 +538,7 @@ impl UpdateWorkoutWrite for SupabaseRestRepository {
 impl DeleteWorkoutWrite for SupabaseRestRepository {
     async fn delete_workout(&self, access_token: &AccessToken, workout_id: &Id) -> Result<()> {
         let path = format!("/workouts?id=eq.{}", workout_id.to_string());
-        self.client
-            .rest_delete(Some(access_token.as_ref()), &path)
-            .await?;
+        self.client.delete(&path).await?;
         Ok(())
     }
 }
@@ -643,7 +565,7 @@ impl CreateProgramScheduleItemWrite for SupabaseRestRepository {
         }
         let body = self
             .client
-            .rest_post(Some(access_token.as_ref()), "/program_schedule", &payload)
+            .post("/program_schedule", &payload.to_string())
             .await?;
         let rows: Vec<ProgramScheduleItemDto> = parse_json(&body)?;
         rows.into_iter()
@@ -662,9 +584,7 @@ impl DeleteProgramScheduleItemWrite for SupabaseRestRepository {
         schedule_id: &Id,
     ) -> Result<()> {
         let path = format!("/program_schedule?id=eq.{}", schedule_id.to_string());
-        self.client
-            .rest_delete(Some(access_token.as_ref()), &path)
-            .await?;
+        self.client.delete(&path).await?;
         Ok(())
     }
 }
@@ -689,10 +609,7 @@ impl CreateExerciseWrite for SupabaseRestRepository {
         if let Some(url) = video_url {
             payload["video_url"] = serde_json::Value::String(url.value().to_string());
         }
-        let body = self
-            .client
-            .rest_post(Some(access_token.as_ref()), "/exercises", &payload)
-            .await?;
+        let body = self.client.post("/exercises", &payload.to_string()).await?;
         let rows: Vec<ExerciseDto> = parse_json(&body)?;
         rows.into_iter()
             .next()
@@ -721,7 +638,7 @@ impl AddExerciseToWorkoutWrite for SupabaseRestRepository {
             "reps": reps.value()
         });
         self.client
-            .rest_post(Some(access_token.as_ref()), "/workout_exercises", &payload)
+            .post("/workout_exercises", &payload.to_string())
             .await?;
         Ok(())
     }
@@ -750,9 +667,7 @@ impl UpdateWorkoutExerciseWrite for SupabaseRestRepository {
             workout_id.to_string(),
             exercise_id.to_string()
         );
-        self.client
-            .rest_patch(Some(access_token.as_ref()), &path, &payload)
-            .await?;
+        self.client.patch(&path, &payload.to_string()).await?;
         Ok(())
     }
 }
@@ -770,9 +685,7 @@ impl RemoveExerciseFromWorkoutWrite for SupabaseRestRepository {
             workout_id.to_string(),
             exercise_id.to_string()
         );
-        self.client
-            .rest_delete(Some(access_token.as_ref()), &path)
-            .await?;
+        self.client.delete(&path).await?;
         Ok(())
     }
 }
@@ -808,9 +721,7 @@ impl UpdateExerciseWrite for SupabaseRestRepository {
             }
         }
         let path = format!("/exercises?id=eq.{}", exercise_id.to_string());
-        self.client
-            .rest_patch(Some(access_token.as_ref()), &path, &payload)
-            .await?;
+        self.client.patch(&path, &payload.to_string()).await?;
         Ok(())
     }
 }
@@ -826,9 +737,7 @@ impl SoftDeleteExerciseWrite for SupabaseRestRepository {
             "deleted_at": chrono::Utc::now().to_rfc3339()
         });
         let path = format!("/exercises?id=eq.{}", exercise_id.to_string());
-        self.client
-            .rest_patch(Some(access_token.as_ref()), &path, &payload)
-            .await?;
+        self.client.patch(&path, &payload.to_string()).await?;
         Ok(())
     }
 }
@@ -838,9 +747,7 @@ impl RestoreExerciseWrite for SupabaseRestRepository {
     async fn restore_exercise(&self, access_token: &AccessToken, exercise_id: &Id) -> Result<()> {
         let payload = serde_json::json!({ "deleted_at": serde_json::Value::Null });
         let path = format!("/exercises?id=eq.{}", exercise_id.to_string());
-        self.client
-            .rest_patch(Some(access_token.as_ref()), &path, &payload)
-            .await?;
+        self.client.patch(&path, &payload.to_string()).await?;
         Ok(())
     }
 }
@@ -860,7 +767,7 @@ impl AssignProgramToPatientWrite for SupabaseRestRepository {
         });
         let body = self
             .client
-            .rest_post(Some(access_token.as_ref()), "/patient_programs", &payload)
+            .post("/patient_programs", &payload.to_string())
             .await?;
         let rows: Vec<PatientProgramDto> = parse_json(&body)?;
         rows.into_iter()
@@ -879,9 +786,7 @@ impl UnassignProgramFromPatientWrite for SupabaseRestRepository {
         patient_program_id: &Id,
     ) -> Result<()> {
         let path = format!("/patient_programs?id=eq.{}", patient_program_id.to_string());
-        self.client
-            .rest_delete(Some(access_token.as_ref()), &path)
-            .await?;
+        self.client.delete(&path).await?;
         Ok(())
     }
 }
@@ -900,10 +805,7 @@ impl GetOrCreateSessionCatalogWrite for SupabaseRestRepository {
             patient_program_id.to_string(),
             day_index.value()
         );
-        let body = self
-            .client
-            .rest_get(Some(access_token.as_ref()), &path)
-            .await?;
+        let body = self.client.get(&path).await?;
         let rows: Vec<WorkoutSessionDto> = parse_json(&body)?;
         if let Some(s) = rows.into_iter().next() {
             return Ok(s.into());
@@ -915,7 +817,7 @@ impl GetOrCreateSessionCatalogWrite for SupabaseRestRepository {
         });
         let body = self
             .client
-            .rest_post(Some(access_token.as_ref()), "/workout_sessions", &payload)
+            .post("/workout_sessions", &payload.to_string())
             .await?;
         let rows: Vec<WorkoutSessionDto> = parse_json(&body)?;
         rows.into_iter()
@@ -933,9 +835,7 @@ impl CompleteSessionCatalogWrite for SupabaseRestRepository {
             "completed_at": chrono::Utc::now().to_rfc3339()
         });
         let path = format!("/workout_sessions?id=eq.{}", session_id.to_string());
-        self.client
-            .rest_patch(Some(access_token.as_ref()), &path, &payload)
-            .await?;
+        self.client.patch(&path, &payload.to_string()).await?;
         Ok(())
     }
 }
@@ -953,9 +853,7 @@ impl UpdateSessionWrite for SupabaseRestRepository {
             payload["session_date"] = serde_json::Value::String(d.value().to_string());
         }
         let path = format!("/workout_sessions?id=eq.{}", session_id.to_string());
-        self.client
-            .rest_patch(Some(access_token.as_ref()), &path, &payload)
-            .await?;
+        self.client.patch(&path, &payload.to_string()).await?;
         Ok(())
     }
 }
@@ -983,16 +881,9 @@ impl UpsertSessionExerciseFeedbackCatalogWrite for SupabaseRestRepository {
             workout_session_id.to_string(),
             exercise_id.to_string()
         );
-        let _ = self
-            .client
-            .rest_delete(Some(access_token.as_ref()), &path)
-            .await;
+        let _ = self.client.delete(&path).await;
         self.client
-            .rest_post(
-                Some(access_token.as_ref()),
-                "/session_exercise_feedback",
-                &payload,
-            )
+            .post("/session_exercise_feedback", &payload.to_string())
             .await?;
         Ok(())
     }
@@ -1003,9 +894,7 @@ impl UncompleteSessionCatalogWrite for SupabaseRestRepository {
     async fn uncomplete_session(&self, access_token: &AccessToken, session_id: &Id) -> Result<()> {
         let payload = serde_json::json!({ "completed_at": serde_json::Value::Null });
         let path = format!("/workout_sessions?id=eq.{}", session_id.to_string());
-        self.client
-            .rest_patch(Some(access_token.as_ref()), &path, &payload)
-            .await?;
+        self.client.patch(&path, &payload.to_string()).await?;
         Ok(())
     }
 }
@@ -1039,9 +928,7 @@ impl PatientSessionWriteRepository for SupabaseRestRepository {
         payload["session_date"] = serde_json::Value::String(session_date.value().to_string());
         payload["completed_at"] = serde_json::Value::String(chrono::Utc::now().to_rfc3339());
         let path = format!("/workout_sessions?id=eq.{}", session_id.to_string());
-        self.client
-            .rest_patch(Some(access_token.as_ref()), &path, &payload)
-            .await?;
+        self.client.patch(&path, &payload.to_string()).await?;
         Ok(())
     }
 
@@ -1070,30 +957,18 @@ impl PatientSessionWriteRepository for SupabaseRestRepository {
             workout_session_id.to_string(),
             exercise_id.to_string()
         );
-        let _ = self
-            .client
-            .rest_upsert(Some(access_token.as_ref()), &path, &payload)
-            .await;
+        let _ = self.client.upsert(&path, &payload.to_string()).await;
         Ok(())
     }
 }
 
 pub struct SupabaseRestRepositoryBuilder {
-    config: Option<SupabaseConfig>,
     client: Option<Arc<SupabaseClient>>,
 }
 
 impl SupabaseRestRepositoryBuilder {
     pub fn new() -> Self {
-        Self {
-            config: None,
-            client: None,
-        }
-    }
-
-    pub fn with_config(mut self, config: SupabaseConfig) -> Self {
-        self.config = Some(config);
-        self
+        Self { client: None }
     }
 
     pub fn with_client(mut self, client: Arc<SupabaseClient>) -> Self {

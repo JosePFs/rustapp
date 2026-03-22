@@ -6,7 +6,7 @@ use domain::error::Result;
 use domain::repositories::{SpecialistCatalogReadRepository, SpecialistCatalogWriteRepository};
 
 use crate::ports::api::BackofficeApi;
-use crate::ports::auth::auth::AuthService;
+use crate::ports::auth::AuthService;
 use crate::use_cases::add_exercise_to_workout::{
     AddExerciseToWorkoutArgs, AddExerciseToWorkoutUseCase,
 };

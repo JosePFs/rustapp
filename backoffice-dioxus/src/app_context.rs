@@ -3,7 +3,7 @@ use std::sync::Arc;
 use dioxus::signals::Signal;
 
 use application::facade::BackofficeFacade;
-use application::ports::auth::session::Session;
+use application::ports::auth::Session;
 use application::{
     use_cases::add_exercise_to_workout::AddExerciseToWorkoutUseCase,
     use_cases::add_specialist_patient::AddSpecialistPatientUseCase,
@@ -30,6 +30,7 @@ use application::{
 };
 use domain::error::Result;
 use infrastructure::supabase::auth::SupabaseAuth;
+use infrastructure::supabase::default_auth;
 use infrastructure::supabase::repositories::{
     SupabaseRestRepository, SupabaseRestRepositoryBuilder,
 };
@@ -58,7 +59,7 @@ impl AppContext {
 }
 
 pub fn build_app_context() -> Result<AppContext> {
-    let auth = Arc::new(SupabaseAuth::builder().build());
+    let auth = default_auth();
     let repository = Arc::new(SupabaseRestRepositoryBuilder::new().build());
 
     let add_specialist_patient_use_case = Arc::new(AddSpecialistPatientUseCase::<

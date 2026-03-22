@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
-use crate::ports::auth::auth::AuthService;
-use crate::ports::auth::{credentials::Credentials, session::Session};
+use crate::ports::auth::{AuthService, Credentials, Session};
 use domain::error::Result;
 use domain::repositories::GetProfilesByIdsRead;
 use domain::vos::id::Id;
@@ -91,9 +90,9 @@ where
     R: GetProfilesByIdsRead,
 {
     let user_id = Id::try_from(session.user_id().to_string())?;
-    let access = AccessToken::try_from(session.access_token().to_string())?;
+    let access_token = AccessToken::try_from(session.access_token().to_string())?;
     let profiles = catalog_read
-        .get_profiles_by_ids(&[user_id], &access)
+        .get_profiles_by_ids(&[user_id], &access_token)
         .await
         .ok();
 
@@ -113,8 +112,7 @@ mod tests {
     use std::sync::{Arc, Mutex};
 
     use super::*;
-    use crate::ports::auth::auth::AuthService;
-    use crate::ports::auth::{credentials::Credentials, session::Session};
+    use crate::ports::auth::{AuthService, Credentials, Session};
     use domain::error::{DomainError, Result};
     use domain::repositories::GetProfilesByIdsRead;
     use domain::vos::email::Email;
@@ -203,6 +201,15 @@ mod tests {
             Err(DomainError::Login(
                 "fake: refresh_session not used by login tests".into(),
             ))
+        }
+
+        fn get_session(&self) -> Option<Session> {
+            self.inner
+                .lock()
+                .unwrap()
+                .sign_in_result
+                .clone()
+                .map(|r| r.unwrap())
         }
     }
 

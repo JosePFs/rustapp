@@ -1,5 +1,6 @@
 use std::sync::{Arc, LazyLock};
 
+use infrastructure::supabase::default_auth;
 use serde::{Deserialize, Serialize};
 
 use application::facade::MobileFacade;
@@ -24,13 +25,10 @@ use infrastructure::supabase::{
 static NATIVE_API: LazyLock<Arc<SupabaseRestRepository>> =
     LazyLock::new(|| Arc::new(SupabaseRestRepositoryBuilder::new().build()));
 
-static SUPABASE_AUTH: LazyLock<Arc<SupabaseAuth>> =
-    LazyLock::new(|| Arc::new(SupabaseAuth::builder().build()));
-
 static MOBILE_FACADE: LazyLock<Arc<MobileFacade<SupabaseRestRepository, SupabaseAuth>>> =
     LazyLock::new(|| {
         let repo = NATIVE_API.clone();
-        let auth = SUPABASE_AUTH.clone();
+        let auth = default_auth();
         Arc::new(MobileFacade {
             login_uc: Arc::new(MobileLoginUseCase::new(repo.clone(), auth.clone())),
             refresh_session_uc: Arc::new(RefreshSessionUseCase::new(repo.clone(), auth.clone())),
