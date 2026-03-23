@@ -133,9 +133,8 @@ async fn http_request(
     headers: &[(&str, &str)],
     body: Option<&[u8]>,
 ) -> Result<HttpResponse> {
-    use reqwest::Client;
+    let client = &*crate::supabase::SHARED_REQWEST_CLIENT;
 
-    let client = Client::new();
     let mut req = match method {
         "GET" => client.get(url),
         "POST" => client.post(url),

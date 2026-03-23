@@ -120,8 +120,8 @@ async fn rest_request_platform(
     body: Option<&[u8]>,
     prefer: Option<&str>,
 ) -> Result<HttpResponse, String> {
-    use reqwest::Client;
-    let client = Client::new();
+    let client = &*crate::supabase::SHARED_REQWEST_CLIENT;
+
     let mut req = match method {
         "GET" => client.get(url),
         "POST" => client.post(url),
@@ -143,6 +143,7 @@ async fn rest_request_platform(
     let response = req.send().await.map_err(|e| e.to_string())?;
     let status = response.status().as_u16();
     let body = response.bytes().await.map_err(|e| e.to_string())?.to_vec();
+
     Ok(HttpResponse { status, body })
 }
 

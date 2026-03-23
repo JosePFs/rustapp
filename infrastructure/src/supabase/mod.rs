@@ -7,6 +7,10 @@ pub mod client;
 pub mod config;
 pub mod repositories;
 
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) static SHARED_REQWEST_CLIENT: LazyLock<reqwest::Client> =
+    LazyLock::new(reqwest::Client::new);
+
 static DEFAULT_AUTH: LazyLock<Arc<SupabaseAuth>> =
     LazyLock::new(|| SupabaseAuth::builder().build());
 
