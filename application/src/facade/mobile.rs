@@ -23,11 +23,22 @@ where
     D: SpecialistCatalogReadRepository + PatientSessionWriteRepository + Send + Sync,
     A: AuthService + Send + Sync,
 {
-    pub login_uc: Arc<MobileLoginUseCase<D, A>>,
-    pub refresh_session_uc: Arc<RefreshSessionUseCase<D, A>>,
-    pub get_patient_programs_uc: Arc<GetPatientProgramsUseCase<D>>,
-    pub submit_patient_workout_feedback_uc: Arc<SubmitPatientWorkoutFeedbackUseCase<D>>,
-    pub uncomplete_patient_workout_session_uc: Arc<UncompletePatientWorkoutSessionUseCase<D>>,
+    pub(crate) login_uc: Arc<MobileLoginUseCase<D, A>>,
+    pub(crate) refresh_session_uc: Arc<RefreshSessionUseCase<D, A>>,
+    pub(crate) get_patient_programs_uc: Arc<GetPatientProgramsUseCase<D>>,
+    pub(crate) submit_patient_workout_feedback_uc: Arc<SubmitPatientWorkoutFeedbackUseCase<D>>,
+    pub(crate) uncomplete_patient_workout_session_uc:
+        Arc<UncompletePatientWorkoutSessionUseCase<D>>,
+}
+
+impl<D, A> MobileFacade<D, A>
+where
+    D: SpecialistCatalogReadRepository + PatientSessionWriteRepository + Send + Sync,
+    A: AuthService + Send + Sync,
+{
+    pub fn builder(repository: Arc<D>, auth: Arc<A>) -> MobileFacadeBuilder<D, A> {
+        MobileFacadeBuilder::new(repository, auth)
+    }
 }
 
 #[common::async_trait_platform]
@@ -62,5 +73,52 @@ where
         self.uncomplete_patient_workout_session_uc
             .execute(args)
             .await
+    }
+}
+
+pub struct MobileFacadeBuilder<D, A>
+where
+    D: SpecialistCatalogReadRepository + PatientSessionWriteRepository + Send + Sync,
+    A: AuthService + Send + Sync,
+{
+    repository: Arc<D>,
+    auth: Arc<A>,
+}
+
+impl<D, A> MobileFacadeBuilder<D, A>
+where
+    D: SpecialistCatalogReadRepository + PatientSessionWriteRepository + Send + Sync,
+    A: AuthService + Send + Sync,
+{
+    pub fn new(repository: Arc<D>, auth: Arc<A>) -> Self {
+        Self { repository, auth }
+    }
+}
+
+impl<D, A> MobileFacadeBuilder<D, A>
+where
+    D: SpecialistCatalogReadRepository + PatientSessionWriteRepository + Send + Sync,
+    A: AuthService + Send + Sync,
+{
+    pub fn build(self) -> Arc<MobileFacade<D, A>> {
+        Arc::new(MobileFacade {
+            login_uc: Arc::new(MobileLoginUseCase::new(
+                self.repository.clone(),
+                self.auth.clone(),
+            )),
+            refresh_session_uc: Arc::new(RefreshSessionUseCase::new(
+                self.repository.clone(),
+                self.auth.clone(),
+            )),
+            get_patient_programs_uc: Arc::new(GetPatientProgramsUseCase::new(
+                self.repository.clone(),
+            )),
+            submit_patient_workout_feedback_uc: Arc::new(SubmitPatientWorkoutFeedbackUseCase::new(
+                self.repository.clone(),
+            )),
+            uncomplete_patient_workout_session_uc: Arc::new(
+                UncompletePatientWorkoutSessionUseCase::new(self.repository.clone()),
+            ),
+        })
     }
 }

@@ -60,7 +60,7 @@ impl AppContext {
 
 pub fn build_app_context() -> Result<AppContext> {
     let auth = default_auth();
-    let repository = Arc::new(SupabaseRestRepositoryBuilder::new().build());
+    let repository = SupabaseRestRepositoryBuilder::new().build();
 
     let add_specialist_patient_use_case = Arc::new(AddSpecialistPatientUseCase::<
         SupabaseRestRepository,

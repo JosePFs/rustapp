@@ -871,8 +871,8 @@ impl SupabaseRestRepositoryBuilder {
         self
     }
 
-    pub fn build(self) -> SupabaseRestRepository {
+    pub fn build(self) -> Arc<SupabaseRestRepository> {
         let client = self.client.unwrap_or_else(|| DEFAULT_CLIENT.clone());
-        SupabaseRestRepository::new(client)
+        Arc::new(SupabaseRestRepository::new(client))
     }
 }

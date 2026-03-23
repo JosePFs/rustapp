@@ -1,45 +1,26 @@
 use std::sync::{Arc, LazyLock};
 
-use infrastructure::supabase::default_auth;
 use serde::{Deserialize, Serialize};
 
-use application::facade::MobileFacade;
 use application::ports::api::MobileApi;
-use application::use_cases::{
-    get_patient_programs::GetPatientProgramsUseCase,
-    login::LoginUseCaseArgs,
-    mobile_login::MobileLoginUseCase,
-    refresh_session::{RefreshSessionArgs, RefreshSessionUseCase},
-    submit_patient_workout_feedback::{
-        SubmitPatientWorkoutFeedbackArgs, SubmitPatientWorkoutFeedbackUseCase,
-    },
-    uncomplete_patient_workout_session::{
-        UncompletePatientWorkoutSessionArgs, UncompletePatientWorkoutSessionUseCase,
-    },
-};
+use application::use_cases::login::LoginUseCaseArgs;
+use application::use_cases::submit_patient_workout_feedback::SubmitPatientWorkoutFeedbackArgs;
+use application::use_cases::uncomplete_patient_workout_session::UncompletePatientWorkoutSessionArgs;
+use application::{facade::MobileFacade, use_cases::refresh_session::RefreshSessionArgs};
+use infrastructure::supabase::default_auth;
 use infrastructure::supabase::{
     auth::SupabaseAuth,
     repositories::{SupabaseRestRepository, SupabaseRestRepositoryBuilder},
 };
 
 static REPOSITORY: LazyLock<Arc<SupabaseRestRepository>> =
-    LazyLock::new(|| Arc::new(SupabaseRestRepositoryBuilder::new().build()));
+    LazyLock::new(|| SupabaseRestRepositoryBuilder::new().build());
 
 static FACADE: LazyLock<Arc<MobileFacade<SupabaseRestRepository, SupabaseAuth>>> =
     LazyLock::new(|| {
         let repo = REPOSITORY.clone();
         let auth = default_auth();
-        Arc::new(MobileFacade {
-            login_uc: Arc::new(MobileLoginUseCase::new(repo.clone(), auth.clone())),
-            refresh_session_uc: Arc::new(RefreshSessionUseCase::new(repo.clone(), auth.clone())),
-            get_patient_programs_uc: Arc::new(GetPatientProgramsUseCase::new(repo.clone())),
-            submit_patient_workout_feedback_uc: Arc::new(SubmitPatientWorkoutFeedbackUseCase::new(
-                repo.clone(),
-            )),
-            uncomplete_patient_workout_session_uc: Arc::new(
-                UncompletePatientWorkoutSessionUseCase::new(repo),
-            ),
-        })
+        MobileFacade::builder(repo, auth).build()
     });
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
