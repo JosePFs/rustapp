@@ -14,13 +14,6 @@ import 'package:app_flutter/src/rust/frb_generated.dart';
 
 enum BootstrapStage { starting, readyForLogin, error }
 
-class _SessionBound<T> {
-  const _SessionBound({required this.session, required this.value});
-
-  final rust_api.LoginResponse session;
-  final T value;
-}
-
 class PatientAppBootstrapPage extends StatefulWidget {
   const PatientAppBootstrapPage({
     required this.localeController,
@@ -246,14 +239,14 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
           password: _passwordController.text,
         ),
       );
-      final result = await _loadPatientProgramsWithRefresh(loginResponse);
-      await _promoteSession(result.session);
+      final patientPrograms = await rust_api.getPatientPrograms();
+      await _promoteSession(loginResponse);
       setState(() {
         _stage = BootstrapStage.readyForLogin;
-        _patientPrograms = result.value;
+        _patientPrograms = patientPrograms;
         _status = context.l10n.statusSignedInLoadedPrograms(
-          result.session.userProfileType,
-          result.value.length,
+          loginResponse.userProfileType,
+          patientPrograms.length,
         );
       });
     } catch (error) {
@@ -279,44 +272,6 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
     }
   }
 
-  bool _isAuthFailure(Object error) {
-    final text = error.toString();
-    return text.contains('status 401') ||
-        text.contains('status 403') ||
-        text.contains('Auth failed: status 401') ||
-        text.contains('Auth failed: status 403');
-  }
-
-  Future<rust_api.LoginResponse> _refreshSessionOrThrow(
-    rust_api.LoginResponse current,
-  ) async {
-    final refreshToken = current.refreshToken;
-    if (refreshToken == null || refreshToken.trim().isEmpty) {
-      throw StateError('Missing refresh token.');
-    }
-    return rust_api.refreshSession(refreshToken: refreshToken);
-  }
-
-  Future<_SessionBound<T>> _withAuthRetry<T>(
-    rust_api.LoginResponse session,
-    Future<T> Function(String accessToken) operation,
-  ) async {
-    try {
-      final value = await operation(session.accessToken);
-      return _SessionBound(session: session, value: value);
-    } catch (error) {
-      if (!_isAuthFailure(error)) rethrow;
-      final refreshed = await _refreshSessionOrThrow(session);
-      final value = await operation(refreshed.accessToken);
-      return _SessionBound(session: refreshed, value: value);
-    }
-  }
-
-  Future<_SessionBound<List<rust_api.PatientProgramSummary>>>
-  _loadPatientProgramsWithRefresh(rust_api.LoginResponse session) {
-    return _withAuthRetry(session, (token) => rust_api.getPatientPrograms());
-  }
-
   Future<void> _submitDayFeedback(
     rust_api.MarkDayAsCompletedRequest request,
   ) async {
@@ -331,27 +286,11 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
     });
 
     try {
-      final submitResult = await _withAuthRetry(
-        loginResponse,
-        (token) => rust_api.markDayAsCompleted(request: request),
-      );
-      if (submitResult.session.accessToken != loginResponse.accessToken ||
-          submitResult.session.refreshToken != loginResponse.refreshToken) {
-        await _promoteSession(submitResult.session);
-      }
-      final programsResult = await _withAuthRetry(
-        submitResult.session,
-        (token) => rust_api.getPatientPrograms(),
-      );
-      if (programsResult.session.accessToken !=
-              submitResult.session.accessToken ||
-          programsResult.session.refreshToken !=
-              submitResult.session.refreshToken) {
-        await _promoteSession(programsResult.session);
-      }
+      await rust_api.markDayAsCompleted(request: request);
+      final programsResult = await rust_api.getPatientPrograms();
       if (mounted) {
         setState(() {
-          _patientPrograms = programsResult.value;
+          _patientPrograms = programsResult;
           _status = context.l10n.statusSavingFeedback;
         });
       }
@@ -378,27 +317,11 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
     });
 
     try {
-      final updateResult = await _withAuthRetry(
-        loginResponse,
-        (token) => rust_api.markDayAsUncompleted(request: request),
-      );
-      if (updateResult.session.accessToken != loginResponse.accessToken ||
-          updateResult.session.refreshToken != loginResponse.refreshToken) {
-        await _promoteSession(updateResult.session);
-      }
-      final programsResult = await _withAuthRetry(
-        updateResult.session,
-        (token) => rust_api.getPatientPrograms(),
-      );
-      if (programsResult.session.accessToken !=
-              updateResult.session.accessToken ||
-          programsResult.session.refreshToken !=
-              updateResult.session.refreshToken) {
-        await _promoteSession(programsResult.session);
-      }
+      await rust_api.markDayAsUncompleted(request: request);
+      final programsResult = await rust_api.getPatientPrograms();
       if (mounted) {
         setState(() {
-          _patientPrograms = programsResult.value;
+          _patientPrograms = programsResult;
           _status = request.workoutSessionId.isNotEmpty
               ? context.l10n.statusSessionMarkedCompleted
               : context.l10n.statusSessionMarkedNotCompleted;

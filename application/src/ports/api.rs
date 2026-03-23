@@ -1,3 +1,4 @@
+use crate::ports::error::Result;
 use crate::use_cases::add_exercise_to_workout::AddExerciseToWorkoutArgs;
 use crate::use_cases::add_specialist_patient::AddSpecialistPatientArgs;
 use crate::use_cases::assign_program_to_patient::AssignProgramToPatientArgs;
@@ -32,7 +33,6 @@ use crate::use_cases::workout_editor_data::{WorkoutEditorDataArgs, WorkoutEditor
 use domain::entities::ProgramScheduleItem;
 use domain::entities::Workout;
 use domain::entities::{Exercise, PatientProgram, Program, SpecialistPatient};
-use domain::error::Result;
 
 #[common::async_trait_platform]
 pub trait BackofficeApi {

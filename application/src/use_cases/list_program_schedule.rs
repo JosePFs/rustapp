@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use domain::error::Result;
+use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::{GetWorkoutsByIdsRead, ListProgramScheduleRead};
 use domain::vos::id::Id;
 
@@ -40,7 +40,7 @@ impl<R: ListProgramScheduleRead + GetWorkoutsByIdsRead> ListProgramScheduleUseCa
 
     pub async fn execute(&self, args: ListProgramScheduleArgs) -> Result<ProgramScheduleData> {
         let program_id = Id::try_from(args.program_id)?;
-        let schedule_domain = self.catalog_read.list_program_schedule(&program_id).await?;
+        let schedule_domain = self.catalog_read.list_program_schedule(&program_id).await.map_err(ApplicationError::from)?;
 
         let ids: Vec<Id> = schedule_domain
             .iter()

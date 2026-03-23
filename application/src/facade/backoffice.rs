@@ -2,11 +2,11 @@ use std::sync::Arc;
 
 use domain::entities::{Exercise, PatientProgram, Program, SpecialistPatient};
 use domain::entities::{ProgramScheduleItem, Workout};
-use domain::error::Result;
 use domain::repositories::{SpecialistCatalogReadRepository, SpecialistCatalogWriteRepository};
 
 use crate::ports::api::BackofficeApi;
 use crate::ports::auth::AuthService;
+use crate::ports::error::Result;
 use crate::use_cases::add_exercise_to_workout::{
     AddExerciseToWorkoutArgs, AddExerciseToWorkoutUseCase,
 };

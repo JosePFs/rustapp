@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use domain::error::Result;
+use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::AddExerciseToWorkoutWrite;
 use domain::vos::id::Id;
 use domain::vos::{Reps, ScheduleOrderIndex, Sets};
@@ -32,14 +32,17 @@ impl<W: AddExerciseToWorkoutWrite> AddExerciseToWorkoutUseCase<W> {
         self.catalog_write
             .add_exercise_to_workout(&workout_id, &exercise_id, order_index, sets, reps)
             .await
+            .map_err(ApplicationError::from)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     use std::sync::Mutex;
 
-    use super::*;
+    use domain::error::Result;
 
     const W: &str = "550e8400-e29b-41d4-a716-446655440140";
     const E: &str = "550e8400-e29b-41d4-a716-446655440141";

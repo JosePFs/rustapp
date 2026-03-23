@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
+use crate::ports::error::{ApplicationError, Result};
 use domain::entities::Program;
-use domain::error::Result;
 use domain::repositories::CreateProgramWrite;
 use domain::vos::id::Id;
 use domain::vos::{Description, ProgramName};
@@ -34,16 +34,18 @@ impl<W: CreateProgramWrite> CreateProgramUseCase<W> {
         self.catalog_write
             .create_program(&specialist_id, &name, description_ref)
             .await
+            .map_err(ApplicationError::from)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     use std::sync::Mutex;
 
     use domain::error::DomainError;
-
-    use super::*;
+    use domain::error::Result;
 
     const SPEC: &str = "550e8400-e29b-41d4-a716-446655440010";
 
@@ -67,7 +69,10 @@ mod tests {
             .await
             .unwrap_err();
 
-        assert!(matches!(err, DomainError::InvalidParameter(_, _)));
+        assert!(matches!(
+            err,
+            ApplicationError::DomainError(DomainError::InvalidParameter(_, _))
+        ));
     }
 
     #[tokio::test]

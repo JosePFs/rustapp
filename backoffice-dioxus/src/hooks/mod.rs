@@ -1,4 +1,4 @@
-use domain::error::DomainError;
+use application::ports::error::ApplicationError;
 
 pub mod add_exercise_to_workout;
 pub mod add_specialist_patient;
@@ -30,7 +30,7 @@ pub mod workout_library_data;
 pub enum AsyncState<T> {
     Idle,
     Loading,
-    Error(DomainError),
+    Error(ApplicationError),
     Ready(T),
 }
 
@@ -58,7 +58,7 @@ impl<T> AsyncState<T> {
         }
     }
 
-    pub fn error(&self) -> Option<&DomainError> {
+    pub fn error(&self) -> Option<&ApplicationError> {
         match self {
             AsyncState::Error(error) => Some(error),
             _ => None,

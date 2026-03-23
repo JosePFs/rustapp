@@ -1,5 +1,6 @@
 pub mod api;
 pub mod auth;
+pub mod error;
 pub mod http_rest_client;
 
 pub use api::{BackofficeApi, MobileApi};

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use domain::error::Result;
+use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::RestoreExerciseWrite;
 use domain::vos::id::Id;
 
@@ -20,7 +20,7 @@ impl<W: RestoreExerciseWrite> RestoreExerciseUseCase<W> {
 
     pub async fn execute(&self, args: RestoreExerciseArgs) -> Result<()> {
         let exercise_id = Id::try_from(args.exercise_id)?;
-        self.catalog_write.restore_exercise(&exercise_id).await
+        self.catalog_write.restore_exercise(&exercise_id).await.map_err(ApplicationError::from)
     }
 }
 

@@ -8,7 +8,7 @@ pub enum DomainError {
     InvalidParameter(String, String),
     Login(String),
     Api(String),
-    SessionNotFound,
+    AuthenticationFailed(String),
 }
 
 impl Display for DomainError {
@@ -19,7 +19,7 @@ impl Display for DomainError {
             }
             DomainError::Login(msg) => write!(f, "{msg}"),
             DomainError::Api(msg) => write!(f, "{msg}"),
-            DomainError::SessionNotFound => write!(f, "Session not found"),
+            DomainError::AuthenticationFailed(msg) => write!(f, "{msg}"),
         }
     }
 }

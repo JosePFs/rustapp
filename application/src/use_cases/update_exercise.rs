@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use domain::error::Result;
+use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::UpdateExerciseWrite;
 use domain::vos::id::Id;
 use domain::vos::{Description, ExerciseName, Patch, ScheduleOrderIndex, VideoUrl};
@@ -55,6 +55,7 @@ impl<W: UpdateExerciseWrite> UpdateExerciseUseCase<W> {
                 video_url,
             )
             .await
+            .map_err(ApplicationError::from)
     }
 }
 

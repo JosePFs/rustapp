@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use futures::stream::{self, StreamExt};
 
-use domain::error::Result;
+use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::PatientSessionWriteRepository;
 use domain::vos::id::Id;
 use domain::vos::{DayIndex, EffortScore, FeedbackComment, PainScore, SessionDate};
@@ -35,12 +35,14 @@ impl<P: PatientSessionWriteRepository> SubmitPatientWorkoutFeedbackUseCase<P> {
         let session = self
             .session_write
             .get_or_create_session(&patient_program_id, day_index, &session_date)
-            .await?;
+            .await
+            .map_err(ApplicationError::from)?;
         let session_id = session.id;
 
         self.session_write
             .complete_session(&session_id, &session_date)
-            .await?;
+            .await
+            .map_err(ApplicationError::from)?;
 
         let session_id = session_id.clone();
 
@@ -50,13 +52,13 @@ impl<P: PatientSessionWriteRepository> SubmitPatientWorkoutFeedbackUseCase<P> {
                 let session_id = session_id.clone();
 
                 async move {
-                    let exercise_id = Id::try_from(exercise_id_str)?;
-                    let effort_vo = EffortScore::try_from(effort)?;
-                    let pain_vo = PainScore::try_from(pain)?;
+                    let exercise_id = Id::try_from(exercise_id_str).map_err(ApplicationError::from)?;
+                    let effort_vo = EffortScore::try_from(effort).map_err(ApplicationError::from)?;
+                    let pain_vo = PainScore::try_from(pain).map_err(ApplicationError::from)?;
                     let comment_vo = if comment.is_empty() {
                         None
                     } else {
-                        Some(FeedbackComment::try_from(comment.as_str())?)
+                        Some(FeedbackComment::try_from(comment.as_str()).map_err(ApplicationError::from)?)
                     };
                     let comment_ref = comment_vo.as_ref();
                     session_write
@@ -68,6 +70,7 @@ impl<P: PatientSessionWriteRepository> SubmitPatientWorkoutFeedbackUseCase<P> {
                             comment_ref,
                         )
                         .await
+                        .map_err(ApplicationError::from)
                 }
             })
             .buffer_unordered(Self::MAX_CONCURRENT_REQUESTS)

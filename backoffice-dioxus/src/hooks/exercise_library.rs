@@ -1,9 +1,10 @@
+use application::ports::error::ApplicationError;
 use dioxus::prelude::*;
 
 use crate::hooks::{app_context::use_app_context, AsyncState};
+use application::ports::error::Result;
 use application::ports::BackofficeApi;
 use application::use_cases::list_exercise_library::{ExerciseLibraryItem, ListExerciseLibraryArgs};
-use domain::error::{DomainError, Result};
 
 #[derive(Clone)]
 pub struct UseExerciseLibrary {
@@ -25,7 +26,7 @@ pub fn use_exercise_library(filter: Signal<String>) -> UseExerciseLibrary {
 
         async move {
             let Some(session) = maybe_session_ref.as_ref() else {
-                return Err(DomainError::SessionNotFound);
+                return Err(ApplicationError::NoSession);
             };
 
             let specialist_id = session.user_id().to_string();

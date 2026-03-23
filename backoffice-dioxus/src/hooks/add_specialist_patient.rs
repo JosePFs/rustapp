@@ -1,9 +1,9 @@
+use application::ports::error::ApplicationError;
 use dioxus::prelude::*;
 
 use crate::hooks::{app_context::use_app_context, AsyncState};
 use application::ports::BackofficeApi;
 use application::use_cases::add_specialist_patient::AddSpecialistPatientArgs;
-use domain::error::DomainError;
 
 #[derive(Clone)]
 pub struct UseAddSpecialistPatient {
@@ -30,8 +30,8 @@ pub fn use_add_specialist_patient() -> UseAddSpecialistPatient {
         async move {
             let sess_opt = session_signal.read().clone();
             let Some(sess) = sess_opt else {
-                state.set(AsyncState::Error(DomainError::SessionNotFound));
-                return Err(DomainError::SessionNotFound);
+                state.set(AsyncState::Error(ApplicationError::NoSession));
+                return Err(ApplicationError::NoSession);
             };
 
             let specialist_id = sess.user_id().to_string();

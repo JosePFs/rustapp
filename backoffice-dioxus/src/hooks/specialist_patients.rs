@@ -1,11 +1,11 @@
 use dioxus::prelude::*;
 
 use crate::hooks::{app_context::use_app_context, AsyncState};
+use application::ports::error::Result;
 use application::ports::BackofficeApi;
 use application::use_cases::get_specialist_patients_with_profiles::{
     GetSpecialistPatientsWithProfilesArgs, GetSpecialistPatientsWithProfilesResult,
 };
-use domain::error::Result;
 
 #[derive(Clone)]
 pub struct UseSpecialistPatients {

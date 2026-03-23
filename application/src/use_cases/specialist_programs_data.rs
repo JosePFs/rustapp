@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use domain::error::Result;
+use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::GetSpecialistDashboardRead;
 use domain::vos::id::Id;
 
@@ -62,7 +62,8 @@ impl<R: GetSpecialistDashboardRead> SpecialistProgramsDataUseCase<R> {
         let dashboard = self
             .catalog_read
             .get_specialist_dashboard(&specialist_id)
-            .await?;
+            .await
+            .map_err(ApplicationError::from)?;
 
         let links: Vec<SpecialistPatientLink> = dashboard
             .links

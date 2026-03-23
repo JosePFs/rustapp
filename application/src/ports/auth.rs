@@ -1,3 +1,5 @@
+use chrono::{DateTime, Utc};
+
 use domain::error::Result;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -58,14 +60,21 @@ pub struct Session {
     access_token: String,
     refresh_token: Option<String>,
     user_id: String,
+    expires_at: Option<DateTime<Utc>>,
 }
 
 impl Session {
-    pub fn new(access_token: String, refresh_token: Option<String>, user_id: String) -> Self {
+    pub fn new(
+        access_token: String,
+        refresh_token: Option<String>,
+        user_id: String,
+        expires_at: Option<DateTime<Utc>>,
+    ) -> Self {
         Self {
             access_token,
             refresh_token,
             user_id,
+            expires_at,
         }
     }
 
@@ -79,6 +88,20 @@ impl Session {
 
     pub fn refresh_token(&self) -> Option<&str> {
         self.refresh_token.as_deref()
+    }
+
+    pub fn expires_at(&self) -> Option<&DateTime<Utc>> {
+        self.expires_at.as_ref()
+    }
+
+    pub fn should_refresh(&self) -> bool {
+        match self.expires_at {
+            Some(expires) => {
+                let five_minutes = chrono::Duration::minutes(5);
+                expires - five_minutes < Utc::now()
+            }
+            None => false,
+        }
     }
 }
 

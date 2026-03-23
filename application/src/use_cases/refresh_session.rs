@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use crate::ports::auth::AuthService;
+use crate::ports::error::{ApplicationError, Result};
 use crate::use_cases::login::{login_result_from_session, LoginUseCaseResult};
-use domain::error::Result;
 use domain::repositories::GetProfilesByIdsRead;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -32,20 +32,24 @@ impl<R: GetProfilesByIdsRead, A: AuthService> RefreshSessionUseCase<R, A> {
         let session = self
             .auth
             .refresh_session(args.refresh_token.as_str())
-            .await?;
-        login_result_from_session(&*self.catalog_read, session).await
+            .await
+            .map_err(ApplicationError::from)?;
+        login_result_from_session(&*self.catalog_read, session)
+            .await
+            .map_err(ApplicationError::from)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Mutex;
-
     use super::*;
+
+    use std::sync::Mutex;
 
     use crate::ports::auth::{AuthService, Credentials, Session};
     use crate::use_cases::login::UserProfileType;
-    use domain::error::{DomainError, Result};
+    use domain::error::DomainError;
+    use domain::error::Result;
     use domain::repositories::GetProfilesByIdsRead;
     use domain::vos::email::Email;
     use domain::vos::fullname::FullName;
@@ -55,7 +59,9 @@ mod tests {
 
     #[tokio::test]
     async fn refresh_session_propagates_auth_error() {
-        let auth = MockAuthService::new().with_refresh_err(DomainError::SessionNotFound);
+        let auth = MockAuthService::new().with_refresh_err(DomainError::AuthenticationFailed(
+            "Session not found".to_string(),
+        ));
         let catalog = MockGetProfilesByIdsRead::new_ok(vec![]);
         let uc = RefreshSessionUseCase::new(Arc::new(catalog), Arc::new(auth));
 
@@ -64,13 +70,18 @@ mod tests {
             .await
             .unwrap_err();
 
-        assert_eq!(err, DomainError::SessionNotFound);
+        assert_eq!(
+            err,
+            ApplicationError::DomainError(DomainError::AuthenticationFailed(
+                "Session not found".to_string()
+            ))
+        );
     }
 
     #[tokio::test]
     async fn refresh_session_maps_specialist_profile() {
         let uid = "550e8400-e29b-41d4-a716-446655440030";
-        let session = Session::new("at".into(), Some("rt".into()), uid.to_string());
+        let session = Session::new("at".into(), Some("rt".into()), uid.to_string(), None);
         let auth = MockAuthService::new().with_refresh_ok(session);
         let id = Id::try_from(uid).unwrap();
         let email = Email::try_from("s@example.com").unwrap();

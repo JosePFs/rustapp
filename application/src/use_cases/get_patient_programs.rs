@@ -3,10 +3,10 @@ use std::sync::Arc;
 
 use futures::stream::{self, StreamExt};
 
+use crate::ports::error::{ApplicationError, Result};
 use crate::use_cases::agenda_schedule::build_agenda_schedule;
 use domain::aggregates::PatientProgramFull;
 use domain::entities::SessionExerciseFeedback;
-use domain::error::Result;
 use domain::repositories::{GetPatientProgramFullRead, ListActivePatientProgramsRead};
 use domain::vos::id::Id;
 
@@ -65,13 +65,20 @@ impl<R: GetPatientProgramFullRead + ListActivePatientProgramsRead> GetPatientPro
     }
 
     pub async fn execute(&self) -> Result<GetPatientProgramsUseCaseResult> {
-        let patient_programs = self.catalog_read.list_active_patient_programs().await?;
+        let patient_programs = self
+            .catalog_read
+            .list_active_patient_programs()
+            .await
+            .map_err(ApplicationError::from)?;
         let patient_programs_data = stream::iter(patient_programs.into_iter().enumerate())
             .map(|(order_index, ass)| {
                 let catalog_read = self.catalog_read.clone();
 
                 async move {
-                    let full = catalog_read.get_patient_program_full(&ass.id).await?;
+                    let full = catalog_read
+                        .get_patient_program_full(&ass.id)
+                        .await
+                        .map_err(ApplicationError::from)?;
 
                     let Some(full) = full else {
                         return Ok(None);
@@ -241,11 +248,12 @@ impl<R: GetPatientProgramFullRead + ListActivePatientProgramsRead> GetPatientPro
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Mutex;
-
     use super::*;
 
+    use std::sync::Mutex;
+
     use domain::entities::PatientProgram;
+    use domain::error::Result;
 
     #[tokio::test]
     async fn get_patient_programs_empty_when_no_active_programs() {

@@ -1,13 +1,14 @@
+use application::ports::error::ApplicationError;
 use dioxus::prelude::*;
 
 use crate::hooks::app_context::use_app_context;
+use application::ports::error::Result;
 use application::ports::BackofficeApi;
 use application::use_cases::list_workout_library::{ListWorkoutLibraryArgs, WorkoutLibraryItem};
-use domain::error::DomainError;
 
 #[derive(Clone)]
 pub struct UseWorkoutLibraryData {
-    pub resource: Resource<Result<Vec<WorkoutLibraryItem>, DomainError>>,
+    pub resource: Resource<Result<Vec<WorkoutLibraryItem>>>,
 }
 
 pub fn use_workout_library_data() -> UseWorkoutLibraryData {
@@ -24,7 +25,7 @@ pub fn use_workout_library_data() -> UseWorkoutLibraryData {
         async move {
             let sess_opt = session.read().clone();
             let Some(sess) = sess_opt else {
-                return Err(DomainError::SessionNotFound);
+                return Err(ApplicationError::NoSession);
             };
 
             let specialist_id = sess.user_id().to_string();

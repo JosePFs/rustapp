@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
+use crate::ports::error::{ApplicationError, Result};
 use domain::entities::ProgramScheduleItem;
-use domain::error::Result;
 use domain::repositories::CreateProgramScheduleItemWrite;
 use domain::vos::id::Id;
 use domain::vos::{DaysInBlock, ScheduleOrderIndex};
@@ -37,14 +37,17 @@ impl<W: CreateProgramScheduleItemWrite> CreateProgramScheduleItemUseCase<W> {
         self.catalog_write
             .create_program_schedule_item(&program_id, order_index, workout_id.as_ref(), days_count)
             .await
+            .map_err(ApplicationError::from)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     use std::sync::Mutex;
 
-    use super::*;
+    use domain::error::Result;
 
     const PRG: &str = "550e8400-e29b-41d4-a716-446655440320";
     const WID: &str = "550e8400-e29b-41d4-a716-446655440321";

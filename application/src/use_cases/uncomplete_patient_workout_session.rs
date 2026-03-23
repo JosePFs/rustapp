@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use domain::error::Result;
+use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::PatientSessionWriteRepository;
 use domain::vos::id::Id;
 
@@ -23,6 +23,7 @@ impl<P: PatientSessionWriteRepository> UncompletePatientWorkoutSessionUseCase<P>
         self.session_write
             .uncomplete_session(&workout_session_id)
             .await
+            .map_err(ApplicationError::from)
     }
 }
 

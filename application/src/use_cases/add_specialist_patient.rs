@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
+use crate::ports::error::{ApplicationError, Result};
 use domain::entities::SpecialistPatient;
-use domain::error::{DomainError, Result};
+use domain::error::DomainError;
 use domain::repositories::{AddSpecialistPatientWrite, GetPatientIdByEmailRead};
 use domain::vos::email::Email;
 use domain::vos::id::Id;
@@ -32,19 +33,23 @@ where
         let patient_id = self
             .catalog
             .get_patient_id_by_email(&email)
-            .await?
+            .await
+            .map_err(ApplicationError::from)?
             .ok_or_else(|| DomainError::Api("Patient not found".into()))?;
 
         let specialist_id = Id::try_from(args.specialist_id)?;
         self.catalog
             .add_specialist_patient(&specialist_id, &patient_id)
             .await
+            .map_err(ApplicationError::from)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use domain::error::Result;
 
     #[tokio::test]
     async fn add_specialist_patient_happy_path() {

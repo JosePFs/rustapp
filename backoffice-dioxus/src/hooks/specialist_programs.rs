@@ -1,10 +1,11 @@
+use application::ports::error::ApplicationError;
 use dioxus::prelude::*;
 
+use application::ports::error::Result;
 use application::ports::BackofficeApi;
 use application::use_cases::specialist_programs_data::{
     SpecialistProgramsDataArgs, SpecialistProgramsDataResult,
 };
-use domain::error::{DomainError, Result};
 
 use crate::hooks::{app_context::use_app_context, AsyncState};
 
@@ -27,7 +28,7 @@ pub fn use_specialist_programs() -> UseSpecialistPrograms {
 
         async move {
             let Some(session) = maybe_session_ref.as_ref() else {
-                return Err(DomainError::SessionNotFound);
+                return Err(ApplicationError::NoSession);
             };
 
             let specialist_id = session.user_id().to_string();

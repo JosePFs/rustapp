@@ -2,14 +2,15 @@ use std::sync::Arc;
 
 use futures::stream::{self, StreamExt};
 use futures::try_join;
+use futures::TryFutureExt;
 
+use crate::ports::error::{ApplicationError, Result};
 use crate::use_cases::agenda_schedule::{
     AgendaSessionFeedback, AgendaWorkoutSession, ProgramScheduleRow, WorkoutSummaryRow,
 };
 use domain::aggregates::PatientProgramFull;
 use domain::entities::PatientProgram;
 use domain::error::DomainError;
-use domain::error::Result;
 use domain::repositories::{
     GetPatientProgramFullRead, GetProfilesByIdsRead, ListPatientProgramsForSpecialistRead,
 };
@@ -65,8 +66,8 @@ impl<
         let profile_ids: [Id; 1] = [patient_id.clone()];
 
         let (profiles, all_assignments) = try_join!(
-            self.catalog_read.get_profiles_by_ids(&profile_ids),
-            self.catalog_read.list_patient_programs_for_specialist(),
+            self.catalog_read.get_profiles_by_ids(&profile_ids).map_err(ApplicationError::from),
+            self.catalog_read.list_patient_programs_for_specialist().map_err(ApplicationError::from),
         )?;
 
         let profile_domain = profiles
@@ -86,7 +87,7 @@ impl<
                 let catalog_read = self.catalog_read.clone();
 
                 async move {
-                    let full = catalog_read.get_patient_program_full(&ass.id).await?;
+                    let full = catalog_read.get_patient_program_full(&ass.id).await.map_err(ApplicationError::from)?;
 
                     Ok(full.map(map_program_block))
                 }

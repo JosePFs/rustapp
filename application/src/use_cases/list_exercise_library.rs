@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use domain::error::Result;
+use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::ListExerciseLibraryRead;
 use domain::vos::id::Id;
 use domain::vos::LibraryNameFilter;
@@ -42,7 +42,8 @@ impl<R: ListExerciseLibraryRead> ListExerciseLibraryUseCase<R> {
         let rows = self
             .catalog_read
             .list_exercise_library(&specialist_id, name_filter_ref)
-            .await?;
+            .await
+            .map_err(ApplicationError::from)?;
         Ok(rows
             .into_iter()
             .map(|e| ExerciseLibraryItem {

@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::sync::Mutex;
 
+use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::supabase::config::SupabaseConfig;
@@ -12,6 +13,10 @@ pub struct AuthSession {
     pub access_token: String,
     pub refresh_token: Option<String>,
     pub user: AuthUser,
+    #[serde(default)]
+    pub expires_in: Option<i64>,
+    #[serde(default)]
+    pub expires_at: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -68,6 +73,7 @@ impl AuthService for SupabaseAuth {
             password: credentials.password().value().to_string(),
         };
         let body_bytes = serde_json::to_vec(&body).map_err(|e| e.to_string())?;
+
         let response = http_request(
             "POST",
             &url,
@@ -78,16 +84,28 @@ impl AuthService for SupabaseAuth {
             Some(&body_bytes),
         )
         .await?;
+
         if response.status < 200 || response.status >= 300 {
             return Err(DomainError::Login(format!(
                 "Auth failed: status {}",
                 response.status
             )));
         }
+
         let session: AuthSession = serde_json::from_slice(&response.body)
             .map_err(|e| DomainError::Login(format!("Parse auth: {}", e)))?;
-        let session = Session::new(session.access_token, session.refresh_token, session.user.id);
+        let expires_at = session
+            .expires_in
+            .map(|secs| Utc::now() + Duration::seconds(secs));
+        let session = Session::new(
+            session.access_token,
+            session.refresh_token,
+            session.user.id,
+            expires_at,
+        );
+
         *self.session.lock().unwrap() = Some(session.clone());
+
         Ok(session)
     }
 
@@ -98,6 +116,7 @@ impl AuthService for SupabaseAuth {
             refresh_token: refresh_token.to_string(),
         };
         let body_bytes = serde_json::to_vec(&body).map_err(|e| e.to_string())?;
+
         let response = http_request(
             "POST",
             &url,
@@ -108,21 +127,47 @@ impl AuthService for SupabaseAuth {
             Some(&body_bytes),
         )
         .await?;
+
         if response.status < 200 || response.status >= 300 {
             return Err(DomainError::Login(format!(
                 "Auth refresh failed: status {}",
                 response.status
             )));
         }
+
         let session: AuthSession = serde_json::from_slice(&response.body)
             .map_err(|e| DomainError::Login(format!("Parse auth: {}", e)))?;
-        let session = Session::new(session.access_token, session.refresh_token, session.user.id);
+        let expires_at = session
+            .expires_in
+            .map(|secs| Utc::now() + Duration::seconds(secs));
+        let session = Session::new(
+            session.access_token,
+            session.refresh_token,
+            session.user.id,
+            expires_at,
+        );
+
         *self.session.lock().unwrap() = Some(session.clone());
+
         Ok(session)
     }
 
     fn get_session(&self) -> Option<Session> {
         self.session.lock().unwrap().clone()
+    }
+}
+
+impl SupabaseAuth {
+    pub fn maybe_refresh(&self) -> Result<Session> {
+        let session_guard = self.session.lock().unwrap();
+        if let Some(ref session) = *session_guard {
+            if session.should_refresh() {
+                return Err(DomainError::Login("Session needs refresh".to_string()));
+            }
+        }
+        session_guard
+            .clone()
+            .ok_or_else(|| DomainError::Login("No session available".to_string()))
     }
 }
 

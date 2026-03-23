@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
+use crate::ports::error::{ApplicationError, Result};
 use domain::entities::Workout;
-use domain::error::Result;
 use domain::repositories::CreateWorkoutWrite;
 use domain::vos::id::Id;
 use domain::vos::{Description, WorkoutName};
@@ -34,14 +34,17 @@ impl<W: CreateWorkoutWrite> CreateWorkoutUseCase<W> {
         self.catalog_write
             .create_workout(&specialist_id, &name, description_ref)
             .await
+            .map_err(ApplicationError::from)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     use std::sync::Mutex;
 
-    use super::*;
+    use domain::error::Result;
 
     #[tokio::test]
     async fn create_workout_forwards_name() {

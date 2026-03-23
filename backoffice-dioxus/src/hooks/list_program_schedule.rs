@@ -1,12 +1,13 @@
 use dioxus::prelude::*;
 
 use crate::hooks::app_context::use_app_context;
+use application::ports::error::Result;
 use application::ports::BackofficeApi;
 use application::use_cases::list_program_schedule::{ListProgramScheduleArgs, ProgramScheduleData};
 
 #[derive(Clone)]
 pub struct UseProgramScheduleData {
-    pub resource: Resource<Result<ProgramScheduleData, domain::error::DomainError>>,
+    pub resource: Resource<Result<ProgramScheduleData>>,
 }
 
 pub fn use_program_schedule_data(program_id: String) -> UseProgramScheduleData {

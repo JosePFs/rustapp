@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use domain::error::Result;
+use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::DeleteWorkoutWrite;
 use domain::vos::id::Id;
 
@@ -20,17 +20,21 @@ impl<W: DeleteWorkoutWrite> DeleteWorkoutUseCase<W> {
 
     pub async fn execute(&self, args: DeleteWorkoutArgs) -> Result<()> {
         let workout_id = Id::try_from(args.workout_id)?;
-        self.catalog_write.delete_workout(&workout_id).await
+        self.catalog_write
+            .delete_workout(&workout_id)
+            .await
+            .map_err(ApplicationError::from)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Mutex;
-
     use super::*;
 
+    use std::sync::Mutex;
+
     use domain::error::DomainError;
+    use domain::error::Result;
 
     const WID: &str = "550e8400-e29b-41d4-a716-446655440001";
 
@@ -46,7 +50,10 @@ mod tests {
             .await
             .unwrap_err();
 
-        assert!(matches!(err, DomainError::InvalidParameter(_, _)));
+        assert!(matches!(
+            err,
+            ApplicationError::DomainError(DomainError::InvalidParameter(_, _))
+        ));
     }
 
     #[tokio::test]
@@ -77,7 +84,10 @@ mod tests {
             .await
             .unwrap_err();
 
-        assert_eq!(err, DomainError::Api("boom".into()));
+        assert_eq!(
+            err,
+            ApplicationError::DomainError(DomainError::Api("boom".into()))
+        );
     }
 
     #[derive(Clone)]

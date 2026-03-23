@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use domain::error::Result;
+use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::RemoveExerciseFromWorkoutWrite;
 use domain::vos::id::Id;
 
@@ -25,6 +25,7 @@ impl<W: RemoveExerciseFromWorkoutWrite> RemoveExerciseFromWorkoutUseCase<W> {
         self.catalog_write
             .remove_exercise_from_workout(&workout_id, &exercise_id)
             .await
+            .map_err(ApplicationError::from)
     }
 }
 

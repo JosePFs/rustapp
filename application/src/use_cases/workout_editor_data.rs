@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
 use futures::try_join;
+use futures::TryFutureExt;
 
+use crate::ports::error::{ApplicationError, Result};
 use domain::entities::Exercise;
-use domain::error::Result;
 use domain::repositories::{GetWorkoutWithExercisesRead, ListExerciseLibraryRead};
 use domain::vos::id::Id;
 
@@ -71,9 +72,9 @@ impl<R: GetWorkoutWithExercisesRead + ListExerciseLibraryRead> WorkoutEditorData
         let workout_id = Id::try_from(args.workout_id)?;
 
         let (workout_with_exercises, library_domain) = try_join!(
-            self.catalog_read.get_workout_with_exercises(&workout_id),
+            self.catalog_read.get_workout_with_exercises(&workout_id).map_err(ApplicationError::from),
             self.catalog_read
-                .list_exercise_library(&specialist_id, None),
+                .list_exercise_library(&specialist_id, None).map_err(ApplicationError::from),
         )?;
 
         let (workout, exercises) = workout_with_exercises

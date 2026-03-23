@@ -3,61 +3,63 @@ use std::sync::Arc;
 use serde::Deserialize;
 
 use crate::supabase::config::SupabaseConfig;
-use application::ports::{auth::AuthService, HttpRestClient};
+use application::ports::{
+    auth::AuthService,
+    error::{ApplicationError, Result},
+    HttpRestClient,
+};
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
+pub struct ResponseStatus(pub u16);
+
+impl ResponseStatus {
+    pub const DEFAULT_ERROR_STATUS: u16 = 400;
+
+    pub fn is_auth_error(&self) -> bool {
+        self.0 == 401 || self.0 == 403
+    }
+
+    pub fn is_success(&self) -> bool {
+        self.0 >= 200 && self.0 < 300
+    }
+
+    pub fn is_client_error(&self) -> bool {
+        self.0 >= 400 && self.0 < 500
+    }
+
+    pub fn is_server_error(&self) -> bool {
+        self.0 >= 500 && self.0 < 600
+    }
+}
+
 pub struct SupabaseClient {
     config: SupabaseConfig,
     auth_service: Arc<dyn AuthService>,
 }
 
 impl HttpRestClient for SupabaseClient {
-    async fn get(&self, path: &str) -> Result<Vec<u8>, String> {
-        let session = self
-            .auth_service
-            .get_session()
-            .map(|s| s.access_token().to_string());
-        self.rest_request(session.as_deref(), "GET", path, None, None)
+    async fn get(&self, path: &str) -> Result<Vec<u8>> {
+        let token = self.get_valid_token().await?;
+        self.rest_request_with_retry(Some(&token), "GET", path, None, None)
             .await
     }
 
-    async fn post(&self, path: &str, body: &str) -> Result<Vec<u8>, String> {
-        let session = self
-            .auth_service
-            .get_session()
-            .map(|s| s.access_token().to_string());
-        self.rest_request(
-            session.as_deref(),
-            "POST",
-            path,
-            Some(body.as_bytes()),
-            None,
-        )
-        .await
+    async fn post(&self, path: &str, body: &str) -> Result<Vec<u8>> {
+        let token = self.get_valid_token().await?;
+        self.rest_request_with_retry(Some(&token), "POST", path, Some(body.as_bytes()), None)
+            .await
     }
 
-    async fn patch(&self, path: &str, body: &str) -> Result<Vec<u8>, String> {
-        let session = self
-            .auth_service
-            .get_session()
-            .map(|s| s.access_token().to_string());
-        self.rest_request(
-            session.as_deref(),
-            "PATCH",
-            path,
-            Some(body.as_bytes()),
-            None,
-        )
-        .await
+    async fn patch(&self, path: &str, body: &str) -> Result<Vec<u8>> {
+        let token = self.get_valid_token().await?;
+        self.rest_request_with_retry(Some(&token), "PATCH", path, Some(body.as_bytes()), None)
+            .await
     }
 
-    async fn upsert(&self, path: &str, body: &str) -> Result<Vec<u8>, String> {
-        let session = self
-            .auth_service
-            .get_session()
-            .map(|s| s.access_token().to_string());
-        self.rest_request(
-            session.as_deref(),
+    async fn upsert(&self, path: &str, body: &str) -> Result<Vec<u8>> {
+        let token = self.get_valid_token().await?;
+        self.rest_request_with_retry(
+            Some(&token),
             "POST",
             path,
             Some(body.as_bytes()),
@@ -66,8 +68,9 @@ impl HttpRestClient for SupabaseClient {
         .await
     }
 
-    async fn delete(&self, path: &str) -> Result<Vec<u8>, String> {
-        self.rest_request(None, "DELETE", path, None, None).await
+    async fn delete(&self, path: &str) -> Result<Vec<u8>> {
+        self.rest_request_with_retry(None, "DELETE", path, None, None)
+            .await
     }
 }
 
@@ -79,6 +82,50 @@ impl SupabaseClient {
         }
     }
 
+    async fn get_valid_token(&self) -> Result<String> {
+        let session = self
+            .auth_service
+            .get_session()
+            .ok_or(ApplicationError::NoSession)?;
+        if session.should_refresh() {
+            let refresh_token = session
+                .refresh_token()
+                .ok_or(ApplicationError::NoRefreshToken)?;
+            let refreshed = self
+                .auth_service
+                .refresh_session(refresh_token)
+                .await
+                .or(Err(ApplicationError::RefreshFailed))?;
+            return Ok(refreshed.access_token().to_string());
+        }
+        Ok(session.access_token().to_string())
+    }
+
+    async fn rest_request_with_retry(
+        &self,
+        access_token: Option<&str>,
+        method: &str,
+        path: &str,
+        body: Option<&[u8]>,
+        prefer: Option<&str>,
+    ) -> Result<Vec<u8>> {
+        let result = self
+            .rest_request(access_token, method, path, body, prefer)
+            .await;
+        match result {
+            Ok(response) => Ok(response),
+            Err(error) => {
+                if error.is_auth_error() {
+                    let token = self.get_valid_token().await?;
+                    return self
+                        .rest_request(Some(&token), method, path, body, prefer)
+                        .await;
+                }
+                Err(error)
+            }
+        }
+    }
+
     pub async fn rest_request(
         &self,
         access_token: Option<&str>,
@@ -86,7 +133,7 @@ impl SupabaseClient {
         path: &str,
         body: Option<&[u8]>,
         prefer: Option<&str>,
-    ) -> Result<Vec<u8>, String> {
+    ) -> Result<Vec<u8>> {
         let url = format!("{}{}", self.config.rest_url().trim_end_matches('/'), path);
         let response = rest_request_platform(
             method,
@@ -97,10 +144,13 @@ impl SupabaseClient {
             prefer,
         )
         .await?;
-        if response.status >= 200 && response.status < 300 {
+        if ResponseStatus(response.status).is_success() {
             Ok(response.body)
         } else {
-            Err(format!("REST {}: status {}", method, response.status))
+            Err(ApplicationError::api(
+                response.status,
+                String::from_utf8_lossy(&response.body).to_string(),
+            ))
         }
     }
 }
@@ -119,7 +169,7 @@ async fn rest_request_platform(
     bearer: Option<&str>,
     body: Option<&[u8]>,
     prefer: Option<&str>,
-) -> Result<HttpResponse, String> {
+) -> Result<HttpResponse> {
     let client = &*crate::supabase::SHARED_REQWEST_CLIENT;
 
     let mut req = match method {
@@ -127,7 +177,12 @@ async fn rest_request_platform(
         "POST" => client.post(url),
         "PATCH" => client.patch(url),
         "DELETE" => client.delete(url),
-        _ => return Err("Unsupported method".to_string()),
+        _ => {
+            return Err(ApplicationError::api(
+                500,
+                "Unsupported rest request method".to_string(),
+            ))
+        }
     };
     req = req
         .header("apikey", apikey)
@@ -140,9 +195,19 @@ async fn rest_request_platform(
     if let Some(b) = body {
         req = req.body(b.to_vec());
     }
-    let response = req.send().await.map_err(|e| e.to_string())?;
+    let response = req.send().await.map_err(|e| {
+        ApplicationError::api(
+            e.status()
+                .map_or(ResponseStatus::DEFAULT_ERROR_STATUS, |s| s.as_u16()),
+            e.to_string(),
+        )
+    })?;
     let status = response.status().as_u16();
-    let body = response.bytes().await.map_err(|e| e.to_string())?.to_vec();
+    let body = response
+        .bytes()
+        .await
+        .map_err(|e| ApplicationError::api(ResponseStatus::DEFAULT_ERROR_STATUS, e.to_string()))?
+        .to_vec();
 
     Ok(HttpResponse { status, body })
 }
@@ -155,7 +220,7 @@ async fn rest_request_platform(
     bearer: Option<&str>,
     body: Option<&[u8]>,
     prefer: Option<&str>,
-) -> Result<HttpResponse, String> {
+) -> Result<HttpResponse> {
     use gloo_net::http::Request;
     use js_sys::Uint8Array;
     use wasm_bindgen::JsValue;
@@ -164,7 +229,12 @@ async fn rest_request_platform(
         "POST" => Request::post(url),
         "PATCH" => Request::patch(url),
         "DELETE" => Request::delete(url),
-        _ => return Err("Unsupported method".to_string()),
+        _ => {
+            return Err(ApplicationError::api(
+                ResponseStatus::DEFAULT_ERROR_STATUS,
+                "Unsupported rest request method".to_string(),
+            ))
+        }
     };
     req = req
         .header("apikey", apikey)
@@ -177,15 +247,24 @@ async fn rest_request_platform(
     let response = if let Some(b) = body {
         let js_body: JsValue = Uint8Array::from(b).into();
         req.body(js_body)
-            .map_err(|e| e.to_string())?
+            .map_err(|e| {
+                ApplicationError::api(ResponseStatus::DEFAULT_ERROR_STATUS, e.to_string())
+            })?
             .send()
             .await
-            .map_err(|e| e.to_string())?
+            .map_err(|e| {
+                ApplicationError::api(ResponseStatus::DEFAULT_ERROR_STATUS, e.to_string())
+            })?
     } else {
-        req.send().await.map_err(|e| e.to_string())?
+        req.send().await.map_err(|e| {
+            ApplicationError::api(ResponseStatus::DEFAULT_ERROR_STATUS, e.to_string())
+        })?
     };
     let status = response.status();
-    let body = response.binary().await.map_err(|e| e.to_string())?;
+    let body = response
+        .binary()
+        .await
+        .map_err(|e| ApplicationError::api(ResponseStatus::DEFAULT_ERROR_STATUS, e.to_string()))?;
     Ok(HttpResponse {
         status,
         body: body.to_vec(),

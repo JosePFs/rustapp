@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use crate::ports::auth::AuthService;
+use crate::ports::error::{ApplicationError, Result};
 use crate::use_cases::login::{login_result_from_session, LoginUseCaseArgs, LoginUseCaseResult};
-use domain::error::Result;
 use domain::repositories::GetProfilesByIdsRead;
 
 pub struct MobileLoginUseCase<R: GetProfilesByIdsRead, A: AuthService> {
@@ -16,8 +16,8 @@ impl<R: GetProfilesByIdsRead, A: AuthService> MobileLoginUseCase<R, A> {
     }
 
     pub async fn execute(&self, args: LoginUseCaseArgs) -> Result<LoginUseCaseResult> {
-        let session = self.auth.sign_in(&args.credentials).await?;
-        login_result_from_session(&*self.catalog_read, session).await
+        let session = self.auth.sign_in(&args.credentials).await.map_err(ApplicationError::from)?;
+        login_result_from_session(&*self.catalog_read, session).await.map_err(ApplicationError::from)
     }
 }
 
@@ -40,7 +40,7 @@ mod tests {
     #[tokio::test]
     async fn mobile_login_uses_same_session_mapping_as_login() {
         let uid = "550e8400-e29b-41d4-a716-446655440040";
-        let session = Session::new("at".into(), None, uid.to_string());
+        let session = Session::new("at".into(), None, uid.to_string(), None);
         let auth = MockAuthService::new().with_sign_in_ok(session);
         let id = Id::try_from(uid).unwrap();
         let email = Email::try_from("m@example.com").unwrap();

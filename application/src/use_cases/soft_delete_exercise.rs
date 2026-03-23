@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use domain::error::Result;
+use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::SoftDeleteExerciseWrite;
 use domain::vos::id::Id;
 
@@ -20,7 +20,7 @@ impl<W: SoftDeleteExerciseWrite> SoftDeleteExerciseUseCase<W> {
 
     pub async fn execute(&self, args: SoftDeleteExerciseArgs) -> Result<()> {
         let exercise_id = Id::try_from(args.exercise_id)?;
-        self.catalog_write.soft_delete_exercise(&exercise_id).await
+        self.catalog_write.soft_delete_exercise(&exercise_id).await.map_err(ApplicationError::from)
     }
 }
 

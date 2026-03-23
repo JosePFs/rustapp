@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use domain::error::Result;
+use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::DeleteProgramScheduleItemWrite;
 use domain::vos::id::Id;
 
@@ -23,14 +23,17 @@ impl<W: DeleteProgramScheduleItemWrite> DeleteProgramScheduleItemUseCase<W> {
         self.catalog_write
             .delete_program_schedule_item(&schedule_item_id)
             .await
+            .map_err(ApplicationError::from)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     use std::sync::Mutex;
 
-    use super::*;
+    use domain::error::Result;
 
     const SID: &str = "550e8400-e29b-41d4-a716-446655440002";
 

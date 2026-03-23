@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::ports::auth::{AuthService, Credentials, Session};
-use domain::error::Result;
+use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::GetProfilesByIdsRead;
 use domain::vos::id::Id;
 use domain::vos::role::Role;
@@ -76,8 +76,14 @@ impl<R: GetProfilesByIdsRead, A: AuthService> LoginUseCase<R, A> {
     }
 
     pub async fn execute(&self, args: LoginUseCaseArgs) -> Result<LoginUseCaseResult> {
-        let session = self.auth.sign_in(&args.credentials).await?;
-        login_result_from_session(&*self.catalog_read, session).await
+        let session = self
+            .auth
+            .sign_in(&args.credentials)
+            .await
+            .map_err(ApplicationError::from)?;
+        login_result_from_session(&*self.catalog_read, session)
+            .await
+            .map_err(ApplicationError::from)
     }
 }
 
@@ -127,13 +133,16 @@ mod tests {
             .await
             .unwrap_err();
 
-        assert_eq!(err, DomainError::Login("bad".into()));
+        assert_eq!(
+            err,
+            ApplicationError::DomainError(DomainError::Login("bad".into()))
+        );
     }
 
     #[tokio::test]
     async fn login_patient_profile_from_catalog() {
         let uid = "550e8400-e29b-41d4-a716-446655440020";
-        let session = Session::new("at".into(), None, uid.to_string());
+        let session = Session::new("at".into(), None, uid.to_string(), None);
         let auth = MockAuthService::new().with_sign_in_ok(session);
         let catalog = MockGetProfilesByIdsRead::new_ok(vec![patient_profile(uid)]);
         let uc = LoginUseCase::new(Arc::new(catalog), Arc::new(auth));

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use domain::error::Result;
+use crate::ports::error::Result;
 use domain::repositories::{PatientSessionWriteRepository, SpecialistCatalogReadRepository};
 
 use crate::ports::api::MobileApi;

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use domain::error::Result;
+use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::UpdateWorkoutWrite;
 use domain::vos::id::Id;
 use domain::vos::{Description, Patch, WorkoutName};
@@ -44,6 +44,7 @@ impl<W: UpdateWorkoutWrite> UpdateWorkoutUseCase<W> {
         self.catalog_write
             .update_workout(&workout_id, name_ref, description, None)
             .await
+            .map_err(ApplicationError::from)
     }
 }
 
@@ -74,7 +75,10 @@ mod tests {
             .await
             .unwrap_err();
 
-        assert!(matches!(err, DomainError::InvalidParameter(_, _)));
+        assert!(matches!(
+            err,
+            ApplicationError::DomainError(DomainError::InvalidParameter(_, _))
+        ));
     }
 
     #[tokio::test]

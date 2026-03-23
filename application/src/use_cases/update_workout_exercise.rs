@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use domain::error::Result;
+use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::UpdateWorkoutExerciseWrite;
 use domain::vos::id::Id;
 use domain::vos::{Reps, ScheduleOrderIndex, Sets};
@@ -35,6 +35,7 @@ impl<W: UpdateWorkoutExerciseWrite> UpdateWorkoutExerciseUseCase<W> {
         self.catalog_write
             .update_workout_exercise(&workout_id, &exercise_id, sets, reps, order_index)
             .await
+            .map_err(ApplicationError::from)
     }
 }
 

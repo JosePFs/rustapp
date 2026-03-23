@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
+use crate::ports::error::{ApplicationError, Result};
 use domain::entities::PatientProgram;
-use domain::error::Result;
 use domain::repositories::AssignProgramToPatientWrite;
 use domain::vos::id::Id;
 
@@ -26,14 +26,17 @@ impl<W: AssignProgramToPatientWrite> AssignProgramToPatientUseCase<W> {
         self.catalog_write
             .assign_program_to_patient(&patient_id, &program_id)
             .await
+            .map_err(ApplicationError::from)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     use std::sync::Mutex;
 
-    use super::*;
+    use domain::error::Result;
 
     const PAT: &str = "550e8400-e29b-41d4-a716-446655440070";
     const PRG: &str = "550e8400-e29b-41d4-a716-446655440071";

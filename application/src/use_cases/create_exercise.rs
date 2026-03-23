@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
+use crate::ports::error::{ApplicationError, Result};
 use domain::entities::Exercise;
-use domain::error::Result;
 use domain::repositories::CreateExerciseWrite;
 use domain::vos::id::Id;
 use domain::vos::{Description, ExerciseName, ScheduleOrderIndex, VideoUrl};
@@ -49,16 +49,18 @@ impl<W: CreateExerciseWrite> CreateExerciseUseCase<W> {
                 video_url_ref,
             )
             .await
+            .map_err(ApplicationError::from)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Mutex;
-
     use super::*;
 
+    use std::sync::Mutex;
+
     use domain::error::DomainError;
+    use domain::error::Result;
 
     const SPEC: &str = "550e8400-e29b-41d4-a716-446655440310";
 
@@ -88,7 +90,10 @@ mod tests {
             .await
             .unwrap_err();
 
-        assert!(matches!(err, DomainError::InvalidParameter(_, _)));
+        assert!(matches!(
+            err,
+            ApplicationError::DomainError(DomainError::InvalidParameter(_, _))
+        ));
     }
 
     #[tokio::test]

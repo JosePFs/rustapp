@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use domain::error::Result;
+use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::{GetProfilesByIdsRead, ListSpecialistPatientsRead};
 use domain::vos::id::Id;
 
@@ -44,9 +44,9 @@ impl<R: GetProfilesByIdsRead + ListSpecialistPatientsRead>
         args: GetSpecialistPatientsWithProfilesArgs,
     ) -> Result<GetSpecialistPatientsWithProfilesResult> {
         let _ = args;
-        let links_domain = self.catalog_read.list_specialist_patients().await?;
+        let links_domain = self.catalog_read.list_specialist_patients().await.map_err(ApplicationError::from)?;
         let ids: Vec<Id> = links_domain.iter().map(|l| l.patient_id.clone()).collect();
-        let profiles_domain = self.catalog_read.get_profiles_by_ids(&ids).await?;
+        let profiles_domain = self.catalog_read.get_profiles_by_ids(&ids).await.map_err(ApplicationError::from)?;
 
         let links: Vec<SpecialistPatientLink> = links_domain
             .into_iter()
