@@ -4,11 +4,10 @@ use domain::entities::Program;
 use domain::error::Result;
 use domain::repositories::CreateProgramWrite;
 use domain::vos::id::Id;
-use domain::vos::{AccessToken, Description, ProgramName};
+use domain::vos::{Description, ProgramName};
 
 #[derive(Clone)]
 pub struct CreateProgramArgs {
-    pub token: String,
     pub specialist_id: String,
     pub name: String,
     pub description: Option<String>,
@@ -24,7 +23,6 @@ impl<W: CreateProgramWrite> CreateProgramUseCase<W> {
     }
 
     pub async fn execute(&self, args: CreateProgramArgs) -> Result<Program> {
-        let access = AccessToken::try_from(args.token)?;
         let specialist_id = Id::try_from(args.specialist_id)?;
         let name = ProgramName::try_from(args.name)?;
         let description = args
@@ -34,23 +32,19 @@ impl<W: CreateProgramWrite> CreateProgramUseCase<W> {
             .transpose()?;
         let description_ref = description.as_ref();
         self.catalog_write
-            .create_program(&access, &specialist_id, &name, description_ref)
+            .create_program(&specialist_id, &name, description_ref)
             .await
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
+
+    use domain::error::DomainError;
 
     use super::*;
-    use domain::entities::Program;
-    use domain::error::DomainError;
-    use domain::error::Result;
-    use domain::repositories::CreateProgramWrite;
-    use domain::vos::{AccessToken, Description, ProgramName};
 
-    const TOKEN: &str = "tok";
     const SPEC: &str = "550e8400-e29b-41d4-a716-446655440010";
 
     #[tokio::test]
@@ -66,7 +60,6 @@ mod tests {
 
         let err = uc
             .execute(CreateProgramArgs {
-                token: TOKEN.to_string(),
                 specialist_id: SPEC.to_string(),
                 name: "".to_string(),
                 description: None,
@@ -90,7 +83,6 @@ mod tests {
 
         let got = uc
             .execute(CreateProgramArgs {
-                token: TOKEN.to_string(),
                 specialist_id: SPEC.to_string(),
                 name: "My prog".to_string(),
                 description: None,
@@ -121,7 +113,6 @@ mod tests {
     impl CreateProgramWrite for MockCreateProgramWrite {
         async fn create_program(
             &self,
-            _access_token: &AccessToken,
             _specialist_id: &Id,
             name: &ProgramName,
             _description: Option<&Description>,

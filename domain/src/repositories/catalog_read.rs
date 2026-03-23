@@ -10,53 +10,36 @@ use crate::vos::email::Email;
 use crate::vos::id::Id;
 use crate::vos::library_name_filter::LibraryNameFilter;
 use crate::vos::profile::Profile;
-use crate::vos::AccessToken;
 
 #[common::async_trait_platform]
 pub trait GetProfilesByIdsRead: Send + Sync {
-    async fn get_profiles_by_ids(
-        &self,
-        ids: &[Id],
-        access_token: &AccessToken,
-    ) -> Result<Vec<Profile>>;
+    async fn get_profiles_by_ids(&self, ids: &[Id]) -> Result<Vec<Profile>>;
 }
 
 #[common::async_trait_platform]
 pub trait GetPatientIdByEmailRead: Send + Sync {
-    async fn get_patient_id_by_email(
-        &self,
-        access_token: &AccessToken,
-        email: &Email,
-    ) -> Result<Option<Id>>;
+    async fn get_patient_id_by_email(&self, email: &Email) -> Result<Option<Id>>;
 }
 
 #[common::async_trait_platform]
 pub trait ListSpecialistPatientsRead: Send + Sync {
-    async fn list_specialist_patients(
-        &self,
-        access_token: &AccessToken,
-    ) -> Result<Vec<SpecialistPatient>>;
+    async fn list_specialist_patients(&self) -> Result<Vec<SpecialistPatient>>;
 }
 
 #[common::async_trait_platform]
 pub trait ListProgramsRead: Send + Sync {
-    async fn list_programs(&self, access_token: &AccessToken) -> Result<Vec<Program>>;
+    async fn list_programs(&self) -> Result<Vec<Program>>;
 }
 
 #[common::async_trait_platform]
 pub trait GetProgramRead: Send + Sync {
-    async fn get_program(
-        &self,
-        access_token: &AccessToken,
-        program_id: &Id,
-    ) -> Result<Option<Program>>;
+    async fn get_program(&self, program_id: &Id) -> Result<Option<Program>>;
 }
 
 #[common::async_trait_platform]
 pub trait ListWorkoutLibraryRead: Send + Sync {
     async fn list_workout_library(
         &self,
-        access_token: &AccessToken,
         specialist_id: &Id,
         name_filter: Option<&LibraryNameFilter>,
     ) -> Result<Vec<Workout>>;
@@ -64,45 +47,28 @@ pub trait ListWorkoutLibraryRead: Send + Sync {
 
 #[common::async_trait_platform]
 pub trait GetWorkoutsByIdsRead: Send + Sync {
-    async fn get_workouts_by_ids(
-        &self,
-        access_token: &AccessToken,
-        ids: &[Id],
-    ) -> Result<Vec<Workout>>;
+    async fn get_workouts_by_ids(&self, ids: &[Id]) -> Result<Vec<Workout>>;
 }
 
 #[common::async_trait_platform]
 pub trait ListWorkoutsForProgramRead: Send + Sync {
-    async fn list_workouts_for_program(
-        &self,
-        access_token: &AccessToken,
-        program_id: &Id,
-    ) -> Result<Vec<Workout>>;
+    async fn list_workouts_for_program(&self, program_id: &Id) -> Result<Vec<Workout>>;
 }
 
 #[common::async_trait_platform]
 pub trait ListProgramScheduleRead: Send + Sync {
-    async fn list_program_schedule(
-        &self,
-        access_token: &AccessToken,
-        program_id: &Id,
-    ) -> Result<Vec<ProgramScheduleItem>>;
+    async fn list_program_schedule(&self, program_id: &Id) -> Result<Vec<ProgramScheduleItem>>;
 }
 
 #[common::async_trait_platform]
 pub trait ListExercisesForWorkoutRead: Send + Sync {
-    async fn list_exercises_for_workout(
-        &self,
-        access_token: &AccessToken,
-        workout_id: &Id,
-    ) -> Result<Vec<WorkoutExercise>>;
+    async fn list_exercises_for_workout(&self, workout_id: &Id) -> Result<Vec<WorkoutExercise>>;
 }
 
 #[common::async_trait_platform]
 pub trait ListExerciseLibraryRead: Send + Sync {
     async fn list_exercise_library(
         &self,
-        access_token: &AccessToken,
         specialist_id: &Id,
         name_filter: Option<&LibraryNameFilter>,
     ) -> Result<Vec<Exercise>>;
@@ -110,35 +76,23 @@ pub trait ListExerciseLibraryRead: Send + Sync {
 
 #[common::async_trait_platform]
 pub trait ListPatientProgramsForSpecialistRead: Send + Sync {
-    async fn list_patient_programs_for_specialist(
-        &self,
-        access_token: &AccessToken,
-    ) -> Result<Vec<PatientProgram>>;
+    async fn list_patient_programs_for_specialist(&self) -> Result<Vec<PatientProgram>>;
 }
 
 #[common::async_trait_platform]
 pub trait GetPatientProgramByIdRead: Send + Sync {
-    async fn get_patient_program_by_id(
-        &self,
-        access_token: &AccessToken,
-        id: &Id,
-    ) -> Result<Option<PatientProgram>>;
+    async fn get_patient_program_by_id(&self, id: &Id) -> Result<Option<PatientProgram>>;
 }
 
 #[common::async_trait_platform]
 pub trait ListWorkoutSessionsRead: Send + Sync {
-    async fn list_workout_sessions(
-        &self,
-        access_token: &AccessToken,
-        patient_program_id: &Id,
-    ) -> Result<Vec<WorkoutSession>>;
+    async fn list_workout_sessions(&self, patient_program_id: &Id) -> Result<Vec<WorkoutSession>>;
 }
 
 #[common::async_trait_platform]
 pub trait ListSessionExerciseFeedbackRead: Send + Sync {
     async fn list_session_exercise_feedback(
         &self,
-        access_token: &AccessToken,
         workout_session_id: &Id,
     ) -> Result<Vec<SessionExerciseFeedback>>;
 }
@@ -147,51 +101,37 @@ pub trait ListSessionExerciseFeedbackRead: Send + Sync {
 pub trait ListSessionExerciseFeedbackForProgramRead: Send + Sync {
     async fn list_session_exercise_feedback_for_program(
         &self,
-        access_token: &AccessToken,
         patient_program_id: &Id,
     ) -> Result<Vec<SessionExerciseFeedback>>;
 }
 
 #[common::async_trait_platform]
 pub trait ListActivePatientProgramsRead: Send + Sync {
-    async fn list_active_patient_programs(
-        &self,
-        access_token: &AccessToken,
-    ) -> Result<Vec<PatientProgram>>;
+    async fn list_active_patient_programs(&self) -> Result<Vec<PatientProgram>>;
 }
 
 #[common::async_trait_platform]
 pub trait GetWorkoutWithExercisesRead: Send + Sync {
     async fn get_workout_with_exercises(
         &self,
-        access_token: &AccessToken,
         workout_id: &Id,
     ) -> Result<Option<WorkoutWithExercises>>;
 }
 
 #[common::async_trait_platform]
 pub trait GetProgramWithAgendaRead: Send + Sync {
-    async fn get_program_with_agenda(
-        &self,
-        access_token: &AccessToken,
-        program_id: &Id,
-    ) -> Result<Option<ProgramWithAgenda>>;
+    async fn get_program_with_agenda(&self, program_id: &Id) -> Result<Option<ProgramWithAgenda>>;
 }
 
 #[common::async_trait_platform]
 pub trait GetPatientProgramFullRead: Send + Sync {
     async fn get_patient_program_full(
         &self,
-        access_token: &AccessToken,
         patient_program_id: &Id,
     ) -> Result<Option<PatientProgramFull>>;
 }
 
 #[common::async_trait_platform]
 pub trait GetSpecialistDashboardRead: Send + Sync {
-    async fn get_specialist_dashboard(
-        &self,
-        access_token: &AccessToken,
-        specialist_id: &Id,
-    ) -> Result<SpecialistDashboard>;
+    async fn get_specialist_dashboard(&self, specialist_id: &Id) -> Result<SpecialistDashboard>;
 }

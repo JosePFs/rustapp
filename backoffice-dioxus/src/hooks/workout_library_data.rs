@@ -30,7 +30,6 @@ pub fn use_workout_library_data() -> UseWorkoutLibraryData {
             let specialist_id = sess.user_id().to_string();
 
             let args = ListWorkoutLibraryArgs {
-                token: sess.access_token().to_string(),
                 specialist_id,
                 name_filter: None,
             };

@@ -115,13 +115,13 @@ pub fn SpecialistPrograms() -> Element {
                     div { class: "flex flex-col gap-4 mt-4",
                         input {
                             class: "w-full min-h-11 px-4 border border-border rounded-md bg-surface focus:outline-none focus:border-primary",
-                            placeholder: "Nombre del programa",
+                            placeholder:  t!("program_name"),
                             value: "{new_program_name()}",
                             oninput: move |ev| new_program_name.set(ev.value().clone()),
                         }
                         input {
                             class: "w-full min-h-11 px-4 border border-border rounded-md bg-surface focus:outline-none focus:border-primary",
-                            placeholder: "Descripción (opcional)",
+                            placeholder:  t!("program_description"),
                             value: "{new_program_desc()}",
                             oninput: move |ev| new_program_desc.set(ev.value().clone()),
                         }
@@ -174,7 +174,7 @@ pub fn SpecialistPrograms() -> Element {
                             input {
                                 class: "w-full min-h-11 px-4 border border-border rounded-md bg-surface mb-4 focus:outline-none focus:border-primary",
                                 r#type: "text",
-                                placeholder: "Filtrar programas por nombre...",
+                                placeholder:  t!("specialist_programs_filter_programs_by_name"),
                                 value: "{program_filter()}",
                                 oninput: move |ev| program_filter.set(ev.value().clone()),
                             }
@@ -254,7 +254,7 @@ pub fn SpecialistPrograms() -> Element {
                                 input {
                                     class: "w-full min-h-11 px-4 border border-border rounded-md bg-surface mb-4 focus:outline-none focus:border-primary",
                                     r#type: "text",
-                                    placeholder: "Filtrar pacientes por nombre o email...",
+                                    placeholder:  t!("specialist_programs_filter_patients_by_name_or_email"),
                                     value: "{patient_filter()}",
                                     oninput: move |ev| patient_filter.set(ev.value().clone()),
                                 }
@@ -345,12 +345,12 @@ pub fn SpecialistPrograms() -> Element {
                                                             .collect();
                                                         selected_patient_ids.set(ids);
                                                     },
-                                                    "Todos (filtrados)"
+                                                    { t!("specialist_programs_all_filtered") }
                                                 }
                                                 button {
-                                                    class: "link-button",
+                                                    class: "bg-transparent text-primary underline min-h-0 py-1 text-sm",
                                                     onclick: move |_| selected_patient_ids.set(HashSet::new()),
-                                                    "Ninguno"
+                                                    { t!("specialist_programs_none") }
                                                 }
                                             }
                                             div { class: "checkbox-list",

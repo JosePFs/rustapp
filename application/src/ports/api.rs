@@ -7,9 +7,7 @@ use crate::use_cases::create_program_schedule_item::CreateProgramScheduleItemArg
 use crate::use_cases::create_workout::CreateWorkoutArgs;
 use crate::use_cases::delete_program_schedule_item::DeleteProgramScheduleItemArgs;
 use crate::use_cases::delete_workout::DeleteWorkoutArgs;
-use crate::use_cases::get_patient_programs::{
-    GetPatientProgramsUseCaseArgs, GetPatientProgramsUseCaseResult,
-};
+use crate::use_cases::get_patient_programs::GetPatientProgramsUseCaseResult;
 use crate::use_cases::get_specialist_patients_with_profiles::{
     GetSpecialistPatientsWithProfilesArgs, GetSpecialistPatientsWithProfilesResult,
 };
@@ -120,10 +118,7 @@ pub trait MobileApi {
 
     async fn refresh_session(&self, args: RefreshSessionArgs) -> Result<LoginUseCaseResult>;
 
-    async fn get_patient_programs(
-        &self,
-        args: GetPatientProgramsUseCaseArgs,
-    ) -> Result<GetPatientProgramsUseCaseResult>;
+    async fn get_patient_programs(&self) -> Result<GetPatientProgramsUseCaseResult>;
 
     async fn submit_patient_workout_feedback(
         &self,

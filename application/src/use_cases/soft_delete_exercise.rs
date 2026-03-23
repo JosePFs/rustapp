@@ -3,11 +3,9 @@ use std::sync::Arc;
 use domain::error::Result;
 use domain::repositories::SoftDeleteExerciseWrite;
 use domain::vos::id::Id;
-use domain::vos::AccessToken;
 
 #[derive(Clone)]
 pub struct SoftDeleteExerciseArgs {
-    pub token: String,
     pub exercise_id: String,
 }
 
@@ -21,24 +19,20 @@ impl<W: SoftDeleteExerciseWrite> SoftDeleteExerciseUseCase<W> {
     }
 
     pub async fn execute(&self, args: SoftDeleteExerciseArgs) -> Result<()> {
-        let access = AccessToken::try_from(args.token)?;
         let exercise_id = Id::try_from(args.exercise_id)?;
-        self.catalog_write
-            .soft_delete_exercise(&access, &exercise_id)
-            .await
+        self.catalog_write.soft_delete_exercise(&exercise_id).await
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     use super::*;
+
     use domain::error::Result;
     use domain::repositories::SoftDeleteExerciseWrite;
-    use domain::vos::AccessToken;
 
-    const TOKEN: &str = "t";
     const EID: &str = "550e8400-e29b-41d4-a716-446655440080";
 
     #[tokio::test]
@@ -48,7 +42,6 @@ mod tests {
         let uc = SoftDeleteExerciseUseCase::new(Arc::new(fake.clone()));
 
         uc.execute(SoftDeleteExerciseArgs {
-            token: TOKEN.to_string(),
             exercise_id: EID.to_string(),
         })
         .await
@@ -74,11 +67,7 @@ mod tests {
 
     #[common::async_trait_platform]
     impl SoftDeleteExerciseWrite for MockSoftDeleteExerciseWrite {
-        async fn soft_delete_exercise(
-            &self,
-            _access_token: &AccessToken,
-            exercise_id: &Id,
-        ) -> Result<()> {
+        async fn soft_delete_exercise(&self, exercise_id: &Id) -> Result<()> {
             *self.last_exercise_id.lock().unwrap() = Some(exercise_id.clone());
             self.outcome.lock().unwrap().clone()
         }

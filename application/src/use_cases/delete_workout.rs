@@ -3,11 +3,9 @@ use std::sync::Arc;
 use domain::error::Result;
 use domain::repositories::DeleteWorkoutWrite;
 use domain::vos::id::Id;
-use domain::vos::AccessToken;
 
 #[derive(Clone)]
 pub struct DeleteWorkoutArgs {
-    pub token: String,
     pub workout_id: String,
 }
 
@@ -21,42 +19,20 @@ impl<W: DeleteWorkoutWrite> DeleteWorkoutUseCase<W> {
     }
 
     pub async fn execute(&self, args: DeleteWorkoutArgs) -> Result<()> {
-        let access = AccessToken::try_from(args.token)?;
         let workout_id = Id::try_from(args.workout_id)?;
-        self.catalog_write
-            .delete_workout(&access, &workout_id)
-            .await
+        self.catalog_write.delete_workout(&workout_id).await
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     use super::*;
+
     use domain::error::DomainError;
-    use domain::error::Result;
-    use domain::repositories::DeleteWorkoutWrite;
-    use domain::vos::AccessToken;
 
-    const TOKEN: &str = "valid-token";
     const WID: &str = "550e8400-e29b-41d4-a716-446655440001";
-
-    #[tokio::test]
-    async fn delete_workout_invalid_token() {
-        let fake = MockDeleteWorkoutWrite::new_ok();
-        let uc = DeleteWorkoutUseCase::new(Arc::new(fake));
-
-        let err = uc
-            .execute(DeleteWorkoutArgs {
-                token: "  ".to_string(),
-                workout_id: WID.to_string(),
-            })
-            .await
-            .unwrap_err();
-
-        assert!(matches!(err, DomainError::InvalidParameter(_, _)));
-    }
 
     #[tokio::test]
     async fn delete_workout_invalid_workout_id() {
@@ -65,7 +41,6 @@ mod tests {
 
         let err = uc
             .execute(DeleteWorkoutArgs {
-                token: TOKEN.to_string(),
                 workout_id: "not-a-uuid".to_string(),
             })
             .await
@@ -81,7 +56,6 @@ mod tests {
         let uc = DeleteWorkoutUseCase::new(Arc::new(fake.clone()));
 
         uc.execute(DeleteWorkoutArgs {
-            token: TOKEN.to_string(),
             workout_id: WID.to_string(),
         })
         .await
@@ -98,7 +72,6 @@ mod tests {
 
         let err = uc
             .execute(DeleteWorkoutArgs {
-                token: TOKEN.to_string(),
                 workout_id: WID.to_string(),
             })
             .await
@@ -131,7 +104,7 @@ mod tests {
 
     #[common::async_trait_platform]
     impl DeleteWorkoutWrite for MockDeleteWorkoutWrite {
-        async fn delete_workout(&self, _access_token: &AccessToken, workout_id: &Id) -> Result<()> {
+        async fn delete_workout(&self, workout_id: &Id) -> Result<()> {
             *self.last_workout_id.lock().unwrap() = Some(workout_id.clone());
             self.outcome.lock().unwrap().clone()
         }

@@ -40,11 +40,9 @@ pub fn use_create_exercise() -> UseCreateExercise {
                     return Err(DomainError::SessionNotFound);
                 };
 
-                let token = sess.access_token().to_string();
                 let specialist_id = sess.user_id().to_string();
 
                 let args = CreateExerciseArgs {
-                    token,
                     specialist_id,
                     name,
                     description: if description.is_empty() {

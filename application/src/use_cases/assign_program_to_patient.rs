@@ -4,11 +4,9 @@ use domain::entities::PatientProgram;
 use domain::error::Result;
 use domain::repositories::AssignProgramToPatientWrite;
 use domain::vos::id::Id;
-use domain::vos::AccessToken;
 
 #[derive(Clone)]
 pub struct AssignProgramToPatientArgs {
-    pub token: String,
     pub patient_id: String,
     pub program_id: String,
 }
@@ -23,25 +21,20 @@ impl<W: AssignProgramToPatientWrite> AssignProgramToPatientUseCase<W> {
     }
 
     pub async fn execute(&self, args: AssignProgramToPatientArgs) -> Result<PatientProgram> {
-        let access = AccessToken::try_from(args.token)?;
         let patient_id = Id::try_from(args.patient_id)?;
         let program_id = Id::try_from(args.program_id)?;
         self.catalog_write
-            .assign_program_to_patient(&access, &patient_id, &program_id)
+            .assign_program_to_patient(&patient_id, &program_id)
             .await
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     use super::*;
-    use domain::error::Result;
-    use domain::repositories::AssignProgramToPatientWrite;
-    use domain::vos::AccessToken;
 
-    const TOKEN: &str = "t";
     const PAT: &str = "550e8400-e29b-41d4-a716-446655440070";
     const PRG: &str = "550e8400-e29b-41d4-a716-446655440071";
 
@@ -58,7 +51,6 @@ mod tests {
 
         let got = uc
             .execute(AssignProgramToPatientArgs {
-                token: TOKEN.to_string(),
                 patient_id: PAT.to_string(),
                 program_id: PRG.to_string(),
             })
@@ -91,7 +83,6 @@ mod tests {
     impl AssignProgramToPatientWrite for MockAssignProgramToPatientWrite {
         async fn assign_program_to_patient(
             &self,
-            _access_token: &AccessToken,
             patient_id: &Id,
             program_id: &Id,
         ) -> Result<PatientProgram> {

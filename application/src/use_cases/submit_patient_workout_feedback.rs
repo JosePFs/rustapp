@@ -5,11 +5,10 @@ use futures::stream::{self, StreamExt};
 use domain::error::Result;
 use domain::repositories::PatientSessionWriteRepository;
 use domain::vos::id::Id;
-use domain::vos::{AccessToken, DayIndex, EffortScore, FeedbackComment, PainScore, SessionDate};
+use domain::vos::{DayIndex, EffortScore, FeedbackComment, PainScore, SessionDate};
 
 #[derive(Clone)]
 pub struct SubmitPatientWorkoutFeedbackArgs {
-    pub token: String,
     pub patient_program_id: String,
     pub day_index: i32,
     pub session_date: String,
@@ -29,28 +28,25 @@ impl<P: PatientSessionWriteRepository> SubmitPatientWorkoutFeedbackUseCase<P> {
     }
 
     pub async fn execute(&self, args: SubmitPatientWorkoutFeedbackArgs) -> Result<()> {
-        let access = AccessToken::try_from(args.token)?;
         let patient_program_id = Id::try_from(args.patient_program_id)?;
         let day_index = DayIndex::try_from(args.day_index)?;
         let session_date = SessionDate::try_from(args.session_date)?;
 
         let session = self
             .session_write
-            .get_or_create_session(&access, &patient_program_id, day_index, &session_date)
+            .get_or_create_session(&patient_program_id, day_index, &session_date)
             .await?;
         let session_id = session.id;
 
         self.session_write
-            .complete_session(&access, &session_id, &session_date)
+            .complete_session(&session_id, &session_date)
             .await?;
 
-        let access_for_feedback = access.clone();
         let session_id = session_id.clone();
 
         stream::iter(args.feedback_map.into_iter())
             .map(|(exercise_id_str, (effort, pain, comment))| {
                 let session_write = self.session_write.clone();
-                let access = access_for_feedback.clone();
                 let session_id = session_id.clone();
 
                 async move {
@@ -65,7 +61,6 @@ impl<P: PatientSessionWriteRepository> SubmitPatientWorkoutFeedbackUseCase<P> {
                     let comment_ref = comment_vo.as_ref();
                     session_write
                         .upsert_session_exercise_feedback(
-                            &access,
                             &session_id,
                             &exercise_id,
                             Some(effort_vo),
@@ -88,16 +83,15 @@ impl<P: PatientSessionWriteRepository> SubmitPatientWorkoutFeedbackUseCase<P> {
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     use super::*;
+
     use domain::entities::WorkoutSession;
     use domain::error::Result;
     use domain::repositories::PatientSessionWriteRepository;
     use domain::vos::id::Id;
-    use domain::vos::{
-        AccessToken, DayIndex, EffortScore, FeedbackComment, PainScore, SessionDate,
-    };
+    use domain::vos::{DayIndex, EffortScore, FeedbackComment, PainScore, SessionDate};
 
     #[tokio::test]
     async fn submit_feedback_empty_map_still_completes_session() {
@@ -116,7 +110,6 @@ mod tests {
         let uc = SubmitPatientWorkoutFeedbackUseCase::new(Arc::new(fake.clone()));
 
         uc.execute(SubmitPatientWorkoutFeedbackArgs {
-            token: "tok".to_string(),
             patient_program_id: "550e8400-e29b-41d4-a716-446655440090".to_string(),
             day_index: 0,
             session_date: "2025-01-15".to_string(),
@@ -160,7 +153,6 @@ mod tests {
     impl PatientSessionWriteRepository for MockPatientSessionWriteRepository {
         async fn get_or_create_session(
             &self,
-            _access_token: &AccessToken,
             _patient_program_id: &Id,
             _day_index: DayIndex,
             _session_date: &SessionDate,
@@ -171,7 +163,6 @@ mod tests {
 
         async fn complete_session(
             &self,
-            _access_token: &AccessToken,
             _session_id: &Id,
             _session_date: &SessionDate,
         ) -> Result<()> {
@@ -179,18 +170,13 @@ mod tests {
             self.complete_outcome.lock().unwrap().clone()
         }
 
-        async fn uncomplete_session(
-            &self,
-            _access_token: &AccessToken,
-            _session_id: &Id,
-        ) -> Result<()> {
+        async fn uncomplete_session(&self, _session_id: &Id) -> Result<()> {
             *self.uncomplete_calls.lock().unwrap() += 1;
             Ok(())
         }
 
         async fn upsert_session_exercise_feedback(
             &self,
-            _access_token: &AccessToken,
             _workout_session_id: &Id,
             _exercise_id: &Id,
             _effort: Option<EffortScore>,

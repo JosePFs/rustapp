@@ -29,13 +29,11 @@ pub fn use_specialist_programs() -> UseSpecialistPrograms {
             let Some(session) = maybe_session_ref.as_ref() else {
                 return Err(DomainError::SessionNotFound);
             };
-            let token = session.access_token().to_string();
+
             let specialist_id = session.user_id().to_string();
+
             facade
-                .specialist_programs_data(SpecialistProgramsDataArgs {
-                    token,
-                    specialist_id,
-                })
+                .specialist_programs_data(SpecialistProgramsDataArgs { specialist_id })
                 .await
         }
     });

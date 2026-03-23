@@ -34,11 +34,9 @@ pub fn use_add_specialist_patient() -> UseAddSpecialistPatient {
                 return Err(DomainError::SessionNotFound);
             };
 
-            let token = sess.access_token().to_string();
             let specialist_id = sess.user_id().to_string();
 
             let args = AddSpecialistPatientArgs {
-                token,
                 specialist_id,
                 patient_email,
             };

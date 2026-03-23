@@ -27,11 +27,11 @@ pub fn use_workout_editor(workout_id: String) -> UseWorkoutEditor {
             let Some(session) = maybe_session_ref.as_ref() else {
                 return Err(DomainError::SessionNotFound);
             };
-            let token = session.access_token().to_string();
+
             let specialist_id = session.user_id().to_string();
+
             facade
                 .workout_editor_data(WorkoutEditorDataArgs {
-                    token,
                     specialist_id,
                     workout_id,
                 })

@@ -5,7 +5,6 @@ use domain::error::Result;
 use domain::repositories::GetProfilesByIdsRead;
 use domain::vos::id::Id;
 use domain::vos::role::Role;
-use domain::vos::AccessToken;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LoginUseCaseArgs {
@@ -90,11 +89,7 @@ where
     R: GetProfilesByIdsRead,
 {
     let user_id = Id::try_from(session.user_id().to_string())?;
-    let access_token = AccessToken::try_from(session.access_token().to_string())?;
-    let profiles = catalog_read
-        .get_profiles_by_ids(&[user_id], &access_token)
-        .await
-        .ok();
+    let profiles = catalog_read.get_profiles_by_ids(&[user_id]).await.ok();
 
     let user_profile_type = profiles
         .and_then(|profiles| profiles.into_iter().next())
@@ -120,7 +115,6 @@ mod tests {
     use domain::vos::id::Id;
     use domain::vos::profile::Profile;
     use domain::vos::role::Role;
-    use domain::vos::AccessToken;
 
     #[tokio::test]
     async fn login_propagates_auth_error() {
@@ -228,11 +222,7 @@ mod tests {
 
     #[common::async_trait_platform]
     impl GetProfilesByIdsRead for MockGetProfilesByIdsRead {
-        async fn get_profiles_by_ids(
-            &self,
-            _ids: &[Id],
-            _access_token: &AccessToken,
-        ) -> Result<Vec<Profile>> {
+        async fn get_profiles_by_ids(&self, _ids: &[Id]) -> Result<Vec<Profile>> {
             self.profiles.lock().unwrap().clone()
         }
     }

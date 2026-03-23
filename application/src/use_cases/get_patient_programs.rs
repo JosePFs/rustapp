@@ -9,7 +9,6 @@ use domain::entities::SessionExerciseFeedback;
 use domain::error::Result;
 use domain::repositories::{GetPatientProgramFullRead, ListActivePatientProgramsRead};
 use domain::vos::id::Id;
-use domain::vos::AccessToken;
 
 #[derive(Clone, PartialEq)]
 pub struct ExerciseInstruction {
@@ -49,10 +48,6 @@ pub struct PatientProgram {
     pub average_pain: Option<f32>,
 }
 
-pub struct GetPatientProgramsUseCaseArgs {
-    pub token: String,
-}
-
 #[derive(Clone, PartialEq)]
 pub struct GetPatientProgramsUseCaseResult {
     pub patient_programs: Vec<PatientProgram>,
@@ -69,25 +64,14 @@ impl<R: GetPatientProgramFullRead + ListActivePatientProgramsRead> GetPatientPro
         Self { catalog_read }
     }
 
-    pub async fn execute(
-        &self,
-        args: GetPatientProgramsUseCaseArgs,
-    ) -> Result<GetPatientProgramsUseCaseResult> {
-        let access = AccessToken::try_from(args.token)?;
-        let patient_programs = self
-            .catalog_read
-            .list_active_patient_programs(&access)
-            .await?;
-
+    pub async fn execute(&self) -> Result<GetPatientProgramsUseCaseResult> {
+        let patient_programs = self.catalog_read.list_active_patient_programs().await?;
         let patient_programs_data = stream::iter(patient_programs.into_iter().enumerate())
             .map(|(order_index, ass)| {
                 let catalog_read = self.catalog_read.clone();
-                let access = access.clone();
 
                 async move {
-                    let full = catalog_read
-                        .get_patient_program_full(&access, &ass.id)
-                        .await?;
+                    let full = catalog_read.get_patient_program_full(&ass.id).await?;
 
                     let Some(full) = full else {
                         return Ok(None);
@@ -257,44 +241,18 @@ impl<R: GetPatientProgramFullRead + ListActivePatientProgramsRead> GetPatientPro
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     use super::*;
-    use domain::aggregates::PatientProgramFull;
+
     use domain::entities::PatientProgram;
-    use domain::error::Result;
-    use domain::repositories::{GetPatientProgramFullRead, ListActivePatientProgramsRead};
-    use domain::vos::id::Id;
-    use domain::vos::AccessToken;
-
-    #[tokio::test]
-    async fn get_patient_programs_invalid_token() {
-        let fake = MockGetPatientProgramsRead::new(Ok(vec![]));
-        let uc = GetPatientProgramsUseCase::new(Arc::new(fake));
-
-        let res = uc
-            .execute(GetPatientProgramsUseCaseArgs {
-                token: "  ".to_string(),
-            })
-            .await;
-
-        assert!(matches!(
-            res,
-            Err(domain::error::DomainError::InvalidParameter(_, _))
-        ));
-    }
 
     #[tokio::test]
     async fn get_patient_programs_empty_when_no_active_programs() {
         let fake = MockGetPatientProgramsRead::new(Ok(vec![]));
         let uc = GetPatientProgramsUseCase::new(Arc::new(fake.clone()));
 
-        let res = uc
-            .execute(GetPatientProgramsUseCaseArgs {
-                token: "tok".to_string(),
-            })
-            .await
-            .unwrap();
+        let res = uc.execute().await.unwrap();
 
         assert!(res.patient_programs.is_empty());
         assert_eq!(*fake.full_calls.lock().unwrap(), 0);
@@ -317,10 +275,7 @@ mod tests {
 
     #[common::async_trait_platform]
     impl ListActivePatientProgramsRead for MockGetPatientProgramsRead {
-        async fn list_active_patient_programs(
-            &self,
-            _access_token: &AccessToken,
-        ) -> Result<Vec<PatientProgram>> {
+        async fn list_active_patient_programs(&self) -> Result<Vec<PatientProgram>> {
             self.active.lock().unwrap().clone()
         }
     }
@@ -329,7 +284,6 @@ mod tests {
     impl GetPatientProgramFullRead for MockGetPatientProgramsRead {
         async fn get_patient_program_full(
             &self,
-            _access_token: &AccessToken,
             _patient_program_id: &Id,
         ) -> Result<Option<PatientProgramFull>> {
             *self.full_calls.lock().unwrap() += 1;

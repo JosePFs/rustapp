@@ -3,11 +3,9 @@ use std::sync::Arc;
 use domain::error::Result;
 use domain::repositories::GetSpecialistDashboardRead;
 use domain::vos::id::Id;
-use domain::vos::AccessToken;
 
 #[derive(Clone)]
 pub struct SpecialistProgramsDataArgs {
-    pub token: String,
     pub specialist_id: String,
 }
 
@@ -60,11 +58,10 @@ impl<R: GetSpecialistDashboardRead> SpecialistProgramsDataUseCase<R> {
         &self,
         args: SpecialistProgramsDataArgs,
     ) -> Result<SpecialistProgramsDataResult> {
-        let access = AccessToken::try_from(args.token)?;
         let specialist_id = Id::try_from(args.specialist_id)?;
         let dashboard = self
             .catalog_read
-            .get_specialist_dashboard(&access, &specialist_id)
+            .get_specialist_dashboard(&specialist_id)
             .await?;
 
         let links: Vec<SpecialistPatientLink> = dashboard
@@ -118,14 +115,14 @@ impl<R: GetSpecialistDashboardRead> SpecialistProgramsDataUseCase<R> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     use super::*;
+
     use domain::aggregates::SpecialistDashboard;
     use domain::error::Result;
     use domain::repositories::GetSpecialistDashboardRead;
     use domain::vos::id::Id;
-    use domain::vos::AccessToken;
 
     #[tokio::test]
     async fn maps_empty_dashboard() {
@@ -140,7 +137,6 @@ mod tests {
 
         let res = uc
             .execute(SpecialistProgramsDataArgs {
-                token: "t".to_string(),
                 specialist_id: "550e8400-e29b-41d4-a716-446655440200".to_string(),
             })
             .await
@@ -167,7 +163,6 @@ mod tests {
     impl GetSpecialistDashboardRead for MockGetSpecialistDashboardRead {
         async fn get_specialist_dashboard(
             &self,
-            _access_token: &AccessToken,
             _specialist_id: &Id,
         ) -> Result<SpecialistDashboard> {
             self.dashboard.lock().unwrap().clone()

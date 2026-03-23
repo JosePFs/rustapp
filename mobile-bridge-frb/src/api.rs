@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use application::facade::MobileFacade;
 use application::ports::api::MobileApi;
 use application::use_cases::{
-    get_patient_programs::{GetPatientProgramsUseCase, GetPatientProgramsUseCaseArgs},
+    get_patient_programs::GetPatientProgramsUseCase,
     login::LoginUseCaseArgs,
     mobile_login::MobileLoginUseCase,
     refresh_session::{RefreshSessionArgs, RefreshSessionUseCase},
@@ -22,12 +22,12 @@ use infrastructure::supabase::{
     repositories::{SupabaseRestRepository, SupabaseRestRepositoryBuilder},
 };
 
-static NATIVE_API: LazyLock<Arc<SupabaseRestRepository>> =
+static REPOSITORY: LazyLock<Arc<SupabaseRestRepository>> =
     LazyLock::new(|| Arc::new(SupabaseRestRepositoryBuilder::new().build()));
 
-static MOBILE_FACADE: LazyLock<Arc<MobileFacade<SupabaseRestRepository, SupabaseAuth>>> =
+static FACADE: LazyLock<Arc<MobileFacade<SupabaseRestRepository, SupabaseAuth>>> =
     LazyLock::new(|| {
-        let repo = NATIVE_API.clone();
+        let repo = REPOSITORY.clone();
         let auth = default_auth();
         Arc::new(MobileFacade {
             login_uc: Arc::new(MobileLoginUseCase::new(repo.clone(), auth.clone())),
@@ -116,7 +116,7 @@ pub struct PatientProgramSummary {
 }
 
 pub async fn login(request: LoginRequest) -> Result<LoginResponse, String> {
-    let result = MOBILE_FACADE
+    let result = FACADE
         .login(LoginUseCaseArgs::from(&request.email, &request.password))
         .await
         .map_err(|error| error.to_string())?;
@@ -130,7 +130,7 @@ pub async fn login(request: LoginRequest) -> Result<LoginResponse, String> {
 }
 
 pub async fn refresh_session(refresh_token: String) -> Result<LoginResponse, String> {
-    let result = MOBILE_FACADE
+    let result = FACADE
         .refresh_session(RefreshSessionArgs::from_refresh_token(refresh_token))
         .await
         .map_err(|error| error.to_string())?;
@@ -143,9 +143,9 @@ pub async fn refresh_session(refresh_token: String) -> Result<LoginResponse, Str
     })
 }
 
-pub async fn get_patient_programs(token: String) -> Result<Vec<PatientProgramSummary>, String> {
-    let result = MOBILE_FACADE
-        .get_patient_programs(GetPatientProgramsUseCaseArgs { token })
+pub async fn get_patient_programs() -> Result<Vec<PatientProgramSummary>, String> {
+    let result = FACADE
+        .get_patient_programs()
         .await
         .map_err(|error| error.to_string())?;
 
@@ -193,10 +193,7 @@ pub async fn get_patient_programs(token: String) -> Result<Vec<PatientProgramSum
         .collect())
 }
 
-pub async fn mark_day_as_completed(
-    token: String,
-    request: MarkDayAsCompletedRequest,
-) -> Result<(), String> {
+pub async fn mark_day_as_completed(request: MarkDayAsCompletedRequest) -> Result<(), String> {
     let feedback_map = request
         .feedback
         .into_iter()
@@ -215,9 +212,8 @@ pub async fn mark_day_as_completed(
         ..
     } = request;
 
-    MOBILE_FACADE
+    FACADE
         .submit_patient_workout_feedback(SubmitPatientWorkoutFeedbackArgs {
-            token,
             patient_program_id,
             day_index,
             session_date,
@@ -228,15 +224,26 @@ pub async fn mark_day_as_completed(
         .map_err(|error| error.to_string())
 }
 
-pub async fn mark_day_as_uncompleted(
-    token: String,
-    request: MarkDayAsUncompletedRequest,
-) -> Result<(), String> {
-    MOBILE_FACADE
+pub async fn mark_day_as_uncompleted(request: MarkDayAsUncompletedRequest) -> Result<(), String> {
+    FACADE
         .uncomplete_patient_workout_session(UncompletePatientWorkoutSessionArgs {
-            token,
             workout_session_id: request.workout_session_id,
         })
         .await
         .map_err(|error| error.to_string())
+}
+
+pub fn init_logger(level: String) {
+    let log_level = match level.to_lowercase().as_str() {
+        "trace" => log::LevelFilter::Trace,
+        "debug" => log::LevelFilter::Debug,
+        "info" => log::LevelFilter::Info,
+        "warn" => log::LevelFilter::Warn,
+        "error" => log::LevelFilter::Error,
+        _ => log::LevelFilter::Off,
+    };
+
+    let _ = env_logger::Builder::from_default_env()
+        .filter_level(log_level)
+        .try_init();
 }

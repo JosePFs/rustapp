@@ -64,7 +64,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => -960944309;
+  int get rustContentHash => -1005096647;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -75,19 +75,17 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
-  Future<List<PatientProgramSummary>> crateApiGetPatientPrograms({
-    required String token,
-  });
+  Future<List<PatientProgramSummary>> crateApiGetPatientPrograms();
+
+  Future<void> crateApiInitLogger({required String level});
 
   Future<LoginResponse> crateApiLogin({required LoginRequest request});
 
   Future<void> crateApiMarkDayAsCompleted({
-    required String token,
     required MarkDayAsCompletedRequest request,
   });
 
   Future<void> crateApiMarkDayAsUncompleted({
-    required String token,
     required MarkDayAsUncompletedRequest request,
   });
 
@@ -103,14 +101,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
-  Future<List<PatientProgramSummary>> crateApiGetPatientPrograms({
-    required String token,
-  }) {
+  Future<List<PatientProgramSummary>> crateApiGetPatientPrograms() {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(token, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -123,16 +118,42 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_String,
         ),
         constMeta: kCrateApiGetPatientProgramsConstMeta,
-        argValues: [token],
+        argValues: [],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiGetPatientProgramsConstMeta => const TaskConstMeta(
-    debugName: "get_patient_programs",
-    argNames: ["token"],
-  );
+  TaskConstMeta get kCrateApiGetPatientProgramsConstMeta =>
+      const TaskConstMeta(debugName: "get_patient_programs", argNames: []);
+
+  @override
+  Future<void> crateApiInitLogger({required String level}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(level, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 2,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiInitLoggerConstMeta,
+        argValues: [level],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiInitLoggerConstMeta =>
+      const TaskConstMeta(debugName: "init_logger", argNames: ["level"]);
 
   @override
   Future<LoginResponse> crateApiLogin({required LoginRequest request}) {
@@ -144,7 +165,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 2,
+            funcId: 3,
             port: port_,
           );
         },
@@ -164,52 +185,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   Future<void> crateApiMarkDayAsCompleted({
-    required String token,
     required MarkDayAsCompletedRequest request,
   }) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(token, serializer);
           sse_encode_box_autoadd_mark_day_as_completed_request(
-            request,
-            serializer,
-          );
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 3,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_String,
-        ),
-        constMeta: kCrateApiMarkDayAsCompletedConstMeta,
-        argValues: [token, request],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiMarkDayAsCompletedConstMeta => const TaskConstMeta(
-    debugName: "mark_day_as_completed",
-    argNames: ["token", "request"],
-  );
-
-  @override
-  Future<void> crateApiMarkDayAsUncompleted({
-    required String token,
-    required MarkDayAsUncompletedRequest request,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(token, serializer);
-          sse_encode_box_autoadd_mark_day_as_uncompleted_request(
             request,
             serializer,
           );
@@ -224,8 +206,43 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_String,
         ),
+        constMeta: kCrateApiMarkDayAsCompletedConstMeta,
+        argValues: [request],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiMarkDayAsCompletedConstMeta => const TaskConstMeta(
+    debugName: "mark_day_as_completed",
+    argNames: ["request"],
+  );
+
+  @override
+  Future<void> crateApiMarkDayAsUncompleted({
+    required MarkDayAsUncompletedRequest request,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_mark_day_as_uncompleted_request(
+            request,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 5,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
         constMeta: kCrateApiMarkDayAsUncompletedConstMeta,
-        argValues: [token, request],
+        argValues: [request],
         apiImpl: this,
       ),
     );
@@ -234,7 +251,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiMarkDayAsUncompletedConstMeta =>
       const TaskConstMeta(
         debugName: "mark_day_as_uncompleted",
-        argNames: ["token", "request"],
+        argNames: ["request"],
       );
 
   @override
@@ -247,7 +264,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 5,
+            funcId: 6,
             port: port_,
           );
         },

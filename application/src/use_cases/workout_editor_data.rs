@@ -6,11 +6,9 @@ use domain::entities::Exercise;
 use domain::error::Result;
 use domain::repositories::{GetWorkoutWithExercisesRead, ListExerciseLibraryRead};
 use domain::vos::id::Id;
-use domain::vos::AccessToken;
 
 #[derive(Clone)]
 pub struct WorkoutEditorDataArgs {
-    pub token: String,
     pub specialist_id: String,
     pub workout_id: String,
 }
@@ -69,15 +67,13 @@ impl<R: GetWorkoutWithExercisesRead + ListExerciseLibraryRead> WorkoutEditorData
     }
 
     pub async fn execute(&self, args: WorkoutEditorDataArgs) -> Result<WorkoutEditorDataResult> {
-        let access = AccessToken::try_from(args.token)?;
         let specialist_id = Id::try_from(args.specialist_id)?;
         let workout_id = Id::try_from(args.workout_id)?;
 
         let (workout_with_exercises, library_domain) = try_join!(
+            self.catalog_read.get_workout_with_exercises(&workout_id),
             self.catalog_read
-                .get_workout_with_exercises(&access, &workout_id),
-            self.catalog_read
-                .list_exercise_library(&access, &specialist_id, None),
+                .list_exercise_library(&specialist_id, None),
         )?;
 
         let (workout, exercises) = workout_with_exercises
@@ -115,17 +111,16 @@ impl<R: GetWorkoutWithExercisesRead + ListExerciseLibraryRead> WorkoutEditorData
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     use super::*;
+
     use domain::aggregates::WorkoutWithExercises;
     use domain::entities::{Exercise, Workout};
     use domain::error::Result;
     use domain::repositories::{GetWorkoutWithExercisesRead, ListExerciseLibraryRead};
     use domain::vos::library_name_filter::LibraryNameFilter;
-    use domain::vos::AccessToken;
 
-    const TOKEN: &str = "t";
     const SPEC: &str = "550e8400-e29b-41d4-a716-446655440360";
     const WID: &str = "550e8400-e29b-41d4-a716-446655440361";
 
@@ -136,7 +131,6 @@ mod tests {
 
         let res = uc
             .execute(WorkoutEditorDataArgs {
-                token: TOKEN.to_string(),
                 specialist_id: SPEC.to_string(),
                 workout_id: WID.to_string(),
             })
@@ -182,7 +176,6 @@ mod tests {
 
         let res = uc
             .execute(WorkoutEditorDataArgs {
-                token: TOKEN.to_string(),
                 specialist_id: SPEC.to_string(),
                 workout_id: WID.to_string(),
             })
@@ -219,7 +212,6 @@ mod tests {
     impl GetWorkoutWithExercisesRead for MockWorkoutEditorRead {
         async fn get_workout_with_exercises(
             &self,
-            _access_token: &AccessToken,
             _workout_id: &Id,
         ) -> Result<Option<WorkoutWithExercises>> {
             self.workout.lock().unwrap().clone()
@@ -230,7 +222,6 @@ mod tests {
     impl ListExerciseLibraryRead for MockWorkoutEditorRead {
         async fn list_exercise_library(
             &self,
-            _access_token: &AccessToken,
             _specialist_id: &Id,
             _name_filter: Option<&LibraryNameFilter>,
         ) -> Result<Vec<Exercise>> {

@@ -23,9 +23,10 @@ impl<R: GetProfilesByIdsRead, A: AuthService> MobileLoginUseCase<R, A> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     use super::*;
+
     use crate::ports::auth::{AuthService, Credentials, Session};
     use crate::use_cases::login::LoginUseCaseArgs;
     use domain::error::{DomainError, Result};
@@ -35,7 +36,6 @@ mod tests {
     use domain::vos::id::Id;
     use domain::vos::profile::Profile;
     use domain::vos::role::Role;
-    use domain::vos::AccessToken;
 
     #[tokio::test]
     async fn mobile_login_uses_same_session_mapping_as_login() {
@@ -121,11 +121,7 @@ mod tests {
 
     #[common::async_trait_platform]
     impl GetProfilesByIdsRead for MockGetProfilesByIdsRead {
-        async fn get_profiles_by_ids(
-            &self,
-            _ids: &[Id],
-            _access_token: &AccessToken,
-        ) -> Result<Vec<Profile>> {
+        async fn get_profiles_by_ids(&self, _ids: &[Id]) -> Result<Vec<Profile>> {
             self.profiles.lock().unwrap().clone()
         }
     }

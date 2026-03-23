@@ -5,7 +5,7 @@ use application::ports::BackofficeApi;
 use application::use_cases::get_specialist_patients_with_profiles::{
     GetSpecialistPatientsWithProfilesArgs, GetSpecialistPatientsWithProfilesResult,
 };
-use domain::error::{DomainError, Result};
+use domain::error::Result;
 
 #[derive(Clone)]
 pub struct UseSpecialistPatients {
@@ -15,24 +15,16 @@ pub struct UseSpecialistPatients {
 
 pub fn use_specialist_patients() -> UseSpecialistPatients {
     let app_context = use_app_context();
-    let app_session = app_context.session();
     let facade = app_context.backoffice_facade();
     let mut state = use_signal(|| AsyncState::<GetSpecialistPatientsWithProfilesResult>::Loading);
 
     let facade = facade.clone();
     let resource = use_resource(move || {
-        let maybe_session_ref = app_session.read().clone();
         let facade = facade.clone();
 
         async move {
-            let Some(session) = maybe_session_ref.as_ref() else {
-                return Err(DomainError::SessionNotFound);
-            };
-            let token = session.access_token().to_string();
             facade
-                .get_specialist_patients_with_profiles(GetSpecialistPatientsWithProfilesArgs {
-                    token,
-                })
+                .get_specialist_patients_with_profiles(GetSpecialistPatientsWithProfilesArgs {})
                 .await
         }
     });

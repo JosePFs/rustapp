@@ -3,12 +3,9 @@ use std::sync::Arc;
 use domain::error::Result;
 use domain::repositories::{GetProfilesByIdsRead, ListSpecialistPatientsRead};
 use domain::vos::id::Id;
-use domain::vos::AccessToken;
 
 #[derive(Clone)]
-pub struct GetSpecialistPatientsWithProfilesArgs {
-    pub token: String,
-}
+pub struct GetSpecialistPatientsWithProfilesArgs {}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SpecialistPatientLink {
@@ -46,10 +43,10 @@ impl<R: GetProfilesByIdsRead + ListSpecialistPatientsRead>
         &self,
         args: GetSpecialistPatientsWithProfilesArgs,
     ) -> Result<GetSpecialistPatientsWithProfilesResult> {
-        let access = AccessToken::try_from(args.token)?;
-        let links_domain = self.catalog_read.list_specialist_patients(&access).await?;
+        let _ = args;
+        let links_domain = self.catalog_read.list_specialist_patients().await?;
         let ids: Vec<Id> = links_domain.iter().map(|l| l.patient_id.clone()).collect();
-        let profiles_domain = self.catalog_read.get_profiles_by_ids(&ids, &access).await?;
+        let profiles_domain = self.catalog_read.get_profiles_by_ids(&ids).await?;
 
         let links: Vec<SpecialistPatientLink> = links_domain
             .into_iter()
@@ -74,7 +71,7 @@ impl<R: GetProfilesByIdsRead + ListSpecialistPatientsRead>
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     use super::*;
     use domain::entities::SpecialistPatient;
@@ -85,7 +82,6 @@ mod tests {
     use domain::vos::id::Id;
     use domain::vos::profile::Profile;
     use domain::vos::role::Role;
-    use domain::vos::AccessToken;
 
     #[tokio::test]
     async fn maps_links_and_profiles() {
@@ -106,9 +102,7 @@ mod tests {
         let uc = GetSpecialistPatientsWithProfilesUseCase::new(Arc::new(fake));
 
         let res = uc
-            .execute(GetSpecialistPatientsWithProfilesArgs {
-                token: "tok".to_string(),
-            })
+            .execute(GetSpecialistPatientsWithProfilesArgs {})
             .await
             .unwrap();
 
@@ -135,21 +129,14 @@ mod tests {
 
     #[common::async_trait_platform]
     impl ListSpecialistPatientsRead for MockListSpecialistPatientsRead {
-        async fn list_specialist_patients(
-            &self,
-            _access_token: &AccessToken,
-        ) -> Result<Vec<SpecialistPatient>> {
+        async fn list_specialist_patients(&self) -> Result<Vec<SpecialistPatient>> {
             self.patients.lock().unwrap().clone()
         }
     }
 
     #[common::async_trait_platform]
     impl GetProfilesByIdsRead for MockListSpecialistPatientsRead {
-        async fn get_profiles_by_ids(
-            &self,
-            _ids: &[Id],
-            _access_token: &AccessToken,
-        ) -> Result<Vec<Profile>> {
+        async fn get_profiles_by_ids(&self, _ids: &[Id]) -> Result<Vec<Profile>> {
             self.profiles.lock().unwrap().clone()
         }
     }

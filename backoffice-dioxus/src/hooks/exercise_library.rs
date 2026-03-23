@@ -27,11 +27,11 @@ pub fn use_exercise_library(filter: Signal<String>) -> UseExerciseLibrary {
             let Some(session) = maybe_session_ref.as_ref() else {
                 return Err(DomainError::SessionNotFound);
             };
-            let token = session.access_token().to_string();
+
             let specialist_id = session.user_id().to_string();
+
             facade
                 .list_exercise_library(ListExerciseLibraryArgs {
-                    token,
                     specialist_id,
                     name_filter: Some(filter_val).filter(|s| !s.is_empty()),
                 })

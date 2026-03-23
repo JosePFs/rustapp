@@ -6,7 +6,7 @@ use domain::repositories::{PatientSessionWriteRepository, SpecialistCatalogReadR
 use crate::ports::api::MobileApi;
 use crate::ports::auth::AuthService;
 use crate::use_cases::get_patient_programs::{
-    GetPatientProgramsUseCase, GetPatientProgramsUseCaseArgs, GetPatientProgramsUseCaseResult,
+    GetPatientProgramsUseCase, GetPatientProgramsUseCaseResult,
 };
 use crate::use_cases::login::{LoginUseCaseArgs, LoginUseCaseResult};
 use crate::use_cases::mobile_login::MobileLoginUseCase;
@@ -44,11 +44,8 @@ where
         self.refresh_session_uc.execute(args).await
     }
 
-    async fn get_patient_programs(
-        &self,
-        args: GetPatientProgramsUseCaseArgs,
-    ) -> Result<GetPatientProgramsUseCaseResult> {
-        self.get_patient_programs_uc.execute(args).await
+    async fn get_patient_programs(&self) -> Result<GetPatientProgramsUseCaseResult> {
+        self.get_patient_programs_uc.execute().await
     }
 
     async fn submit_patient_workout_feedback(

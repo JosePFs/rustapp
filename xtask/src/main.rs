@@ -23,6 +23,9 @@ fn main() {
         "flutter-check" => {
             run_flutter_command("check", &args[1..]);
         }
+        "flutter-test" => {
+            run_flutter_command("test", &args[1..]);
+        }
 
         // Dioxus Development
         "dioxus-run" => {

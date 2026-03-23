@@ -5,11 +5,9 @@ use domain::error::{DomainError, Result};
 use domain::repositories::{AddSpecialistPatientWrite, GetPatientIdByEmailRead};
 use domain::vos::email::Email;
 use domain::vos::id::Id;
-use domain::vos::AccessToken;
 
 #[derive(Clone)]
 pub struct AddSpecialistPatientArgs {
-    pub token: String,
     pub specialist_id: String,
     pub patient_email: String,
 }
@@ -30,32 +28,23 @@ where
     }
 
     pub async fn execute(&self, args: AddSpecialistPatientArgs) -> Result<SpecialistPatient> {
-        let access = AccessToken::try_from(args.token)?;
         let email = Email::try_from(args.patient_email)?;
         let patient_id = self
             .catalog
-            .get_patient_id_by_email(&access, &email)
+            .get_patient_id_by_email(&email)
             .await?
             .ok_or_else(|| DomainError::Api("Patient not found".into()))?;
 
         let specialist_id = Id::try_from(args.specialist_id)?;
         self.catalog
-            .add_specialist_patient(&access, &specialist_id, &patient_id)
+            .add_specialist_patient(&specialist_id, &patient_id)
             .await
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
-
     use super::*;
-    use domain::entities::SpecialistPatient;
-    use domain::error::Result;
-    use domain::repositories::{AddSpecialistPatientWrite, GetPatientIdByEmailRead};
-    use domain::vos::email::Email;
-    use domain::vos::id::Id;
-    use domain::vos::AccessToken;
 
     #[tokio::test]
     async fn add_specialist_patient_happy_path() {
@@ -73,7 +62,6 @@ mod tests {
 
         let got = uc
             .execute(AddSpecialistPatientArgs {
-                token: "tok".to_string(),
                 specialist_id: sid.to_string(),
                 patient_email: "p@example.com".to_string(),
             })
@@ -97,11 +85,7 @@ mod tests {
 
     #[common::async_trait_platform]
     impl GetPatientIdByEmailRead for MockAddSpecialistPatientWrite {
-        async fn get_patient_id_by_email(
-            &self,
-            _access_token: &AccessToken,
-            _email: &Email,
-        ) -> Result<Option<Id>> {
+        async fn get_patient_id_by_email(&self, _email: &Email) -> Result<Option<Id>> {
             Ok(Some(self.patient_id.clone()))
         }
     }
@@ -110,7 +94,6 @@ mod tests {
     impl AddSpecialistPatientWrite for MockAddSpecialistPatientWrite {
         async fn add_specialist_patient(
             &self,
-            _access_token: &AccessToken,
             _specialist_id: &Id,
             _patient_id: &Id,
         ) -> Result<SpecialistPatient> {

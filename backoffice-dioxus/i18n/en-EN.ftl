@@ -69,6 +69,14 @@ specialist_programs_create_btn = Create program
 specialist_programs_assign_section = Assign programs to patients
 specialist_programs_assign_instructions = 1) Select one or more programs. 2) Select patients who do not yet have any of those programs. 3) Click Assign.
 specialist_programs_programs_section = Programs
+program_name = Program name
+program_description = Program description (Optional)
+specialist_programs_filter_programs_by_name = Filter programs by name...
+specialist_programs_filter_patients_by_name_or_email = Filter patients by name or email...
+specialist_programs_all_filtered = All
+specialist_programs_none = None
+specialist_programs_eligible_patients = Eligible patients
+specialist_programs_select_programs_first = Select one or more programs first to see available patients.
 
 # Patient workout session
 workout_no_exercises = This workout has no exercises configured.

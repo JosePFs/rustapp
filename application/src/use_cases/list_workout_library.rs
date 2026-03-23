@@ -3,11 +3,10 @@ use std::sync::Arc;
 use domain::error::Result;
 use domain::repositories::ListWorkoutLibraryRead;
 use domain::vos::id::Id;
-use domain::vos::{AccessToken, LibraryNameFilter};
+use domain::vos::LibraryNameFilter;
 
 #[derive(Clone)]
 pub struct ListWorkoutLibraryArgs {
-    pub token: String,
     pub specialist_id: String,
     pub name_filter: Option<String>,
 }
@@ -30,7 +29,6 @@ impl<R: ListWorkoutLibraryRead> ListWorkoutLibraryUseCase<R> {
     }
 
     pub async fn execute(&self, args: ListWorkoutLibraryArgs) -> Result<Vec<WorkoutLibraryItem>> {
-        let access = AccessToken::try_from(args.token)?;
         let name_filter = args
             .name_filter
             .as_deref()
@@ -41,7 +39,7 @@ impl<R: ListWorkoutLibraryRead> ListWorkoutLibraryUseCase<R> {
         let specialist_id = Id::try_from(args.specialist_id)?;
         let rows = self
             .catalog_read
-            .list_workout_library(&access, &specialist_id, name_filter_ref)
+            .list_workout_library(&specialist_id, name_filter_ref)
             .await?;
         Ok(rows
             .into_iter()
@@ -57,15 +55,15 @@ impl<R: ListWorkoutLibraryRead> ListWorkoutLibraryUseCase<R> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     use super::*;
+
     use domain::entities::Workout;
     use domain::error::Result;
     use domain::repositories::ListWorkoutLibraryRead;
     use domain::vos::id::Id;
     use domain::vos::library_name_filter::LibraryNameFilter;
-    use domain::vos::AccessToken;
 
     #[tokio::test]
     async fn maps_workout_rows() {
@@ -84,7 +82,6 @@ mod tests {
 
         let rows = uc
             .execute(ListWorkoutLibraryArgs {
-                token: "t".to_string(),
                 specialist_id: "550e8400-e29b-41d4-a716-446655440210".to_string(),
                 name_filter: None,
             })
@@ -112,7 +109,6 @@ mod tests {
     impl ListWorkoutLibraryRead for MockListWorkoutLibraryRead {
         async fn list_workout_library(
             &self,
-            _access_token: &AccessToken,
             _specialist_id: &Id,
             _name_filter: Option<&LibraryNameFilter>,
         ) -> Result<Vec<Workout>> {

@@ -3,11 +3,10 @@ use std::sync::Arc;
 use domain::error::Result;
 use domain::repositories::UpdateExerciseWrite;
 use domain::vos::id::Id;
-use domain::vos::{AccessToken, Description, ExerciseName, Patch, ScheduleOrderIndex, VideoUrl};
+use domain::vos::{Description, ExerciseName, Patch, ScheduleOrderIndex, VideoUrl};
 
 #[derive(Clone)]
 pub struct UpdateExerciseArgs {
-    pub token: String,
     pub exercise_id: String,
     pub name: Option<String>,
     pub description: Option<String>,
@@ -25,7 +24,6 @@ impl<W: UpdateExerciseWrite> UpdateExerciseUseCase<W> {
     }
 
     pub async fn execute(&self, args: UpdateExerciseArgs) -> Result<()> {
-        let access = AccessToken::try_from(args.token)?;
         let exercise_id = Id::try_from(args.exercise_id)?;
         let name = args
             .name
@@ -50,7 +48,6 @@ impl<W: UpdateExerciseWrite> UpdateExerciseUseCase<W> {
         };
         self.catalog_write
             .update_exercise(
-                &access,
                 &exercise_id,
                 name_ref,
                 description_ref,
@@ -63,37 +60,15 @@ impl<W: UpdateExerciseWrite> UpdateExerciseUseCase<W> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     use super::*;
-    use domain::error::DomainError;
+
     use domain::error::Result;
     use domain::repositories::UpdateExerciseWrite;
-    use domain::vos::AccessToken;
     use domain::vos::Patch;
 
-    const TOKEN: &str = "t";
     const EID: &str = "550e8400-e29b-41d4-a716-446655440340";
-
-    #[tokio::test]
-    async fn update_exercise_invalid_token() {
-        let fake = MockUpdateExerciseWrite::new_ok();
-        let uc = UpdateExerciseUseCase::new(Arc::new(fake));
-
-        let err = uc
-            .execute(UpdateExerciseArgs {
-                token: "".to_string(),
-                exercise_id: EID.to_string(),
-                name: None,
-                description: None,
-                order_index: None,
-                video_url: None,
-            })
-            .await
-            .unwrap_err();
-
-        assert!(matches!(err, DomainError::InvalidParameter(_, _)));
-    }
 
     #[tokio::test]
     async fn update_exercise_forwards_exercise_id() {
@@ -102,7 +77,6 @@ mod tests {
         let uc = UpdateExerciseUseCase::new(Arc::new(fake.clone()));
 
         uc.execute(UpdateExerciseArgs {
-            token: TOKEN.to_string(),
             exercise_id: EID.to_string(),
             name: None,
             description: None,
@@ -134,7 +108,6 @@ mod tests {
     impl UpdateExerciseWrite for MockUpdateExerciseWrite {
         async fn update_exercise(
             &self,
-            _access_token: &AccessToken,
             exercise_id: &Id,
             _name: Option<&ExerciseName>,
             _description: Option<&Description>,

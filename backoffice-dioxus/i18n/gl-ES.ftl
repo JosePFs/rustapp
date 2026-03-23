@@ -69,6 +69,14 @@ specialist_programs_create_btn = Crear programa
 specialist_programs_assign_section = Asignar programas a pacientes
 specialist_programs_assign_instructions = 1) Selecciona un ou máis programas. 2) Selecciona pacientes que aínda non teñan ningún deses programas. 3) Pulsa Asignar.
 specialist_programs_programs_section = Programas
+program_name = Nome do programa
+program_description = Descrición do programa (Opcional)
+specialist_programs_filter_programs_by_name = Filtrar programas por nome...
+specialist_programs_filter_patients_by_name_or_email = Filtrar pacientes por nome ou email...
+specialist_programs_all_filtered = Todos
+specialist_programs_none = Ningún
+specialist_programs_eligible_patients = Pacientes elexibles
+specialist_programs_select_programs_first = Selecciona primeiro un ou máis programas para ver os pacientes dispoñibles.
 
 # Patient workout session
 workout_no_exercises = Este adestramento non ten exercicios configurados.

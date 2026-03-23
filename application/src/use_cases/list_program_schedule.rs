@@ -3,11 +3,9 @@ use std::sync::Arc;
 use domain::error::Result;
 use domain::repositories::{GetWorkoutsByIdsRead, ListProgramScheduleRead};
 use domain::vos::id::Id;
-use domain::vos::AccessToken;
 
 #[derive(Clone)]
 pub struct ListProgramScheduleArgs {
-    pub token: String,
     pub program_id: String,
 }
 
@@ -41,12 +39,8 @@ impl<R: ListProgramScheduleRead + GetWorkoutsByIdsRead> ListProgramScheduleUseCa
     }
 
     pub async fn execute(&self, args: ListProgramScheduleArgs) -> Result<ProgramScheduleData> {
-        let access = AccessToken::try_from(args.token)?;
         let program_id = Id::try_from(args.program_id)?;
-        let schedule_domain = self
-            .catalog_read
-            .list_program_schedule(&access, &program_id)
-            .await?;
+        let schedule_domain = self.catalog_read.list_program_schedule(&program_id).await?;
 
         let ids: Vec<Id> = schedule_domain
             .iter()
@@ -55,7 +49,7 @@ impl<R: ListProgramScheduleRead + GetWorkoutsByIdsRead> ListProgramScheduleUseCa
 
         let workouts_domain = self
             .catalog_read
-            .get_workouts_by_ids(&access, &ids)
+            .get_workouts_by_ids(&ids)
             .await
             .unwrap_or_default();
 
@@ -83,37 +77,17 @@ impl<R: ListProgramScheduleRead + GetWorkoutsByIdsRead> ListProgramScheduleUseCa
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     use super::*;
+
     use domain::entities::{ProgramScheduleItem, Workout};
     use domain::error::Result;
     use domain::repositories::{GetWorkoutsByIdsRead, ListProgramScheduleRead};
-    use domain::vos::AccessToken;
 
-    const TOKEN: &str = "t";
     const PRG: &str = "550e8400-e29b-41d4-a716-446655440350";
     const SID: &str = "550e8400-e29b-41d4-a716-446655440351";
     const WID: &str = "550e8400-e29b-41d4-a716-446655440352";
-
-    #[tokio::test]
-    async fn list_program_schedule_invalid_token() {
-        let fake = MockListProgramScheduleRead::new(Ok(vec![]), Ok(vec![]));
-        let uc = ListProgramScheduleUseCase::new(Arc::new(fake));
-
-        let err = uc
-            .execute(ListProgramScheduleArgs {
-                token: "".to_string(),
-                program_id: PRG.to_string(),
-            })
-            .await
-            .unwrap_err();
-
-        assert!(matches!(
-            err,
-            domain::error::DomainError::InvalidParameter(_, _)
-        ));
-    }
 
     #[tokio::test]
     async fn list_program_schedule_maps_rows_and_workouts() {
@@ -141,7 +115,6 @@ mod tests {
 
         let res = uc
             .execute(ListProgramScheduleArgs {
-                token: TOKEN.to_string(),
                 program_id: PRG.to_string(),
             })
             .await
@@ -172,7 +145,6 @@ mod tests {
     impl ListProgramScheduleRead for MockListProgramScheduleRead {
         async fn list_program_schedule(
             &self,
-            _access_token: &AccessToken,
             _program_id: &Id,
         ) -> Result<Vec<ProgramScheduleItem>> {
             self.schedule.lock().unwrap().clone()
@@ -181,11 +153,7 @@ mod tests {
 
     #[common::async_trait_platform]
     impl GetWorkoutsByIdsRead for MockListProgramScheduleRead {
-        async fn get_workouts_by_ids(
-            &self,
-            _access_token: &AccessToken,
-            _ids: &[Id],
-        ) -> Result<Vec<Workout>> {
+        async fn get_workouts_by_ids(&self, _ids: &[Id]) -> Result<Vec<Workout>> {
             self.workouts.lock().unwrap().clone()
         }
     }

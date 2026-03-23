@@ -3,11 +3,9 @@ use std::sync::Arc;
 use domain::error::Result;
 use domain::repositories::PatientSessionWriteRepository;
 use domain::vos::id::Id;
-use domain::vos::AccessToken;
 
 #[derive(Clone)]
 pub struct UncompletePatientWorkoutSessionArgs {
-    pub token: String,
     pub workout_session_id: String,
 }
 
@@ -21,26 +19,24 @@ impl<P: PatientSessionWriteRepository> UncompletePatientWorkoutSessionUseCase<P>
     }
 
     pub async fn execute(&self, args: UncompletePatientWorkoutSessionArgs) -> Result<()> {
-        let access = AccessToken::try_from(args.token)?;
         let workout_session_id = Id::try_from(args.workout_session_id)?;
         self.session_write
-            .uncomplete_session(&access, &workout_session_id)
+            .uncomplete_session(&workout_session_id)
             .await
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     use super::*;
+
     use domain::entities::WorkoutSession;
     use domain::error::Result;
     use domain::repositories::PatientSessionWriteRepository;
     use domain::vos::id::Id;
-    use domain::vos::{
-        AccessToken, DayIndex, EffortScore, FeedbackComment, PainScore, SessionDate,
-    };
+    use domain::vos::{DayIndex, EffortScore, FeedbackComment, PainScore, SessionDate};
 
     #[tokio::test]
     async fn uncomplete_calls_repo() {
@@ -57,7 +53,6 @@ mod tests {
         let uc = UncompletePatientWorkoutSessionUseCase::new(Arc::new(fake.clone()));
 
         uc.execute(UncompletePatientWorkoutSessionArgs {
-            token: "t".to_string(),
             workout_session_id: "550e8400-e29b-41d4-a716-446655440100".to_string(),
         })
         .await
@@ -95,7 +90,6 @@ mod tests {
     impl PatientSessionWriteRepository for MockPatientSessionWriteRepository {
         async fn get_or_create_session(
             &self,
-            _access_token: &AccessToken,
             _patient_program_id: &Id,
             _day_index: DayIndex,
             _session_date: &SessionDate,
@@ -106,7 +100,6 @@ mod tests {
 
         async fn complete_session(
             &self,
-            _access_token: &AccessToken,
             _session_id: &Id,
             _session_date: &SessionDate,
         ) -> Result<()> {
@@ -114,18 +107,13 @@ mod tests {
             self.complete_outcome.lock().unwrap().clone()
         }
 
-        async fn uncomplete_session(
-            &self,
-            _access_token: &AccessToken,
-            _session_id: &Id,
-        ) -> Result<()> {
+        async fn uncomplete_session(&self, _session_id: &Id) -> Result<()> {
             *self.uncomplete_calls.lock().unwrap() += 1;
             Ok(())
         }
 
         async fn upsert_session_exercise_feedback(
             &self,
-            _access_token: &AccessToken,
             _workout_session_id: &Id,
             _exercise_id: &Id,
             _effort: Option<EffortScore>,

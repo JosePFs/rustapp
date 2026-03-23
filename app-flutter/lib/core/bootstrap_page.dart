@@ -51,7 +51,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
   String? _loginErrorMessage;
   BootstrapStage _stage = BootstrapStage.starting;
   rust_api.LoginResponse? _loginResponse;
-  List<rust_api.PatientProgramSummary> _patientPrograms = const [];
+  List<rust_api.PatientProgramSummary>? _patientPrograms;
 
   ExternalLibrary? _bridgeLibrary() {
     if (kIsWeb) {
@@ -110,7 +110,6 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
   bool _shouldClearStoredSession(Object error) {
     final text = error.toString();
     if (text.contains('Missing refresh token')) return true;
-    // Refresh grant is rejected (token revoked/expired/etc).
     if (text.contains('Auth refresh failed: status 400')) return true;
     if (text.contains('Auth refresh failed: status 401')) return true;
     if (text.contains('Auth refresh failed: status 403')) return true;
@@ -125,12 +124,13 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
       _restoringSession = true;
     });
     final stored = await _sessionStore.read();
-    if (!mounted || stored == null) {
-      if (mounted) {
-        setState(() {
-          _restoringSession = false;
-        });
-      }
+    if (stored == null) {
+      setState(() {
+        _stage = BootstrapStage.readyForLogin;
+        _status = context.l10n.statusSignedOut;
+        _restoringSession = false;
+        _busy = false;
+      });
       return;
     }
 
@@ -140,20 +140,25 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
     });
 
     try {
-      final result = await _loadPatientProgramsWithRefresh(stored);
-      if (!mounted) return;
-      if (result.session.accessToken != stored.accessToken ||
-          result.session.refreshToken != stored.refreshToken) {
-        await _promoteSession(result.session);
+      if (stored.refreshToken != null && stored.refreshToken!.isNotEmpty) {
+        final refreshed = await rust_api.refreshSession(
+          refreshToken: stored.refreshToken!,
+        );
+        if (refreshed.accessToken != stored.accessToken ||
+            refreshed.refreshToken != stored.refreshToken) {
+          await _promoteSession(refreshed);
+        }
+        _loginResponse = refreshed;
       } else {
         _loginResponse = stored;
       }
+      final result = await rust_api.getPatientPrograms();
+      if (!mounted) return;
       setState(() {
-        _patientPrograms = result.value;
-        _stage = BootstrapStage.readyForLogin;
+        _patientPrograms = result;
         _status = context.l10n.statusSignedInLoadedPrograms(
-          result.session.userProfileType,
-          result.value.length,
+          stored.userProfileType,
+          result.length,
         );
       });
     } catch (error) {
@@ -164,8 +169,6 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
       setState(() {
         _loginResponse = null;
         _patientPrograms = const [];
-        // Keep the app usable even if restore fails.
-        _stage = BootstrapStage.readyForLogin;
         _status = context.l10n.errorRustCallFailed(error);
       });
     } finally {
@@ -173,6 +176,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
         setState(() {
           _busy = false;
           _restoringSession = false;
+          _stage = BootstrapStage.readyForLogin;
         });
       }
     }
@@ -199,6 +203,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
 
     try {
       await RustLib.init(externalLibrary: _bridgeLibrary());
+      rust_api.initLogger(level: kDebugMode ? 'debug' : 'error');
       setState(() {
         _bridgeInitialized = true;
         _bridgeRuntimeInitialized = true;
@@ -309,10 +314,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
 
   Future<_SessionBound<List<rust_api.PatientProgramSummary>>>
   _loadPatientProgramsWithRefresh(rust_api.LoginResponse session) {
-    return _withAuthRetry(
-      session,
-      (token) => rust_api.getPatientPrograms(token: token),
-    );
+    return _withAuthRetry(session, (token) => rust_api.getPatientPrograms());
   }
 
   Future<void> _submitDayFeedback(
@@ -331,7 +333,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
     try {
       final submitResult = await _withAuthRetry(
         loginResponse,
-        (token) => rust_api.markDayAsCompleted(token: token, request: request),
+        (token) => rust_api.markDayAsCompleted(request: request),
       );
       if (submitResult.session.accessToken != loginResponse.accessToken ||
           submitResult.session.refreshToken != loginResponse.refreshToken) {
@@ -339,7 +341,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
       }
       final programsResult = await _withAuthRetry(
         submitResult.session,
-        (token) => rust_api.getPatientPrograms(token: token),
+        (token) => rust_api.getPatientPrograms(),
       );
       if (programsResult.session.accessToken !=
               submitResult.session.accessToken ||
@@ -378,8 +380,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
     try {
       final updateResult = await _withAuthRetry(
         loginResponse,
-        (token) =>
-            rust_api.markDayAsUncompleted(token: token, request: request),
+        (token) => rust_api.markDayAsUncompleted(request: request),
       );
       if (updateResult.session.accessToken != loginResponse.accessToken ||
           updateResult.session.refreshToken != loginResponse.refreshToken) {
@@ -387,7 +388,7 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
       }
       final programsResult = await _withAuthRetry(
         updateResult.session,
-        (token) => rust_api.getPatientPrograms(token: token),
+        (token) => rust_api.getPatientPrograms(),
       );
       if (programsResult.session.accessToken !=
               updateResult.session.accessToken ||
@@ -430,10 +431,10 @@ class _PatientAppBootstrapPageState extends State<PatientAppBootstrapPage> {
       return bootstrapBody;
     }
 
-    if (_loginResponse != null) {
+    if (_loginResponse != null && _patientPrograms != null) {
       return PatientHomePage(
         loginResponse: _loginResponse!,
-        patientPrograms: _patientPrograms,
+        patientPrograms: _patientPrograms!,
         onSignOut: _signOut,
         onSubmitDayFeedback: _submitDayFeedback,
         onMarkDayAsUnCompleted: _updateDayAsUnCompleted,

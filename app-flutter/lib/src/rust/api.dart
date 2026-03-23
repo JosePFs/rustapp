@@ -14,25 +14,18 @@ Future<LoginResponse> login({required LoginRequest request}) =>
 Future<LoginResponse> refreshSession({required String refreshToken}) =>
     RustLib.instance.api.crateApiRefreshSession(refreshToken: refreshToken);
 
-Future<List<PatientProgramSummary>> getPatientPrograms({
-  required String token,
-}) => RustLib.instance.api.crateApiGetPatientPrograms(token: token);
+Future<List<PatientProgramSummary>> getPatientPrograms() =>
+    RustLib.instance.api.crateApiGetPatientPrograms();
 
-Future<void> markDayAsCompleted({
-  required String token,
-  required MarkDayAsCompletedRequest request,
-}) => RustLib.instance.api.crateApiMarkDayAsCompleted(
-  token: token,
-  request: request,
-);
+Future<void> markDayAsCompleted({required MarkDayAsCompletedRequest request}) =>
+    RustLib.instance.api.crateApiMarkDayAsCompleted(request: request);
 
 Future<void> markDayAsUncompleted({
-  required String token,
   required MarkDayAsUncompletedRequest request,
-}) => RustLib.instance.api.crateApiMarkDayAsUncompleted(
-  token: token,
-  request: request,
-);
+}) => RustLib.instance.api.crateApiMarkDayAsUncompleted(request: request);
+
+Future<void> initLogger({required String level}) =>
+    RustLib.instance.api.crateApiInitLogger(level: level);
 
 class ExerciseFeedbackInput {
   final String exerciseId;

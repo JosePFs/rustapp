@@ -15,11 +15,9 @@ use domain::repositories::{
 };
 use domain::vos::id::Id;
 use domain::vos::profile::Profile;
-use domain::vos::AccessToken;
 
 #[derive(Clone)]
 pub struct PatientProgressArgs {
-    pub token: String,
     pub patient_id: String,
 }
 
@@ -63,14 +61,12 @@ impl<
     }
 
     pub async fn execute(&self, args: PatientProgressArgs) -> Result<PatientProgressResult> {
-        let access = AccessToken::try_from(args.token)?;
         let patient_id = Id::try_from(args.patient_id)?;
         let profile_ids: [Id; 1] = [patient_id.clone()];
 
         let (profiles, all_assignments) = try_join!(
-            self.catalog_read.get_profiles_by_ids(&profile_ids, &access),
-            self.catalog_read
-                .list_patient_programs_for_specialist(&access),
+            self.catalog_read.get_profiles_by_ids(&profile_ids),
+            self.catalog_read.list_patient_programs_for_specialist(),
         )?;
 
         let profile_domain = profiles
@@ -88,12 +84,9 @@ impl<
         let programs_with_sessions: Vec<PatientProgressProgramBlock> = stream::iter(assignments)
             .map(|ass| {
                 let catalog_read = self.catalog_read.clone();
-                let access = access.clone();
 
                 async move {
-                    let full = catalog_read
-                        .get_patient_program_full(&access, &ass.id)
-                        .await?;
+                    let full = catalog_read.get_patient_program_full(&ass.id).await?;
 
                     Ok(full.map(map_program_block))
                 }
@@ -169,18 +162,12 @@ fn map_program_block(full: PatientProgramFull) -> PatientProgressProgramBlock {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use domain::aggregates::PatientProgramFull;
-    use domain::entities::PatientProgram;
-    use domain::error::Result;
-    use domain::repositories::{
-        GetPatientProgramFullRead, GetProfilesByIdsRead, ListPatientProgramsForSpecialistRead,
-    };
+
     use domain::vos::email::Email;
     use domain::vos::fullname::FullName;
     use domain::vos::id::Id;
     use domain::vos::profile::Profile;
     use domain::vos::role::Role;
-    use domain::vos::AccessToken;
 
     #[test]
     fn map_profile_maps_full_name_and_email_to_strings() {
@@ -194,60 +181,5 @@ mod tests {
 
         assert_eq!(dto.full_name, "Ada Lovelace");
         assert_eq!(dto.email, "patient@example.com");
-    }
-
-    #[tokio::test]
-    async fn execute_rejects_empty_access_token() {
-        use std::sync::Arc;
-
-        use domain::error::DomainError;
-
-        let catalog = MockPatientProgressRead::default();
-        let uc = PatientProgressUseCase::new(Arc::new(catalog));
-
-        let err = uc
-            .execute(PatientProgressArgs {
-                token: "   ".to_string(),
-                patient_id: "550e8400-e29b-41d4-a716-446655440110".to_string(),
-            })
-            .await
-            .unwrap_err();
-
-        assert!(matches!(err, DomainError::InvalidParameter(_, _)));
-    }
-
-    #[derive(Clone, Default)]
-    struct MockPatientProgressRead;
-
-    #[common::async_trait_platform]
-    impl GetProfilesByIdsRead for MockPatientProgressRead {
-        async fn get_profiles_by_ids(
-            &self,
-            _ids: &[Id],
-            _access_token: &AccessToken,
-        ) -> Result<Vec<Profile>> {
-            Ok(vec![])
-        }
-    }
-
-    #[common::async_trait_platform]
-    impl ListPatientProgramsForSpecialistRead for MockPatientProgressRead {
-        async fn list_patient_programs_for_specialist(
-            &self,
-            _access_token: &AccessToken,
-        ) -> Result<Vec<PatientProgram>> {
-            Ok(vec![])
-        }
-    }
-
-    #[common::async_trait_platform]
-    impl GetPatientProgramFullRead for MockPatientProgressRead {
-        async fn get_patient_program_full(
-            &self,
-            _access_token: &AccessToken,
-            _patient_program_id: &Id,
-        ) -> Result<Option<PatientProgramFull>> {
-            Ok(None)
-        }
     }
 }

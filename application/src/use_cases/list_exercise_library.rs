@@ -3,11 +3,10 @@ use std::sync::Arc;
 use domain::error::Result;
 use domain::repositories::ListExerciseLibraryRead;
 use domain::vos::id::Id;
-use domain::vos::{AccessToken, LibraryNameFilter};
+use domain::vos::LibraryNameFilter;
 
 #[derive(Clone)]
 pub struct ListExerciseLibraryArgs {
-    pub token: String,
     pub specialist_id: String,
     pub name_filter: Option<String>,
 }
@@ -32,7 +31,6 @@ impl<R: ListExerciseLibraryRead> ListExerciseLibraryUseCase<R> {
     }
 
     pub async fn execute(&self, args: ListExerciseLibraryArgs) -> Result<Vec<ExerciseLibraryItem>> {
-        let access = AccessToken::try_from(args.token)?;
         let name_filter = args
             .name_filter
             .as_deref()
@@ -43,7 +41,7 @@ impl<R: ListExerciseLibraryRead> ListExerciseLibraryUseCase<R> {
         let specialist_id = Id::try_from(args.specialist_id)?;
         let rows = self
             .catalog_read
-            .list_exercise_library(&access, &specialist_id, name_filter_ref)
+            .list_exercise_library(&specialist_id, name_filter_ref)
             .await?;
         Ok(rows
             .into_iter()
@@ -61,16 +59,15 @@ impl<R: ListExerciseLibraryRead> ListExerciseLibraryUseCase<R> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     use super::*;
+
     use domain::entities::Exercise;
     use domain::error::Result;
     use domain::repositories::ListExerciseLibraryRead;
     use domain::vos::library_name_filter::LibraryNameFilter;
-    use domain::vos::AccessToken;
 
-    const TOKEN: &str = "t";
     const SPEC: &str = "550e8400-e29b-41d4-a716-446655440050";
 
     #[tokio::test]
@@ -90,7 +87,6 @@ mod tests {
 
         let rows = uc
             .execute(ListExerciseLibraryArgs {
-                token: TOKEN.to_string(),
                 specialist_id: SPEC.to_string(),
                 name_filter: None,
             })
@@ -118,7 +114,6 @@ mod tests {
     impl ListExerciseLibraryRead for MockListExerciseLibraryRead {
         async fn list_exercise_library(
             &self,
-            _access_token: &AccessToken,
             _specialist_id: &Id,
             _name_filter: Option<&LibraryNameFilter>,
         ) -> Result<Vec<Exercise>> {

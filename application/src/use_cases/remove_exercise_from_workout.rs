@@ -3,11 +3,9 @@ use std::sync::Arc;
 use domain::error::Result;
 use domain::repositories::RemoveExerciseFromWorkoutWrite;
 use domain::vos::id::Id;
-use domain::vos::AccessToken;
 
 #[derive(Clone)]
 pub struct RemoveExerciseFromWorkoutArgs {
-    pub token: String,
     pub workout_id: String,
     pub exercise_id: String,
 }
@@ -22,11 +20,10 @@ impl<W: RemoveExerciseFromWorkoutWrite> RemoveExerciseFromWorkoutUseCase<W> {
     }
 
     pub async fn execute(&self, args: RemoveExerciseFromWorkoutArgs) -> Result<()> {
-        let access = AccessToken::try_from(args.token)?;
         let workout_id = Id::try_from(args.workout_id)?;
         let exercise_id = Id::try_from(args.exercise_id)?;
         self.catalog_write
-            .remove_exercise_from_workout(&access, &workout_id, &exercise_id)
+            .remove_exercise_from_workout(&workout_id, &exercise_id)
             .await
     }
 }
@@ -36,9 +33,9 @@ mod tests {
     use std::sync::{Arc, Mutex};
 
     use super::*;
+
     use domain::error::Result;
     use domain::repositories::RemoveExerciseFromWorkoutWrite;
-    use domain::vos::AccessToken;
 
     const W: &str = "550e8400-e29b-41d4-a716-446655440130";
     const E: &str = "550e8400-e29b-41d4-a716-446655440131";
@@ -49,7 +46,6 @@ mod tests {
         let uc = RemoveExerciseFromWorkoutUseCase::new(Arc::new(fake.clone()));
 
         uc.execute(RemoveExerciseFromWorkoutArgs {
-            token: "t".to_string(),
             workout_id: W.to_string(),
             exercise_id: E.to_string(),
         })
@@ -80,7 +76,6 @@ mod tests {
     impl RemoveExerciseFromWorkoutWrite for MockRemoveExerciseFromWorkoutWrite {
         async fn remove_exercise_from_workout(
             &self,
-            _access_token: &AccessToken,
             workout_id: &Id,
             exercise_id: &Id,
         ) -> Result<()> {

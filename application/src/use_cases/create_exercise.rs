@@ -4,11 +4,10 @@ use domain::entities::Exercise;
 use domain::error::Result;
 use domain::repositories::CreateExerciseWrite;
 use domain::vos::id::Id;
-use domain::vos::{AccessToken, Description, ExerciseName, ScheduleOrderIndex, VideoUrl};
+use domain::vos::{Description, ExerciseName, ScheduleOrderIndex, VideoUrl};
 
 #[derive(Clone)]
 pub struct CreateExerciseArgs {
-    pub token: String,
     pub specialist_id: String,
     pub name: String,
     pub description: Option<String>,
@@ -26,7 +25,6 @@ impl<W: CreateExerciseWrite> CreateExerciseUseCase<W> {
     }
 
     pub async fn execute(&self, args: CreateExerciseArgs) -> Result<Exercise> {
-        let access = AccessToken::try_from(args.token)?;
         let specialist_id = Id::try_from(args.specialist_id)?;
         let name = ExerciseName::try_from(args.name)?;
         let description = args
@@ -44,7 +42,6 @@ impl<W: CreateExerciseWrite> CreateExerciseUseCase<W> {
         let video_url_ref = video_url.as_ref();
         self.catalog_write
             .create_exercise(
-                &access,
                 &specialist_id,
                 &name,
                 description_ref,
@@ -57,15 +54,12 @@ impl<W: CreateExerciseWrite> CreateExerciseUseCase<W> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     use super::*;
-    use domain::error::DomainError;
-    use domain::error::Result;
-    use domain::repositories::CreateExerciseWrite;
-    use domain::vos::AccessToken;
 
-    const TOKEN: &str = "tok";
+    use domain::error::DomainError;
+
     const SPEC: &str = "550e8400-e29b-41d4-a716-446655440310";
 
     #[tokio::test]
@@ -85,7 +79,6 @@ mod tests {
 
         let err = uc
             .execute(CreateExerciseArgs {
-                token: TOKEN.to_string(),
                 specialist_id: SPEC.to_string(),
                 name: "".to_string(),
                 description: None,
@@ -115,7 +108,6 @@ mod tests {
 
         let got = uc
             .execute(CreateExerciseArgs {
-                token: TOKEN.to_string(),
                 specialist_id: SPEC.to_string(),
                 name: "Push-up".to_string(),
                 description: None,
@@ -148,7 +140,6 @@ mod tests {
     impl CreateExerciseWrite for MockCreateExerciseWrite {
         async fn create_exercise(
             &self,
-            _access_token: &AccessToken,
             _specialist_id: &Id,
             name: &ExerciseName,
             _description: Option<&Description>,

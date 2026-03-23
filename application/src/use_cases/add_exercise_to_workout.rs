@@ -3,11 +3,10 @@ use std::sync::Arc;
 use domain::error::Result;
 use domain::repositories::AddExerciseToWorkoutWrite;
 use domain::vos::id::Id;
-use domain::vos::{AccessToken, Reps, ScheduleOrderIndex, Sets};
+use domain::vos::{Reps, ScheduleOrderIndex, Sets};
 
 #[derive(Clone)]
 pub struct AddExerciseToWorkoutArgs {
-    pub token: String,
     pub workout_id: String,
     pub exercise_id: String,
     pub order_index: i32,
@@ -25,26 +24,22 @@ impl<W: AddExerciseToWorkoutWrite> AddExerciseToWorkoutUseCase<W> {
     }
 
     pub async fn execute(&self, args: AddExerciseToWorkoutArgs) -> Result<()> {
-        let access = AccessToken::try_from(args.token)?;
         let workout_id = Id::try_from(args.workout_id)?;
         let exercise_id = Id::try_from(args.exercise_id)?;
         let order_index = ScheduleOrderIndex::try_from(args.order_index)?;
         let sets = Sets::try_from(args.sets)?;
         let reps = Reps::try_from(args.reps)?;
         self.catalog_write
-            .add_exercise_to_workout(&access, &workout_id, &exercise_id, order_index, sets, reps)
+            .add_exercise_to_workout(&workout_id, &exercise_id, order_index, sets, reps)
             .await
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     use super::*;
-    use domain::error::Result;
-    use domain::repositories::AddExerciseToWorkoutWrite;
-    use domain::vos::{AccessToken, Reps, ScheduleOrderIndex, Sets};
 
     const W: &str = "550e8400-e29b-41d4-a716-446655440140";
     const E: &str = "550e8400-e29b-41d4-a716-446655440141";
@@ -55,7 +50,6 @@ mod tests {
         let uc = AddExerciseToWorkoutUseCase::new(Arc::new(fake.clone()));
 
         uc.execute(AddExerciseToWorkoutArgs {
-            token: "t".to_string(),
             workout_id: W.to_string(),
             exercise_id: E.to_string(),
             order_index: 0,
@@ -89,7 +83,6 @@ mod tests {
     impl AddExerciseToWorkoutWrite for MockAddExerciseToWorkoutWrite {
         async fn add_exercise_to_workout(
             &self,
-            _access_token: &AccessToken,
             workout_id: &Id,
             exercise_id: &Id,
             _order_index: ScheduleOrderIndex,
