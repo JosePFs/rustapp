@@ -13,7 +13,7 @@ Physiotherapy clinic application (MVP Phase 1): web backoffice frontend in **Dio
 - Rust (1.79+)
 - Dioxus 0.7
 - Flutter 3.41
-- Account and project in [Supabase](https://supabase.com)
+- Account and project in [Supabase](https://supabase.com) and supabase [cli](https://supabase.com/docs/guides/local-development/cli/install)
 
 ## Configuration
 
@@ -28,20 +28,25 @@ Physiotherapy clinic application (MVP Phase 1): web backoffice frontend in **Dio
 
    For web development with `dx serve`, you can use `Dioxus.toml` or inject these variables into the build (e.g. in the startup script).
 
+   For testing, a `.env.test.local` file. `.env.test.example` is provided as template.
+
 2. **Database**
 
    Run the SQL migration in Supabase’s SQL Editor:
 
    ```bash
    # Content in:
-   supabase/migrations/001_initial_schema.sql
+   supabase/migrations/20260324120000_init.sql
    ```
 
    It includes tables (`profiles`, `specialist_patients`, `programs`, `exercises`, `patient_programs`, `workout_sessions`), RLS, and the profile trigger on signup.
 
 3. **Test users and role assignment**
 
-   The trigger creates the profile in `profiles` by reading the role from **User Metadata**. Valid values: `"specialist"` or `"patient"`. If you don’t set anything, the default role is `"patient"`.
+   For the time being, the Supabase dashboard is used to create users and roles.
+
+   A trigger creates the profile in `profiles` by reading the role from **User Metadata**.
+   Valid values: `"specialist"` or `"patient"`. If you don’t set anything, the default role is `"patient"`.
 
    **From the Supabase Dashboard (Auth → Users → Add user):**
    - Fill in email and password.
@@ -55,7 +60,7 @@ Physiotherapy clinic application (MVP Phase 1): web backoffice frontend in **Dio
    - Specialist: `"user_metadata": { "role": "specialist" }`
    - Patient: `"user_metadata": { "role": "patient" }` or omit `role`.
 
-## Running Backoffice Dioxus
+## Running Backoffice Dioxus in local
 
 ```bash
 # Install Dioxus CLI (if you don't have it)
@@ -70,19 +75,26 @@ cargo xtask dioxus-run
 
 Open the URL shown by the CLI (e.g. `http://127.0.0.1:8080`).
 
-## Running Flutter
+## Running Flutter locally
 
 ```bash
 # Launch app in linux
 cargo xtask flutter-linux
 
-# Launch app in mobile (-d <ID_DEL_DISPOSITIVO> when several devices available)
+# Launch app in mobile (-d <DEVICE_ID> when several devices available)
 cargo xtask flutter-run
 
 # Open devtools
 flutter devtools
 
 # Also: VS Code: Ctrl+Shift+P -> “Dart: Open DevTools”.
+```
+
+## Running tests locally
+
+```bash
+# By default runs all the tests of a specific type, but it can be passed as a second argument
+cargo xtask [test-all|test-all-unit|test-all-integration|test-all-docker] [--test-name]
 ```
 
 ## Project layout
