@@ -1,5 +1,5 @@
-pub mod config;
-pub mod logger;
+mod config;
+mod logger;
 
 pub async fn setup() -> (reqwest::Client, config::TestConfig) {
     config::load_env();

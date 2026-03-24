@@ -1,16 +1,13 @@
-// Run:
-//   cargo xtask infrastructure-test -- smoke_test
-
 mod common;
 
 #[tokio::test]
-async fn test_postgrest_is_reachable() {
+async fn smoke_test_postgrest_is_reachable() {
     let (client, config) = common::setup().await;
     assert!(client.get(&config.supabase_url).send().await.is_ok());
 }
 
 #[tokio::test]
-async fn test_auth_is_reachable() {
+async fn smoke_test_auth_is_reachable() {
     let (client, config) = common::setup().await;
 
     let response = client
@@ -29,7 +26,7 @@ async fn test_auth_is_reachable() {
 }
 
 #[tokio::test]
-async fn test_anon_key_is_accepted() {
+async fn smoke_test_anon_key_is_accepted() {
     let (client, config) = common::setup().await;
 
     let response = client

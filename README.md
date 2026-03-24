@@ -93,8 +93,11 @@ flutter devtools
 ## Running tests locally
 
 ```bash
+# To check whether supabase is running or not
+cargo xtask smoke-test [-- --extra-test-arguments]
+
 # By default runs all the tests of a specific type, but it can be passed as a second argument
-cargo xtask [test-all|test-all-unit|test-all-integration|test-all-docker] [--test-name]
+cargo xtask [test-all|test-all-unit|test-all-integration|test-all-docker] [test-name] [-- --extra-test-arguments]
 ```
 
 ## Project layout
