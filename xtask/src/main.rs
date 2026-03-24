@@ -48,13 +48,10 @@ fn main() {
             run_cargo_command("run", &["--bin", "dev", "--", "web"]);
         }
         "dioxus-check" => {
-            run_cargo_command("check", &[]);
-        }
-        "dioxus-test" => {
-            run_cargo_command("test", &[]);
+            run_dx_command("check", &cmd_args);
         }
         "dioxus-build" => {
-            run_cargo_command("build", &["--release"]);
+            run_dx_command("build", &cmd_args);
         }
 
         // Domain Commands
@@ -250,6 +247,10 @@ fn show_help() {
         "[command-arguments] [-- --extra-binary-arguments]".style(arg_style),
     );
     println!();
+}
+
+fn run_dx_command(command: &str, args: &[String]) {
+    run_bash_command(format!("dx {command} {}", args.join(" ")).as_str());
 }
 
 fn run_flutter_command(command: &str, args: &[String]) {

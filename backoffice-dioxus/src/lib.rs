@@ -44,7 +44,12 @@ pub fn launch() {
 
 #[component]
 fn App() -> Element {
-    init_i18n();
+    use_init_i18n(|| {
+        I18nConfig::new(langid!("es-ES"))
+            .with_locale((langid!("es-ES"), include_str!("../i18n/es-ES.ftl")))
+            .with_locale((langid!("gl-ES"), include_str!("../i18n/gl-ES.ftl")))
+            .with_locale((langid!("en-EN"), include_str!("../i18n/en-EN.ftl")))
+    });
 
     let app_context = match build_app_context() {
         Ok(ctx) => ctx,
@@ -89,13 +94,4 @@ fn init_logging() {
             .with_max_level(log::LevelFilter::Debug)
             .with_tag("Backoffice"),
     );
-}
-
-fn init_i18n() {
-    use_init_i18n(|| {
-        I18nConfig::new(langid!("es-ES"))
-            .with_locale((langid!("es-ES"), include_str!("../i18n/es-ES.ftl")))
-            .with_locale((langid!("gl-ES"), include_str!("../i18n/gl-ES.ftl")))
-            .with_locale((langid!("en-EN"), include_str!("../i18n/en-EN.ftl")))
-    });
 }
