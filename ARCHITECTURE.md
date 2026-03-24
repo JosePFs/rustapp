@@ -77,8 +77,6 @@ The **heart of the system**. Contains all business logic and domain concepts.
 
 - ✅ Domain is **framework-agnostic**
 - ✅ No dependencies on UI or infrastructure
-- ✅ Business rules encoded in types and constructors
-- ✅ Immutable entities where possible
 
 ### Application Layer (`application/`)
 
@@ -112,7 +110,7 @@ Each file represents a specific user workflow:
 
 **Use Case Pattern:**
 
-Use cases depend on **domain repository traits** (outbound/driven ports), with the smallest bound that matches their calls—e.g. read-only flows use only `SpecialistCatalogReadRepository`; mutations use `SpecialistCatalogWriteRepository`; patient session flows use `PatientSessionWriteRepository`. A single concrete adapter (`Api` / `NativeApi` → `SupabaseRestRepository`) implements all of them.
+Use cases depend on **domain repository traits** (outbound/driven ports), with the smallest bound that matches their calls—e.g. read-only flows use only `SpecialistCatalogReadRepository`; mutations use `SpecialistCatalogWriteRepository`; patient session flows use `PatientSessionWriteRepository`.
 
 ```rust
 pub struct ExampleReadUseCase<R: SpecialistCatalogReadRepository> {
@@ -188,24 +186,20 @@ flowchart LR
 
 #### Supabase Adapter (`supabase/`)
 
-Domain repository traits are implemented by **`SupabaseRestRepository`** in `repositories/supabase_rest_repository.rs` (REST + RPC). `Api` and `NativeApi` are type aliases to that type; builders live in `api.rs` and `native_api.rs`. DTOs remain in `infrastructure/src/api/dtos.rs`.
+Domain repository traits are implemented by **`SupabaseRestRepository`** in `repositories/supabase_rest_repository.rs` (REST + RPC). DTOs remain in `infrastructure/src/api/dtos.rs`.
 
 | Module          | Purpose                                |
 | --------------- | -------------------------------------- |
+| `auth.rs`       | Authentication, session token handler  |
 | `client.rs`     | HTTP client for Supabase REST API      |
 | `config.rs`     | Configuration (URL, anon key)          |
 | `repositories/` | `SupabaseRestRepository` (trait impls) |
-| `api.rs`        | `Api` alias + `ApiBuilder`             |
-| `native_api.rs` | `NativeApi` alias + `NativeApiBuilder` |
-
-**RPC example:** migration `014_rpc_session_feedback_by_patient_program.sql` exposes `list_session_exercise_feedback_for_patient_program` so the app loads program-wide feedback in one call instead of two round-trips.
 
 #### Database Schema (`../supabase/migrations/`)
 
 PostgreSQL schema defined as versioned migrations:
 
-- `001_initial_schema.sql`: Core tables (users, profiles, programs, workouts, exercises)
-- `002_*.sql`: Incremental updates
+- `20260324120000_init.sql`: Core tables (users, profiles, programs, workouts, exercises)
 
 **Core Tables:**
 
@@ -234,33 +228,10 @@ public.workouts ───→ public.workout_exercises ───→ public.exerci
 
 **Entrypoint: `src/api.rs`**
 
-Public async functions callable from Flutter:
-
-```rust
-// Authentication
-pub async fn login(request: LoginRequest, config: BridgeConfig) -> Result<LoginResponse, String>
-pub async fn refresh_session(refresh_token: String, config: BridgeConfig) -> Result<LoginResponse, String>
-
-// Data Fetching
-pub async fn get_patient_programs(token: String, config: BridgeConfig) -> Result<Vec<PatientProgramSummary>, String>
-
-// Data Submission
-pub async fn submit_day_feedback(token: String, request: SubmitDayFeedbackRequest, config: BridgeConfig) -> Result<(), String>
-pub async fn update_day_completion(token: String, request: UpdateDayCompletionRequest, config: BridgeConfig) -> Result<(), String>
-```
-
-**Data Structures:**
-
-- `BridgeConfig`: Supabase URL + anon_key (configured at runtime)
-- `LoginRequest`: email + password
-- `LoginResponse`: access_token, user_id, user_profile_type
-- `PatientProgramSummary`: Program details with days and exercises
-- `SubmitDayFeedbackRequest`: Workout feedback (effort, pain, comments)
-
 **Key Pattern:**
 
 1. Receive Flutter request
-2. Instantiate `NativeApi` with config
+2. Instantiate `MobileApi`
 3. Create use case (e.g., `MobileLoginUseCase<NativeApi>`, `MobileRefreshSessionUseCase<NativeApi, SupabaseAuth>` for token refresh)
 4. Execute use case and map domain result to Dart-friendly DTO
 5. Return `Result<T, String>` (Dart cannot represent Rust error enums)
@@ -269,7 +240,7 @@ pub async fn update_day_completion(token: String, request: UpdateDayCompletionRe
 
 ### Flutter Mobile (`app-flutter/`)
 
-**Mobile frontoffice** for patients and specialists.
+**Mobile frontoffice** for patients.
 
 **Architecture:**
 
@@ -279,12 +250,6 @@ pub async fn update_day_completion(token: String, request: UpdateDayCompletionRe
 - **FutureBuilder/StreamBuilder**: Handle async bridge calls
 
 **Key Entry Point:** `lib/main.rs`
-
-```dart
-void main() {
-  runApp(EixeApp(bridgeConfig: BridgeRuntimeConfig.fromEnvironment()));
-}
-```
 
 **Design:**
 
@@ -308,44 +273,12 @@ void main() {
 
 **Key Entry Point:** `src/main.rs`
 
-```rust
-fn main() {
-    backoffice_dioxus::launch();
-}
-```
-
-Calls `backoffice_dioxus::lib.rs`:
-
-```rust
-pub fn launch() {
-    init_logging();
-    dioxus::launch(App);  // Start router and render App component
-}
-```
-
-**Routing:**
-
-```rust
-#[derive(Routable, Clone, PartialEq)]
-pub enum Route {
-    #[route("/")] LoginView {},
-    #[route("/specialist")] SpecialistPatients {},
-    #[route("/specialist/programs")] SpecialistPrograms {},
-    #[route("/specialist/exercises")] ExerciseLibrary {},
-    #[route("/specialist/workouts")] WorkoutLibrary {},
-    #[route("/specialist/workouts/:id")] WorkoutEditor { id: String },
-    #[route("/specialist/patient/:id")] PatientProgress { id: String },
-    #[route("/patient/program/:patient_program_id/day/:day_index")] PatientWorkoutSessionView { ... },
-    #[route("/programs/:id/edit")] ProgramEditor { id: String },
-}
-```
-
 **Use Case Example: Fetching Programs**
 
 1. `WorkoutLibrary` view calls `use_workout_library()` hook
 2. Hook calls `ListWorkoutLibrary::execute()`
-3. Use case orchestrates `backend.get_workouts()`
-4. `NativeApi` (Supabase adapter) fetches from DB
+3. Use case orchestrates `backoffice_facade.get_workouts()`
+4. `BackofficeApi` (Supabase adapter) fetches from DB
 5. Result bubbles back to component via Dioxus signal
 
 ## Data Flow Examples
@@ -358,7 +291,7 @@ sequenceDiagram
     participant Flutter as Flutter App
     participant Bridge as mobile-bridge-frb
     participant UseCase as MobileLoginUseCase
-    participant Adapter as NativeApi
+    participant Adapter as MobileFacade
     participant Supabase as Supabase REST API
     participant DB as PostgreSQL
 
@@ -384,7 +317,7 @@ sequenceDiagram
     participant Dioxus as Dioxus View
     participant Hook as use_list_programs Hook
     participant UseCase as ListProgramsUseCase
-    participant Adapter as NativeApi
+    participant Adapter as BackOfficeFacade
     participant Supabase as Supabase REST API
     participant DB as PostgreSQL
 
@@ -408,12 +341,11 @@ sequenceDiagram
 ### Web (Dioxus)
 
 ```rust
-// backoffice-dioxus/src/app_context.rs (simplified)
+// backoffice-dioxus/src/app_context.rs
 pub fn build_app_context() -> Result<AppContext> {
-    let backend = Arc::new(ApiBuilder::new().build());
-    // Arc::new(SomeUseCase::<Api>::new(backend.clone(), …))
-    // …
-}
+    let auth = default_auth();
+    let repository = SupabaseRestRepositoryBuilder::new().build();
+    // ...
 ```
 
 Injected into app as a context provider; hooks extract it via `use_context()`.
@@ -422,20 +354,22 @@ Injected into app as a context provider; hooks extract it via `use_context()`.
 
 ```rust
 // mobile-bridge-frb/src/api.rs
-fn backend(config: BridgeConfig) -> Arc<NativeApi> {
-    let config = SupabaseConfig {
-        url: config.url,
-        anon_key: config.anon_key,
-    };
-    Arc::new(NativeApi::new(SupabaseClient::new(config)))
-}
+static REPOSITORY: LazyLock<Arc<SupabaseRestRepository>> =
+    LazyLock::new(|| SupabaseRestRepositoryBuilder::new().build());
+
+static FACADE: LazyLock<Arc<MobileFacade<SupabaseRestRepository, SupabaseAuth>>> =
+    LazyLock::new(|| {
+        let repo = REPOSITORY.clone();
+        let auth = default_auth();
+        MobileFacade::builder(repo, auth).build()
+    });
 ```
 
 Config passed at call time from Flutter; backend instantiated per request (simple and safe for FFI).
 
 ## Key Design Decisions
 
-### 1. DDD Boundaries by Crate
+### 1. DDD layers by Crate
 
 ```
 domain/              → Business logic (framework-agnostic)
@@ -446,11 +380,11 @@ app-flutter/         → Mobile UI (pure presentation)
 backoffice-dioxus/   → Web UI (pure presentation)
 ```
 
-**Benefit:** Clear separation; infrastructure cannot leak into domain.
+**Benefit:** Clear separation; domain and application as core, and infrastructure cannot leak into them.
 
 ### 2. Ports for Abstraction
 
-Instead of direct database calls, use cases depend on **domain repository traits** and `AuthService` where needed:
+For, example, instead of direct database calls, use cases depend on **domain repository traits** and `AuthService` where needed:
 
 - `SpecialistCatalogReadRepository` / `SpecialistCatalogWriteRepository` → catalog and programs
 - `PatientSessionWriteRepository` → patient workout sessions and feedback
@@ -576,7 +510,7 @@ app-flutter
 ### Adding a New Port
 
 1. **Define trait** in `application/src/ports/your_port.rs`
-2. **Implement** in `infrastructure/src/supabase/native_api.rs`
+2. **Implement** in `infrastructure/src/supabase/yout_adapter.rs`
 3. **Use cases** depend on trait, not concrete type
 
 ### Schema Changes

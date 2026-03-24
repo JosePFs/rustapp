@@ -1,6 +1,6 @@
 # MVP Phase 1 — Physiotherapy Clinic
 
-Physiotherapy clinic application (MVP Phase 1): web backoffice frontend in **Dioxus (Rust)**, mobile app frontend in **Flutter**, and data in **Supabase** (Auth + PostgreSQL). No dedicated backend in this phase.
+Physiotherapy clinic application (MVP Phase 1): web backoffice frontend in **Dioxus**, mobile app frontend in **Flutter**; and data using **Supabase**. No dedicated backend in this phase.
 
 ## Stack
 
@@ -13,7 +13,7 @@ Physiotherapy clinic application (MVP Phase 1): web backoffice frontend in **Dio
 - Rust (1.79+)
 - Dioxus 0.7
 - Flutter 3.41
-- Account and project in [Supabase](https://supabase.com) and supabase [cli](https://supabase.com/docs/guides/local-development/cli/install)
+- Have an account and project in [Supabase](https://supabase.com) and supabase [cli](https://supabase.com/docs/guides/local-development/cli/install)
 
 ## Configuration
 
@@ -26,8 +26,6 @@ Physiotherapy clinic application (MVP Phase 1): web backoffice frontend in **Dio
    SUPABASE_ANON_KEY=your_anon_key
    ```
 
-   For web development with `dx serve`, you can use `Dioxus.toml` or inject these variables into the build (e.g. in the startup script).
-
    For testing, a `.env.test.local` file. `.env.test.example` is provided as template.
 
 2. **Database**
@@ -38,8 +36,6 @@ Physiotherapy clinic application (MVP Phase 1): web backoffice frontend in **Dio
    # Content in:
    supabase/migrations/20260324120000_init.sql
    ```
-
-   It includes tables (`profiles`, `specialist_patients`, `programs`, `exercises`, `patient_programs`, `workout_sessions`), RLS, and the profile trigger on signup.
 
 3. **Test users and role assignment**
 
@@ -60,7 +56,7 @@ Physiotherapy clinic application (MVP Phase 1): web backoffice frontend in **Dio
    - Specialist: `"user_metadata": { "role": "specialist" }`
    - Patient: `"user_metadata": { "role": "patient" }` or omit `role`.
 
-## Running Backoffice Dioxus in local
+## Running Backoffice Dioxus
 
 ```bash
 # Install Dioxus CLI (if you don't have it)
@@ -75,7 +71,7 @@ cargo xtask dioxus-run
 
 Open the URL shown by the CLI (e.g. `http://127.0.0.1:8080`).
 
-## Running Flutter locally
+## Running Flutter
 
 ```bash
 # Launch app in linux
@@ -90,7 +86,7 @@ flutter devtools
 # Also: VS Code: Ctrl+Shift+P -> “Dart: Open DevTools”.
 ```
 
-## Running tests locally
+## Running tests
 
 ```bash
 # To check whether supabase is running or not
@@ -110,11 +106,12 @@ cargo xtask [test-all|test-all-unit|test-all-integration|test-all-docker] [test-
 - `mobile-bridge-frb`: Rust FFI bridge compiled as a native library for Flutter
 - `supabase`: SQL migrations and database schema
 - `xtask`: helper CLI tasks for local development (running frontends, building bridges, etc.)
-- [ARCHITECTURE.md](ARCHITECTURE.md): architecture overview with component and sequence diagrams
+
+For more detail, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Features (MVP Phase 1)
 
-- **Login** with email/password (Supabase Auth). After login, redirect by role (specialist or patient).
+- **Login** with email/password (Supabase Auth).
 - **Specialist:** list and add patients (by email), create programs, add exercises, assign a program to a patient, view basic adherence/compliance.
 - **Patient:** view active program and exercises, mark the day’s session as completed, and send feedback (effort 1–10, pain 0–10, free-text comment).
 
