@@ -27,6 +27,17 @@ fn main() {
             run_flutter_command("test", &args[1..]);
         }
 
+        // Flutter Bridge Development
+        "frb-generate" => {
+            run_bash_command(
+                "flutter_rust_bridge_codegen generate \
+                        --rust-root mobile-bridge-frb \
+                        --rust-input crate::api \
+                        --dart-root app-flutter \
+                        --dart-output app-flutter/lib/src/rust",
+            );
+        }
+
         // Dioxus Development
         "dioxus-run" => {
             run_cargo_command(&["run", "--bin", "dev", "--", "web"]);
@@ -41,32 +52,69 @@ fn main() {
             run_cargo_command(&["build", "--release"]);
         }
 
-        // Flutter Bridge Development
-        "frb-generate" => {
-            run_bash_command(
-                "flutter_rust_bridge_codegen generate \
-                --rust-root mobile-bridge-frb \
-                --rust-input crate::api \
-                --dart-root app-flutter \
-                --dart-output app-flutter/lib/src/rust",
-            );
-        }
-
         // Domain Commands
         "domain-check" => run_cargo_command(&["check", "--package", "domain"]),
-        "domain-test" => run_cargo_command(&["test", "--package", "domain"]),
+        "domain-test" => run_cargo_command(&["test", "--lib", "--package", "domain"]),
         "domain-build" => run_cargo_command(&["build", "--release", "--package", "domain"]),
 
         // Application Commands
         "application-check" => run_cargo_command(&["check", "--package", "application"]),
-        "application-test" => run_cargo_command(&["test", "--package", "application"]),
+        "application-test" => run_cargo_command(&["test", "--lib", "--package", "application"]),
         "application-build" => {
             run_cargo_command(&["build", "--release", "--package", "application"])
         }
 
+        // Infrastructure Commands
+        "infrastructure-check" => run_cargo_command(&["check", "--package", "infrastructure"]),
+        "infrastructure-test" => {
+            run_supabase_command(&["start"]);
+            run_supabase_command(&["db", "reset"]);
+            run_cargo_command(&[
+                "test",
+                "--tests",
+                &args[1..].join(" "),
+                "--package",
+                "infrastructure",
+            ]);
+        }
+
+        // Testing Commands
+        "test-all-unit" => run_cargo_command(&[
+            "test",
+            "--tests",
+            &args[1..].join(" "),
+            "--lib",
+            "--workspace",
+        ]),
+        "test-all-integration" => {
+            run_supabase_command(&["start"]);
+            run_supabase_command(&["db", "reset"]);
+            run_cargo_command(&["test", "--tests", &args[1..].join(" "), "--workspace"]);
+        }
+        "test-all" => {
+            run_cargo_command(&["test", "--lib", "--workspace"]);
+            run_supabase_command(&["start"]);
+            run_supabase_command(&["db", "reset"]);
+            run_cargo_command(&[
+                "test",
+                "--tests",
+                &args[1..].join(" "),
+                "--package",
+                "infrastructure",
+            ]);
+        }
+        "test-all-docker" => {
+            run_supabase_command(&["start"]);
+            run_supabase_command(&["db", "reset"]);
+            let test_args = args[1..].join(" ");
+            run_bash_command(&format!(
+                "docker compose -f docker-compose.test.yml --env-file .env.test.local run --rm runner cargo test --tests {} --workspace -- --nocapture",
+                test_args
+            ));
+        }
+
         // General Commands
         "check-all" => run_cargo_command(&["check", "--workspace"]),
-        "test-all" => run_cargo_command(&["test", "--workspace"]),
         "clean" => run_cargo_command(&["clean", "--workspace"]),
 
         "help" | "--help" | "-h" => show_help(),
@@ -88,17 +136,30 @@ fn show_help() {
     println!("  flutter-run       # Run the Flutter app");
     println!("  flutter-build     # Build the Flutter app");
     println!("  flutter-check     # Check the Flutter app");
+    println!("  flutter-test      # Test the Flutter app");
     println!();
 
-    println!("Rust Commands:");
-    println!("  check-all    # Check all crates");
-    println!("  test-all     # Test all crates");
-    println!("  clean        # Clean all targets");
+    println!("Dioxus Commands:");
+    println!("  dioxus-run        # Run the Dioxus app");
+    println!("  dioxus-check      # Check the Dioxus app");
+    println!("  dioxus-test       # Test the Dioxus app");
+    println!("  dioxus-build      # Build the Dioxus app");
+    println!();
+
+    println!("Testing Commands:");
+    println!("  test-all-unit         [--test-name] # Test all units");
+    println!("  test-all-integration  [--test-name] # Test all integrations");
+    println!("  test-all-docker       [--test-name] # Test all in Docker");
+    println!("  test-all              [--test-name] # Test all");
+    println!();
+
+    println!("General Commands:");
+    println!("  check-all         # Check all crates");
+    println!("  clean             # Clean all targets");
     println!();
 
     println!("Usage:");
-    println!("  cargo run -p xtask <command>");
-    println!("  Or use the alias: cargo xtask <command>");
+    println!("  cargo xtask <command>");
 }
 
 fn run_cargo_command(args: &[&str]) {
@@ -123,6 +184,18 @@ fn run_bash_command(command_line: &str) {
 
     if !status.success() {
         eprintln!("Script failed");
+        exit(1);
+    }
+}
+
+fn run_supabase_command(args: &[&str]) {
+    let mut cmd = Command::new("npx");
+    cmd.arg("supabase").args(args);
+
+    let status = cmd.status().expect("Failed to run supabase via npx");
+
+    if !status.success() {
+        eprintln!("Supabase command failed");
         exit(1);
     }
 }

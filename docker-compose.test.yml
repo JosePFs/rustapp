@@ -1,0 +1,34 @@
+# ─────────────────────────────────────────────
+#  SUPABASE LOCAL - Integration tests
+#
+#  Requires supabase cli installed:
+#    https://supabase.com/docs/guides/local-development/cli/install
+#
+#  Usage:
+#    Running tests in Docker
+#    cargo xtask test-all-docker [--test-name]
+#
+#    Running tests locally:
+#    cargo xtask [test-all|test-all-unit|test-all-integration] [--test-name]
+#
+#  See `cargo xtask help` for more details.
+# ─────────────────────────────────────────────
+
+services:
+  runner:
+    image: rust
+    working_dir: /app
+    volumes:
+      - .:/app
+      - cargo_cache:/usr/local/cargo/registry
+      - target_cache:/app/target
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SUPABASE_URL: http://host.docker.internal:54321
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+      TEST_SUPABASE_AUTH_URL: http://host.docker.internal:54321/auth/v1
+      RUST_LOG: ${RUST_LOG}
+
+volumes:
+  cargo_cache:
+  target_cache:

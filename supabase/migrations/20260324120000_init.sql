@@ -516,15 +516,6 @@ WHERE a.patient_id = b.patient_id
   AND a.id <> b.id
   AND a.assigned_at > b.assigned_at;
 
--- 2. Add unique constraint (001 may already define it)
-DO $$
-BEGIN
-    ALTER TABLE patient_programs
-    ADD CONSTRAINT uq_patient_programs_patient_program UNIQUE (patient_id, program_id);
-EXCEPTION
-    WHEN duplicate_object THEN NULL;
-END $$;
-
 -- Add video_url (YouTube) and soft delete support to exercises.
 -- Logical delete: set deleted_at so patients keep seeing the exercise in their dashboard.
 
