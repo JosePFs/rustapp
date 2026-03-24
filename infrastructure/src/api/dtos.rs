@@ -1,3 +1,7 @@
+use domain::vos::{
+    DayIndex, DaysInBlock, EffortScore, FeedbackComment, PainScore, Reps, ScheduleOrderIndex,
+    SessionDate, Sets, VideoUrl,
+};
 use serde::{Deserialize, Serialize};
 
 use domain::aggregates::{
@@ -170,7 +174,7 @@ impl From<WorkoutDto> for Workout {
             specialist_id: Id::try_from(dto.specialist_id).unwrap(),
             name: dto.name,
             description: dto.description,
-            order_index: dto.order_index,
+            order_index: ScheduleOrderIndex::try_from(dto.order_index).unwrap(),
             created_at: dto.created_at,
             updated_at: dto.updated_at,
         }
@@ -182,9 +186,9 @@ impl From<ProgramScheduleItemDto> for ProgramScheduleItem {
         ProgramScheduleItem {
             id: Id::try_from(dto.id).unwrap(),
             program_id: Id::try_from(dto.program_id).unwrap(),
-            order_index: dto.order_index,
+            order_index: ScheduleOrderIndex::try_from(dto.order_index).unwrap(),
             workout_id: dto.workout_id.map(|s| Id::try_from(s).unwrap()),
-            days_count: dto.days_count,
+            days_count: DaysInBlock::try_from(dto.days_count).unwrap(),
             created_at: dto.created_at,
         }
     }
@@ -197,8 +201,8 @@ impl From<ExerciseDto> for Exercise {
             specialist_id: Id::try_from(dto.specialist_id).unwrap(),
             name: dto.name,
             description: dto.description,
-            order_index: dto.order_index,
-            video_url: dto.video_url,
+            order_index: ScheduleOrderIndex::try_from(dto.order_index).unwrap(),
+            video_url: dto.video_url.map(|s| VideoUrl::try_from(s).unwrap()),
             deleted_at: dto.deleted_at,
             created_at: dto.created_at,
         }
@@ -221,8 +225,8 @@ impl From<WorkoutSessionDto> for WorkoutSession {
         WorkoutSession {
             id: Id::try_from(dto.id).unwrap(),
             patient_program_id: Id::try_from(dto.patient_program_id).unwrap(),
-            day_index: dto.day_index,
-            session_date: dto.session_date,
+            day_index: DayIndex::try_from(dto.day_index).unwrap(),
+            session_date: SessionDate::try_from(dto.session_date).unwrap(),
             completed_at: dto.completed_at,
             created_at: dto.created_at,
             updated_at: dto.updated_at,
@@ -235,9 +239,9 @@ impl From<SessionExerciseFeedbackDto> for SessionExerciseFeedback {
         SessionExerciseFeedback {
             workout_session_id: Id::try_from(dto.workout_session_id).unwrap(),
             exercise_id: Id::try_from(dto.exercise_id).unwrap(),
-            effort: dto.effort,
-            pain: dto.pain,
-            comment: dto.comment,
+            effort: dto.effort.map(|e| EffortScore::try_from(e).unwrap()),
+            pain: dto.pain.map(|p| PainScore::try_from(p).unwrap()),
+            comment: dto.comment.map(|c| FeedbackComment::try_from(c).unwrap()),
         }
     }
 }
@@ -298,9 +302,9 @@ impl From<WorkoutExerciseRpcDto> for WorkoutExercise {
     fn from(dto: WorkoutExerciseRpcDto) -> Self {
         WorkoutExercise {
             exercise: dto.exercise.into(),
-            order_index: dto.order_index,
-            sets: dto.sets,
-            reps: dto.reps,
+            order_index: ScheduleOrderIndex::try_from(dto.order_index).unwrap(),
+            sets: Sets::try_from(dto.sets).unwrap(),
+            reps: Reps::try_from(dto.reps).unwrap(),
         }
     }
 }
@@ -403,8 +407,8 @@ mod tests {
         let aggregate: WorkoutWithExercises = dto.into();
         assert_eq!(aggregate.workout.id, "11111111-1111-1111-1111-111111111111");
         assert_eq!(aggregate.exercises.len(), 1);
-        assert_eq!(aggregate.exercises[0].sets, 3);
-        assert_eq!(aggregate.exercises[0].reps, 10);
+        assert_eq!(aggregate.exercises[0].sets, Sets::try_from(3).unwrap());
+        assert_eq!(aggregate.exercises[0].reps, Reps::try_from(10).unwrap());
     }
 
     #[test]
@@ -508,6 +512,9 @@ mod tests {
         assert_eq!(aggregate.program.id, "33333333-3333-3333-3333-333333333333");
         assert_eq!(aggregate.sessions.len(), 1);
         assert_eq!(aggregate.feedback.len(), 1);
-        assert_eq!(aggregate.feedback[0].effort, Some(7));
+        assert_eq!(
+            aggregate.feedback[0].effort,
+            Some(EffortScore::try_from(7).unwrap())
+        );
     }
 }

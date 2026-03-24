@@ -44,8 +44,8 @@ mod tests {
         let session = WorkoutSession {
             id: Id::try_from("550e8400-e29b-41d4-a716-446655440100").unwrap(),
             patient_program_id: Id::try_from("550e8400-e29b-41d4-a716-446655440101").unwrap(),
-            day_index: 0,
-            session_date: "2025-01-01".to_string(),
+            day_index: DayIndex::ZERO,
+            session_date: SessionDate::try_from("2025-01-01".to_string()).unwrap(),
             completed_at: None,
             created_at: None,
             updated_at: None,

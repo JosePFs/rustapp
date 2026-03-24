@@ -198,9 +198,9 @@ impl ListExercisesForWorkoutRead for SupabaseRestRepository {
             .filter_map(|r| {
                 r.exercises.map(|e| WorkoutExercise {
                     exercise: e.into(),
-                    order_index: r.order_index,
-                    sets: r.sets,
-                    reps: r.reps,
+                    order_index: ScheduleOrderIndex::try_from(r.order_index).unwrap(),
+                    sets: Sets::try_from(r.sets).unwrap(),
+                    reps: Reps::try_from(r.reps).unwrap(),
                 })
             })
             .collect())

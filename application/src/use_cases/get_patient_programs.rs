@@ -153,13 +153,24 @@ impl<R: GetPatientProgramFullRead + ListActivePatientProgramsRead> GetPatientPro
                                         exercise_id: exercise.exercise.id.value().to_string(),
                                         name: exercise.exercise.name.clone(),
                                         description: exercise.exercise.description.clone(),
-                                        video_url: exercise.exercise.video_url.clone(),
-                                        sets: exercise.sets,
-                                        reps: exercise.reps,
-                                        effort: existing_feedback.and_then(|entry| entry.effort),
-                                        pain: existing_feedback.and_then(|entry| entry.pain),
-                                        comment: existing_feedback
-                                            .and_then(|entry| entry.comment.clone()),
+                                        video_url: exercise
+                                            .exercise
+                                            .video_url
+                                            .map(|url| url.value().to_string()),
+                                        sets: exercise.sets.value(),
+                                        reps: exercise.reps.value(),
+                                        effort: existing_feedback.and_then(|entry| {
+                                            entry.effort.map(|score| score.value())
+                                        }),
+                                        pain: existing_feedback.and_then(|entry| {
+                                            entry.pain.map(|score| score.value())
+                                        }),
+                                        comment: existing_feedback.and_then(|entry| {
+                                            entry
+                                                .comment
+                                                .as_ref()
+                                                .map(|comment| comment.value().to_string())
+                                        }),
                                     }
                                 })
                                 .collect();
@@ -186,7 +197,7 @@ impl<R: GetPatientProgramFullRead + ListActivePatientProgramsRead> GetPatientPro
                     workout_name,
                     workout_description,
                     is_rest_day,
-                    session_date: session.map(|session| session.session_date.clone()),
+                    session_date: session.map(|session| session.session_date.value().to_string()),
                     completed_at: session.and_then(|session| session.completed_at.clone()),
                     exercises,
                 }
@@ -212,11 +223,11 @@ impl<R: GetPatientProgramFullRead + ListActivePatientProgramsRead> GetPatientPro
 
         for fb in &full.feedback {
             if let Some(e) = fb.effort {
-                effort_sum += e;
+                effort_sum += e.value();
                 effort_count += 1;
             }
             if let Some(p) = fb.pain {
-                pain_sum += p;
+                pain_sum += p.value();
                 pain_count += 1;
             }
         }

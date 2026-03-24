@@ -6,6 +6,8 @@ use crate::error::{DomainError, Result};
 pub struct DayIndex(i32);
 
 impl DayIndex {
+    pub const ZERO: Self = Self(0);
+
     pub fn new(value: i32) -> Result<Self> {
         if value < 0 {
             return Err(DomainError::InvalidParameter(
@@ -35,10 +37,21 @@ impl Display for DayIndex {
     }
 }
 
+impl PartialEq<i32> for DayIndex {
+    fn eq(&self, other: &i32) -> bool {
+        self.0 == *other
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ScheduleOrderIndex(i32);
 
 impl ScheduleOrderIndex {
+    pub const ZERO: Self = Self(0);
+    pub const ONE: Self = Self(1);
+    pub const TWO: Self = Self(2);
+    pub const THREE: Self = Self(3);
+
     pub fn new(value: i32) -> Result<Self> {
         if value < 0 {
             return Err(DomainError::InvalidParameter(
@@ -72,6 +85,10 @@ impl Display for ScheduleOrderIndex {
 pub struct DaysInBlock(i32);
 
 impl DaysInBlock {
+    pub const ONE: Self = Self(1);
+    pub const TWO: Self = Self(2);
+    pub const THREE: Self = Self(3);
+
     pub fn new(value: i32) -> Result<Self> {
         if value < 1 {
             return Err(DomainError::InvalidParameter(

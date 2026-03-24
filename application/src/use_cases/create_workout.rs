@@ -44,7 +44,7 @@ mod tests {
 
     use std::sync::Mutex;
 
-    use domain::error::Result;
+    use domain::{error::Result, vos::ScheduleOrderIndex};
 
     #[tokio::test]
     async fn create_workout_forwards_name() {
@@ -53,7 +53,7 @@ mod tests {
             specialist_id: Id::try_from("550e8400-e29b-41d4-a716-446655440223").unwrap(),
             name: "Arms".to_string(),
             description: None,
-            order_index: 0,
+            order_index: ScheduleOrderIndex::ZERO,
             created_at: None,
             updated_at: None,
         };

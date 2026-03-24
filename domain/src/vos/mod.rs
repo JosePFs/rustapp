@@ -1,4 +1,3 @@
-pub mod access_token;
 pub mod bounded_label;
 pub mod description;
 pub mod email;
@@ -14,7 +13,6 @@ pub mod session_feedback_scores;
 pub mod training_counts;
 pub mod video_url;
 
-pub use access_token::AccessToken;
 pub use bounded_label::{ExerciseName, ProgramName, WorkoutName};
 pub use description::Description;
 pub use feedback_comment::FeedbackComment;

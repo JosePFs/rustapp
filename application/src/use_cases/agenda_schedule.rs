@@ -64,7 +64,7 @@ pub fn build_agenda_schedule(
         .iter()
         .map(|item| ProgramScheduleRow {
             workout_id: item.workout_id.as_ref().map(|id| id.to_string()),
-            days_count: item.days_count,
+            days_count: item.days_count.value(),
         })
         .collect();
     let wrows: Vec<WorkoutSummaryRow> = workouts

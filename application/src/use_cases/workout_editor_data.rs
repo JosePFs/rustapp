@@ -32,6 +32,19 @@ pub struct WorkoutEditorExerciseItem {
     pub deleted_at: Option<String>,
 }
 
+impl From<Exercise> for WorkoutEditorExerciseItem {
+    fn from(e: Exercise) -> Self {
+        WorkoutEditorExerciseItem {
+            id: e.id.to_string(),
+            name: e.name,
+            description: e.description,
+            order_index: e.order_index.value(),
+            video_url: e.video_url.map(|url| url.value().to_string()),
+            deleted_at: e.deleted_at,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WorkoutEditorLine {
     pub exercise: WorkoutEditorExerciseItem,
@@ -45,17 +58,6 @@ pub struct WorkoutEditorDataResult {
     pub workout: Option<WorkoutEditorWorkout>,
     pub exercises: Vec<WorkoutEditorLine>,
     pub library: Vec<WorkoutEditorExerciseItem>,
-}
-
-fn map_exercise_item(e: Exercise) -> WorkoutEditorExerciseItem {
-    WorkoutEditorExerciseItem {
-        id: e.id.to_string(),
-        name: e.name,
-        description: e.description,
-        order_index: e.order_index,
-        video_url: e.video_url,
-        deleted_at: e.deleted_at,
-    }
 }
 
 pub struct WorkoutEditorDataUseCase<R: GetWorkoutWithExercisesRead + ListExerciseLibraryRead> {
@@ -72,9 +74,12 @@ impl<R: GetWorkoutWithExercisesRead + ListExerciseLibraryRead> WorkoutEditorData
         let workout_id = Id::try_from(args.workout_id)?;
 
         let (workout_with_exercises, library_domain) = try_join!(
-            self.catalog_read.get_workout_with_exercises(&workout_id).map_err(ApplicationError::from),
             self.catalog_read
-                .list_exercise_library(&specialist_id, None).map_err(ApplicationError::from),
+                .get_workout_with_exercises(&workout_id)
+                .map_err(ApplicationError::from),
+            self.catalog_read
+                .list_exercise_library(&specialist_id, None)
+                .map_err(ApplicationError::from),
         )?;
 
         let (workout, exercises) = workout_with_exercises
@@ -83,16 +88,16 @@ impl<R: GetWorkoutWithExercisesRead + ListExerciseLibraryRead> WorkoutEditorData
                     id: w.workout.id.to_string(),
                     name: w.workout.name,
                     description: w.workout.description,
-                    order_index: w.workout.order_index,
+                    order_index: w.workout.order_index.value(),
                 };
                 let lines: Vec<WorkoutEditorLine> = w
                     .exercises
                     .into_iter()
                     .map(|we| WorkoutEditorLine {
-                        exercise: map_exercise_item(we.exercise),
-                        order_index: we.order_index,
-                        sets: we.sets,
-                        reps: we.reps,
+                        exercise: we.exercise.into(),
+                        order_index: we.order_index.value(),
+                        sets: we.sets.value(),
+                        reps: we.reps.value(),
                     })
                     .collect();
                 (Some(row), lines)
@@ -100,7 +105,7 @@ impl<R: GetWorkoutWithExercisesRead + ListExerciseLibraryRead> WorkoutEditorData
             .unwrap_or((None, vec![]));
 
         let library: Vec<WorkoutEditorExerciseItem> =
-            library_domain.into_iter().map(map_exercise_item).collect();
+            library_domain.into_iter().map(Into::into).collect();
 
         Ok(WorkoutEditorDataResult {
             workout,
@@ -121,6 +126,7 @@ mod tests {
     use domain::error::Result;
     use domain::repositories::{GetWorkoutWithExercisesRead, ListExerciseLibraryRead};
     use domain::vos::library_name_filter::LibraryNameFilter;
+    use domain::vos::ScheduleOrderIndex;
 
     const SPEC: &str = "550e8400-e29b-41d4-a716-446655440360";
     const WID: &str = "550e8400-e29b-41d4-a716-446655440361";
@@ -152,7 +158,7 @@ mod tests {
             specialist_id: spec.clone(),
             name: "Edit me".to_string(),
             description: Some("desc".to_string()),
-            order_index: 2,
+            order_index: ScheduleOrderIndex::TWO,
             created_at: None,
             updated_at: None,
         };
@@ -161,7 +167,7 @@ mod tests {
             specialist_id: spec,
             name: "Lib ex".to_string(),
             description: None,
-            order_index: 0,
+            order_index: ScheduleOrderIndex::ZERO,
             video_url: None,
             deleted_at: None,
             created_at: None,

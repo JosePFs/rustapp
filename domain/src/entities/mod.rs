@@ -1,4 +1,7 @@
-use crate::vos::id::Id;
+use crate::vos::{
+    id::Id, DayIndex, DaysInBlock, EffortScore, FeedbackComment, PainScore, Reps,
+    ScheduleOrderIndex, SessionDate, Sets, VideoUrl,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct SpecialistPatient {
@@ -22,7 +25,7 @@ pub struct Workout {
     pub specialist_id: Id,
     pub name: String,
     pub description: Option<String>,
-    pub order_index: i32,
+    pub order_index: ScheduleOrderIndex,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
 }
@@ -31,9 +34,9 @@ pub struct Workout {
 pub struct ProgramScheduleItem {
     pub id: Id,
     pub program_id: Id,
-    pub order_index: i32,
+    pub order_index: ScheduleOrderIndex,
     pub workout_id: Option<Id>,
-    pub days_count: i32,
+    pub days_count: DaysInBlock,
     pub created_at: Option<String>,
 }
 
@@ -43,8 +46,8 @@ pub struct Exercise {
     pub specialist_id: Id,
     pub name: String,
     pub description: Option<String>,
-    pub order_index: i32,
-    pub video_url: Option<String>,
+    pub order_index: ScheduleOrderIndex,
+    pub video_url: Option<VideoUrl>,
     pub deleted_at: Option<String>,
     pub created_at: Option<String>,
 }
@@ -52,18 +55,18 @@ pub struct Exercise {
 #[derive(Debug, Clone, PartialEq)]
 pub struct WorkoutExercise {
     pub exercise: Exercise,
-    pub order_index: i32,
-    pub sets: i32,
-    pub reps: i32,
+    pub order_index: ScheduleOrderIndex,
+    pub sets: Sets,
+    pub reps: Reps,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct SessionExerciseFeedback {
     pub workout_session_id: Id,
     pub exercise_id: Id,
-    pub effort: Option<i32>,
-    pub pain: Option<i32>,
-    pub comment: Option<String>,
+    pub effort: Option<EffortScore>,
+    pub pain: Option<PainScore>,
+    pub comment: Option<FeedbackComment>,
 }
 
 #[derive(Debug, Clone)]
@@ -84,8 +87,8 @@ impl PatientProgram {
 pub struct WorkoutSession {
     pub id: Id,
     pub patient_program_id: Id,
-    pub day_index: i32,
-    pub session_date: String,
+    pub day_index: DayIndex,
+    pub session_date: SessionDate,
     pub completed_at: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,

@@ -1,4 +1,7 @@
-use std::fmt::{Display, Formatter};
+use std::{
+    fmt::{Display, Formatter},
+    ops::{Add, AddAssign},
+};
 
 use crate::error::{DomainError, Result};
 
@@ -35,6 +38,26 @@ impl Display for EffortScore {
     }
 }
 
+impl Add<i32> for EffortScore {
+    type Output = EffortScore;
+
+    fn add(self, rhs: i32) -> EffortScore {
+        EffortScore(self.0 + rhs)
+    }
+}
+
+impl AddAssign for EffortScore {
+    fn add_assign(&mut self, rhs: EffortScore) {
+        self.0 += rhs.0;
+    }
+}
+
+impl AddAssign<i32> for EffortScore {
+    fn add_assign(&mut self, rhs: i32) {
+        self.0 += rhs;
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PainScore(i32);
 
@@ -51,6 +74,26 @@ impl PainScore {
 
     pub fn value(self) -> i32 {
         self.0
+    }
+}
+
+impl Add<i32> for PainScore {
+    type Output = PainScore;
+
+    fn add(self, rhs: i32) -> PainScore {
+        PainScore(self.0 + rhs)
+    }
+}
+
+impl AddAssign for PainScore {
+    fn add_assign(&mut self, rhs: PainScore) {
+        self.0 += rhs.0;
+    }
+}
+
+impl AddAssign<i32> for PainScore {
+    fn add_assign(&mut self, rhs: i32) {
+        self.0 += rhs;
     }
 }
 

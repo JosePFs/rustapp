@@ -52,13 +52,18 @@ impl<P: PatientSessionWriteRepository> SubmitPatientWorkoutFeedbackUseCase<P> {
                 let session_id = session_id.clone();
 
                 async move {
-                    let exercise_id = Id::try_from(exercise_id_str).map_err(ApplicationError::from)?;
-                    let effort_vo = EffortScore::try_from(effort).map_err(ApplicationError::from)?;
+                    let exercise_id =
+                        Id::try_from(exercise_id_str).map_err(ApplicationError::from)?;
+                    let effort_vo =
+                        EffortScore::try_from(effort).map_err(ApplicationError::from)?;
                     let pain_vo = PainScore::try_from(pain).map_err(ApplicationError::from)?;
                     let comment_vo = if comment.is_empty() {
                         None
                     } else {
-                        Some(FeedbackComment::try_from(comment.as_str()).map_err(ApplicationError::from)?)
+                        Some(
+                            FeedbackComment::try_from(comment.as_str())
+                                .map_err(ApplicationError::from)?,
+                        )
                     };
                     let comment_ref = comment_vo.as_ref();
                     session_write
@@ -103,8 +108,8 @@ mod tests {
         let session = WorkoutSession {
             id: session_id,
             patient_program_id: pp_id,
-            day_index: 0,
-            session_date: "2025-01-15".to_string(),
+            day_index: DayIndex::ZERO,
+            session_date: SessionDate::try_from("2025-01-15".to_string()).unwrap(),
             completed_at: None,
             created_at: None,
             updated_at: None,

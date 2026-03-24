@@ -40,7 +40,11 @@ impl<R: ListProgramScheduleRead + GetWorkoutsByIdsRead> ListProgramScheduleUseCa
 
     pub async fn execute(&self, args: ListProgramScheduleArgs) -> Result<ProgramScheduleData> {
         let program_id = Id::try_from(args.program_id)?;
-        let schedule_domain = self.catalog_read.list_program_schedule(&program_id).await.map_err(ApplicationError::from)?;
+        let schedule_domain = self
+            .catalog_read
+            .list_program_schedule(&program_id)
+            .await
+            .map_err(ApplicationError::from)?;
 
         let ids: Vec<Id> = schedule_domain
             .iter()
@@ -57,9 +61,9 @@ impl<R: ListProgramScheduleRead + GetWorkoutsByIdsRead> ListProgramScheduleUseCa
             .into_iter()
             .map(|s| ProgramScheduleEntry {
                 id: s.id.to_string(),
-                order_index: s.order_index,
+                order_index: s.order_index.value(),
                 workout_id: s.workout_id.map(|id| id.to_string()),
-                days_count: s.days_count,
+                days_count: s.days_count.value(),
             })
             .collect();
 
@@ -84,6 +88,7 @@ mod tests {
     use domain::entities::{ProgramScheduleItem, Workout};
     use domain::error::Result;
     use domain::repositories::{GetWorkoutsByIdsRead, ListProgramScheduleRead};
+    use domain::vos::{DaysInBlock, ScheduleOrderIndex};
 
     const PRG: &str = "550e8400-e29b-41d4-a716-446655440350";
     const SID: &str = "550e8400-e29b-41d4-a716-446655440351";
@@ -96,9 +101,9 @@ mod tests {
         let sched = ProgramScheduleItem {
             id: Id::try_from(SID).unwrap(),
             program_id: pid,
-            order_index: 0,
+            order_index: ScheduleOrderIndex::ZERO,
             workout_id: Some(wid.clone()),
-            days_count: 2,
+            days_count: DaysInBlock::TWO,
             created_at: None,
         };
         let w = Workout {
@@ -106,7 +111,7 @@ mod tests {
             specialist_id: Id::try_from("550e8400-e29b-41d4-a716-446655440353").unwrap(),
             name: "Leg day".to_string(),
             description: None,
-            order_index: 0,
+            order_index: ScheduleOrderIndex::ZERO,
             created_at: None,
             updated_at: None,
         };

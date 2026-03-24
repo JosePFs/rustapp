@@ -2,26 +2,12 @@ use crate::entities::{
     PatientProgram, Program, ProgramScheduleItem, SessionExerciseFeedback, SpecialistPatient,
     Workout, WorkoutExercise, WorkoutSession,
 };
-use crate::vos::id::Id;
 use crate::vos::profile::Profile;
-
-#[derive(Debug, Clone)]
-pub struct ProgramAgenda {
-    pub program: Program,
-    pub schedule: Vec<ProgramScheduleItem>,
-}
 
 #[derive(Debug, Clone)]
 pub struct WorkoutWithExercises {
     pub workout: Workout,
     pub exercises: Vec<WorkoutExercise>,
-}
-
-#[derive(Debug, Clone)]
-pub struct PatientProgramSessionProgress {
-    pub patient_program_id: Id,
-    pub sessions: Vec<WorkoutSession>,
-    pub session_exercise_feedback: Vec<SessionExerciseFeedback>,
 }
 
 #[derive(Debug, Clone)]

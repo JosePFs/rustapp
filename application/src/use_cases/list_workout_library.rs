@@ -48,7 +48,7 @@ impl<R: ListWorkoutLibraryRead> ListWorkoutLibraryUseCase<R> {
                 id: w.id.to_string(),
                 name: w.name,
                 description: w.description,
-                order_index: w.order_index,
+                order_index: w.order_index.value(),
             })
             .collect())
     }
@@ -65,6 +65,7 @@ mod tests {
     use domain::repositories::ListWorkoutLibraryRead;
     use domain::vos::id::Id;
     use domain::vos::library_name_filter::LibraryNameFilter;
+    use domain::vos::ScheduleOrderIndex;
 
     #[tokio::test]
     async fn maps_workout_rows() {
@@ -74,7 +75,7 @@ mod tests {
             specialist_id: spec,
             name: "W1".to_string(),
             description: None,
-            order_index: 0,
+            order_index: ScheduleOrderIndex::ZERO,
             created_at: None,
             updated_at: None,
         };

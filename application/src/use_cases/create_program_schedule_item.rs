@@ -58,9 +58,9 @@ mod tests {
         let item = ProgramScheduleItem {
             id: Id::try_from(NEW_ID).unwrap(),
             program_id: Id::try_from(PRG).unwrap(),
-            order_index: 1,
+            order_index: ScheduleOrderIndex::ONE,
             workout_id: Some(Id::try_from(WID).unwrap()),
-            days_count: 3,
+            days_count: DaysInBlock::THREE,
             created_at: None,
         };
         let fake = MockCreateProgramScheduleItemWrite::new_ok(item.clone());
@@ -77,7 +77,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(got.id, item.id);
-        assert_eq!(got.days_count, 3);
+        assert_eq!(got.days_count, DaysInBlock::THREE);
     }
 
     #[derive(Clone)]

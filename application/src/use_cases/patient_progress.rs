@@ -66,8 +66,12 @@ impl<
         let profile_ids: [Id; 1] = [patient_id.clone()];
 
         let (profiles, all_assignments) = try_join!(
-            self.catalog_read.get_profiles_by_ids(&profile_ids).map_err(ApplicationError::from),
-            self.catalog_read.list_patient_programs_for_specialist().map_err(ApplicationError::from),
+            self.catalog_read
+                .get_profiles_by_ids(&profile_ids)
+                .map_err(ApplicationError::from),
+            self.catalog_read
+                .list_patient_programs_for_specialist()
+                .map_err(ApplicationError::from),
         )?;
 
         let profile_domain = profiles
@@ -87,7 +91,10 @@ impl<
                 let catalog_read = self.catalog_read.clone();
 
                 async move {
-                    let full = catalog_read.get_patient_program_full(&ass.id).await.map_err(ApplicationError::from)?;
+                    let full = catalog_read
+                        .get_patient_program_full(&ass.id)
+                        .await
+                        .map_err(ApplicationError::from)?;
 
                     Ok(full.map(map_program_block))
                 }
@@ -125,8 +132,8 @@ fn map_program_block(full: PatientProgramFull) -> PatientProgressProgramBlock {
             .into_iter()
             .map(|s| AgendaWorkoutSession {
                 id: s.id.to_string(),
-                day_index: s.day_index,
-                session_date: s.session_date,
+                day_index: s.day_index.value(),
+                session_date: s.session_date.value().to_string(),
                 completed_at: s.completed_at,
             })
             .collect(),
@@ -136,9 +143,12 @@ fn map_program_block(full: PatientProgramFull) -> PatientProgressProgramBlock {
             .map(|f| AgendaSessionFeedback {
                 workout_session_id: f.workout_session_id.to_string(),
                 exercise_id: f.exercise_id.to_string(),
-                effort: f.effort,
-                pain: f.pain,
-                comment: f.comment,
+                effort: f.effort.map(|score| score.value()),
+                pain: f.pain.map(|score| score.value()),
+                comment: f
+                    .comment
+                    .as_ref()
+                    .map(|comment| comment.value().to_string()),
             })
             .collect(),
         schedule: full
@@ -146,7 +156,7 @@ fn map_program_block(full: PatientProgramFull) -> PatientProgressProgramBlock {
             .into_iter()
             .map(|item| ProgramScheduleRow {
                 workout_id: item.workout_id.map(|id| id.to_string()),
-                days_count: item.days_count,
+                days_count: item.days_count.value(),
             })
             .collect(),
         workouts: full
