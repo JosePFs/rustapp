@@ -1,6 +1,9 @@
-# MVP Phase 1 — Physiotherapy Clinic
+# MVP Phase 1 - Eixe: Physiotherapy Clinic App
 
-Physiotherapy clinic application (MVP Phase 1): web backoffice frontend in **Dioxus**, mobile app frontend in **Flutter**; and data using **Supabase**. No dedicated backend in this phase.
+Application is divided into:
+
+- A web-based back office for patient management, scheduling routines, and tracking exercise performance, effort, and progress.
+- A mobile application for patients where they can view videos of their scheduled routines, follow exercise instructions, and provide feedback on their performance.
 
 ## Stack
 
