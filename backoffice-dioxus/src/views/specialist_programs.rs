@@ -8,7 +8,6 @@ use dioxus_i18n::t;
 use dioxus_primitives::ContentSide;
 use dioxus_router::Link;
 
-use crate::app_context::AppContext;
 use crate::components::{Tooltip, TooltipContent, TooltipTrigger};
 use crate::hooks::{
     assign_program_to_patient::use_assign_program_to_patient, create_program::use_create_program,
@@ -18,8 +17,6 @@ use crate::Route;
 
 #[component]
 pub fn SpecialistPrograms() -> Element {
-    let app_context = use_context::<AppContext>();
-    let session_signal = app_context.session();
     let data = use_specialist_programs();
     let create_program = use_create_program();
     let assign_program = use_assign_program_to_patient();
@@ -31,19 +28,6 @@ pub fn SpecialistPrograms() -> Element {
     let mut patient_filter = use_signal(|| String::new());
     let mut selected_program_ids = use_signal(|| HashSet::<String>::new());
     let mut selected_patient_ids = use_signal(|| HashSet::<String>::new());
-
-    let session = session_signal.read().clone();
-
-    if session.is_none() {
-        return rsx! {
-            div { class: "p-6 text-center",
-                p { { t!("must_login_message") } }
-                Link { to: Route::LoginView {}, class: "text-primary underline", { t!("go_to_login") } }
-            }
-        };
-    }
-
-    let _sess = session.as_ref().unwrap();
 
     rsx! {
         div {
@@ -135,7 +119,7 @@ pub fn SpecialistPrograms() -> Element {
                                 let mut action = create_program.action.clone();
                                 let mut resource = data.resource.clone();
                                 spawn(async move {
-                                    action.call((name, desc)).await;
+                                    action.call(name, desc).await;
                                     new_program_name.set(String::new());
                                     new_program_desc.set(String::new());
                                     resource.restart();

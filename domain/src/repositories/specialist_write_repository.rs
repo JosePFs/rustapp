@@ -1,9 +1,9 @@
 use super::catalog_write::*;
 
 pub trait SpecialistCatalogWriteRepository:
-    AddSpecialistPatientWrite
-    + CreateProgramWrite
-    + CreateWorkoutWrite
+    AddSpecialistPatient
+    + CreateProgram
+    + CreateWorkout
     + UpdateWorkoutWrite
     + DeleteWorkoutWrite
     + CreateProgramScheduleItemWrite
@@ -26,9 +26,9 @@ pub trait SpecialistCatalogWriteRepository:
 }
 
 impl<T> SpecialistCatalogWriteRepository for T where
-    T: AddSpecialistPatientWrite
-        + CreateProgramWrite
-        + CreateWorkoutWrite
+    T: AddSpecialistPatient
+        + CreateProgram
+        + CreateWorkout
         + UpdateWorkoutWrite
         + DeleteWorkoutWrite
         + CreateProgramScheduleItemWrite

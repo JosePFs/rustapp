@@ -64,4 +64,17 @@ impl<T> AsyncState<T> {
             _ => None,
         }
     }
+
+    pub fn auth_error(&self) -> Option<&ApplicationError> {
+        match self {
+            AsyncState::Error(error) => {
+                if error.is_auth_error() {
+                    Some(error)
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
 }

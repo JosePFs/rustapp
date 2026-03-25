@@ -1,13 +1,11 @@
 use std::sync::Arc;
 
 use crate::ports::error::{ApplicationError, Result};
-use domain::repositories::ListExerciseLibraryRead;
-use domain::vos::id::Id;
+use domain::repositories::ListExerciseLibrary;
 use domain::vos::LibraryNameFilter;
 
 #[derive(Clone)]
 pub struct ListExerciseLibraryArgs {
-    pub specialist_id: String,
     pub name_filter: Option<String>,
 }
 
@@ -21,11 +19,11 @@ pub struct ExerciseLibraryItem {
     pub deleted_at: Option<String>,
 }
 
-pub struct ListExerciseLibraryUseCase<R: ListExerciseLibraryRead> {
+pub struct ListExerciseLibraryUseCase<R: ListExerciseLibrary> {
     catalog_read: Arc<R>,
 }
 
-impl<R: ListExerciseLibraryRead> ListExerciseLibraryUseCase<R> {
+impl<R: ListExerciseLibrary> ListExerciseLibraryUseCase<R> {
     pub fn new(catalog_read: Arc<R>) -> Self {
         Self { catalog_read }
     }
@@ -38,10 +36,9 @@ impl<R: ListExerciseLibraryRead> ListExerciseLibraryUseCase<R> {
             .map(LibraryNameFilter::try_from)
             .transpose()?;
         let name_filter_ref = name_filter.as_ref();
-        let specialist_id = Id::try_from(args.specialist_id)?;
         let rows = self
             .catalog_read
-            .list_exercise_library(&specialist_id, name_filter_ref)
+            .list_exercise_library(name_filter_ref)
             .await
             .map_err(ApplicationError::from)?;
         Ok(rows
@@ -66,7 +63,8 @@ mod tests {
 
     use domain::entities::Exercise;
     use domain::error::Result;
-    use domain::repositories::ListExerciseLibraryRead;
+    use domain::repositories::ListExerciseLibrary;
+    use domain::vos::id::Id;
     use domain::vos::library_name_filter::LibraryNameFilter;
     use domain::vos::ScheduleOrderIndex;
 
@@ -88,10 +86,7 @@ mod tests {
         let uc = ListExerciseLibraryUseCase::new(Arc::new(fake));
 
         let rows = uc
-            .execute(ListExerciseLibraryArgs {
-                specialist_id: SPEC.to_string(),
-                name_filter: None,
-            })
+            .execute(ListExerciseLibraryArgs { name_filter: None })
             .await
             .unwrap();
 
@@ -113,10 +108,9 @@ mod tests {
     }
 
     #[common::async_trait_platform]
-    impl ListExerciseLibraryRead for MockListExerciseLibraryRead {
+    impl ListExerciseLibrary for MockListExerciseLibraryRead {
         async fn list_exercise_library(
             &self,
-            _specialist_id: &Id,
             _name_filter: Option<&LibraryNameFilter>,
         ) -> Result<Vec<Exercise>> {
             self.exercises.lock().unwrap().clone()

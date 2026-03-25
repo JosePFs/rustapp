@@ -37,10 +37,9 @@ pub trait GetProgramRead: Send + Sync {
 }
 
 #[common::async_trait_platform]
-pub trait ListWorkoutLibraryRead: Send + Sync {
+pub trait ListWorkoutLibrary: Send + Sync {
     async fn list_workout_library(
         &self,
-        specialist_id: &Id,
         name_filter: Option<&LibraryNameFilter>,
     ) -> Result<Vec<Workout>>;
 }
@@ -66,10 +65,9 @@ pub trait ListExercisesForWorkoutRead: Send + Sync {
 }
 
 #[common::async_trait_platform]
-pub trait ListExerciseLibraryRead: Send + Sync {
+pub trait ListExerciseLibrary: Send + Sync {
     async fn list_exercise_library(
         &self,
-        specialist_id: &Id,
         name_filter: Option<&LibraryNameFilter>,
     ) -> Result<Vec<Exercise>>;
 }
@@ -133,5 +131,5 @@ pub trait GetPatientProgramFullRead: Send + Sync {
 
 #[common::async_trait_platform]
 pub trait GetSpecialistDashboardRead: Send + Sync {
-    async fn get_specialist_dashboard(&self, specialist_id: &Id) -> Result<SpecialistDashboard>;
+    async fn get_specialist_dashboard(&self) -> Result<SpecialistDashboard>;
 }

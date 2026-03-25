@@ -8,24 +8,6 @@ use crate::Route;
 use application::use_cases::agenda_schedule::AgendaSessionFeedback;
 use application::use_cases::patient_progress::PatientProgressResult;
 
-const EMPTY: &str = "";
-
-fn session_avg_feedback(session_id: &str, feedback: &[AgendaSessionFeedback]) -> (String, String) {
-    let sess_fb: Vec<_> = feedback
-        .iter()
-        .filter(|f| f.workout_session_id == session_id)
-        .collect();
-    if sess_fb.is_empty() {
-        (EMPTY.to_string(), EMPTY.to_string())
-    } else {
-        let e: f64 =
-            sess_fb.iter().filter_map(|f| f.effort).sum::<i32>() as f64 / sess_fb.len() as f64;
-        let p: f64 =
-            sess_fb.iter().filter_map(|f| f.pain).sum::<i32>() as f64 / sess_fb.len() as f64;
-        (format!("{:.1}", e), format!("{:.1}", p))
-    }
-}
-
 #[component]
 pub fn PatientProgress(id: String) -> Element {
     let progress = use_patient_progress(id.clone());
@@ -118,5 +100,23 @@ pub fn PatientProgress(id: String) -> Element {
                 }
             }
         }
+    }
+}
+
+const EMPTY: &str = "";
+
+fn session_avg_feedback(session_id: &str, feedback: &[AgendaSessionFeedback]) -> (String, String) {
+    let sess_fb: Vec<_> = feedback
+        .iter()
+        .filter(|f| f.workout_session_id == session_id)
+        .collect();
+    if sess_fb.is_empty() {
+        (EMPTY.to_string(), EMPTY.to_string())
+    } else {
+        let e: f64 =
+            sess_fb.iter().filter_map(|f| f.effort).sum::<i32>() as f64 / sess_fb.len() as f64;
+        let p: f64 =
+            sess_fb.iter().filter_map(|f| f.pain).sum::<i32>() as f64 / sess_fb.len() as f64;
+        (format!("{:.1}", e), format!("{:.1}", p))
     }
 }

@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 use futures::stream::{self, StreamExt};
 
 use crate::ports::error::{ApplicationError, Result};
-use domain::repositories::PatientSessionWriteRepository;
+use domain::repositories::PatientSessionRepository;
 use domain::vos::id::Id;
 use domain::vos::{DayIndex, EffortScore, FeedbackComment, PainScore, SessionDate};
 
@@ -16,11 +16,11 @@ pub struct SubmitPatientWorkoutFeedbackArgs {
     pub completion_status: Option<bool>,
 }
 
-pub struct SubmitPatientWorkoutFeedbackUseCase<P: PatientSessionWriteRepository> {
+pub struct SubmitPatientWorkoutFeedbackUseCase<P: PatientSessionRepository> {
     session_write: Arc<P>,
 }
 
-impl<P: PatientSessionWriteRepository> SubmitPatientWorkoutFeedbackUseCase<P> {
+impl<P: PatientSessionRepository> SubmitPatientWorkoutFeedbackUseCase<P> {
     const MAX_CONCURRENT_REQUESTS: usize = 6;
 
     pub fn new(session_write: Arc<P>) -> Self {
@@ -97,7 +97,7 @@ mod tests {
 
     use domain::entities::WorkoutSession;
     use domain::error::Result;
-    use domain::repositories::PatientSessionWriteRepository;
+    use domain::repositories::PatientSessionRepository;
     use domain::vos::id::Id;
     use domain::vos::{DayIndex, EffortScore, FeedbackComment, PainScore, SessionDate};
 
@@ -158,7 +158,7 @@ mod tests {
     }
 
     #[common::async_trait_platform]
-    impl PatientSessionWriteRepository for MockPatientSessionWriteRepository {
+    impl PatientSessionRepository for MockPatientSessionWriteRepository {
         async fn get_or_create_session(
             &self,
             _patient_program_id: &Id,

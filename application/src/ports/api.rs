@@ -21,9 +21,7 @@ use crate::use_cases::refresh_session::RefreshSessionArgs;
 use crate::use_cases::remove_exercise_from_workout::RemoveExerciseFromWorkoutArgs;
 use crate::use_cases::restore_exercise::RestoreExerciseArgs;
 use crate::use_cases::soft_delete_exercise::SoftDeleteExerciseArgs;
-use crate::use_cases::specialist_programs_data::{
-    SpecialistProgramsDataArgs, SpecialistProgramsDataResult,
-};
+use crate::use_cases::specialist_programs_data::SpecialistProgramsDataResult;
 use crate::use_cases::submit_patient_workout_feedback::SubmitPatientWorkoutFeedbackArgs;
 use crate::use_cases::uncomplete_patient_workout_session::UncompletePatientWorkoutSessionArgs;
 use crate::use_cases::update_exercise::UpdateExerciseArgs;
@@ -71,10 +69,7 @@ pub trait BackofficeApi {
         args: GetSpecialistPatientsWithProfilesArgs,
     ) -> Result<GetSpecialistPatientsWithProfilesResult>;
 
-    async fn specialist_programs_data(
-        &self,
-        args: SpecialistProgramsDataArgs,
-    ) -> Result<SpecialistProgramsDataResult>;
+    async fn specialist_programs_data(&self) -> Result<SpecialistProgramsDataResult>;
 
     async fn list_exercise_library(
         &self,

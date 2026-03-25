@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::ports::error::{ApplicationError, Result};
-use domain::repositories::PatientSessionWriteRepository;
+use domain::repositories::PatientSessionRepository;
 use domain::vos::id::Id;
 
 #[derive(Clone)]
@@ -9,11 +9,11 @@ pub struct UncompletePatientWorkoutSessionArgs {
     pub workout_session_id: String,
 }
 
-pub struct UncompletePatientWorkoutSessionUseCase<P: PatientSessionWriteRepository> {
+pub struct UncompletePatientWorkoutSessionUseCase<P: PatientSessionRepository> {
     session_write: Arc<P>,
 }
 
-impl<P: PatientSessionWriteRepository> UncompletePatientWorkoutSessionUseCase<P> {
+impl<P: PatientSessionRepository> UncompletePatientWorkoutSessionUseCase<P> {
     pub fn new(session_write: Arc<P>) -> Self {
         Self { session_write }
     }
@@ -35,7 +35,7 @@ mod tests {
 
     use domain::entities::WorkoutSession;
     use domain::error::Result;
-    use domain::repositories::PatientSessionWriteRepository;
+    use domain::repositories::PatientSessionRepository;
     use domain::vos::id::Id;
     use domain::vos::{DayIndex, EffortScore, FeedbackComment, PainScore, SessionDate};
 
@@ -88,7 +88,7 @@ mod tests {
     }
 
     #[common::async_trait_platform]
-    impl PatientSessionWriteRepository for MockPatientSessionWriteRepository {
+    impl PatientSessionRepository for MockPatientSessionWriteRepository {
         async fn get_or_create_session(
             &self,
             _patient_program_id: &Id,

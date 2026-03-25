@@ -10,29 +10,23 @@ use crate::vos::{
 };
 
 #[common::async_trait_platform]
-pub trait AddSpecialistPatientWrite: Send + Sync {
-    async fn add_specialist_patient(
-        &self,
-        specialist_id: &Id,
-        patient_id: &Id,
-    ) -> Result<SpecialistPatient>;
+pub trait AddSpecialistPatient: Send + Sync {
+    async fn add_specialist_patient(&self, patient_id: &Id) -> Result<SpecialistPatient>;
 }
 
 #[common::async_trait_platform]
-pub trait CreateProgramWrite: Send + Sync {
+pub trait CreateProgram: Send + Sync {
     async fn create_program(
         &self,
-        specialist_id: &Id,
         name: &ProgramName,
         description: Option<&Description>,
     ) -> Result<Program>;
 }
 
 #[common::async_trait_platform]
-pub trait CreateWorkoutWrite: Send + Sync {
+pub trait CreateWorkout: Send + Sync {
     async fn create_workout(
         &self,
-        specialist_id: &Id,
         name: &WorkoutName,
         description: Option<&Description>,
     ) -> Result<Workout>;
@@ -74,7 +68,6 @@ pub trait DeleteProgramScheduleItemWrite: Send + Sync {
 pub trait CreateExerciseWrite: Send + Sync {
     async fn create_exercise(
         &self,
-        specialist_id: &Id,
         name: &ExerciseName,
         description: Option<&Description>,
         order_index: ScheduleOrderIndex,

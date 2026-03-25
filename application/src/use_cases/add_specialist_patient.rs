@@ -3,26 +3,24 @@ use std::sync::Arc;
 use crate::ports::error::{ApplicationError, Result};
 use domain::entities::SpecialistPatient;
 use domain::error::DomainError;
-use domain::repositories::{AddSpecialistPatientWrite, GetPatientIdByEmailRead};
+use domain::repositories::{AddSpecialistPatient, GetPatientIdByEmailRead};
 use domain::vos::email::Email;
-use domain::vos::id::Id;
 
 #[derive(Clone)]
 pub struct AddSpecialistPatientArgs {
-    pub specialist_id: String,
     pub patient_email: String,
 }
 
 pub struct AddSpecialistPatientUseCase<C>
 where
-    C: GetPatientIdByEmailRead + AddSpecialistPatientWrite,
+    C: GetPatientIdByEmailRead + AddSpecialistPatient,
 {
     catalog: Arc<C>,
 }
 
 impl<C> AddSpecialistPatientUseCase<C>
 where
-    C: GetPatientIdByEmailRead + AddSpecialistPatientWrite,
+    C: GetPatientIdByEmailRead + AddSpecialistPatient,
 {
     pub fn new(catalog: Arc<C>) -> Self {
         Self { catalog }
@@ -37,9 +35,8 @@ where
             .map_err(ApplicationError::from)?
             .ok_or_else(|| DomainError::Api("Patient not found".into()))?;
 
-        let specialist_id = Id::try_from(args.specialist_id)?;
         self.catalog
-            .add_specialist_patient(&specialist_id, &patient_id)
+            .add_specialist_patient(&patient_id)
             .await
             .map_err(ApplicationError::from)
     }
@@ -50,6 +47,7 @@ mod tests {
     use super::*;
 
     use domain::error::Result;
+    use domain::vos::id::Id;
 
     #[tokio::test]
     async fn add_specialist_patient_happy_path() {
@@ -67,7 +65,6 @@ mod tests {
 
         let got = uc
             .execute(AddSpecialistPatientArgs {
-                specialist_id: sid.to_string(),
                 patient_email: "p@example.com".to_string(),
             })
             .await
@@ -96,12 +93,8 @@ mod tests {
     }
 
     #[common::async_trait_platform]
-    impl AddSpecialistPatientWrite for MockAddSpecialistPatientWrite {
-        async fn add_specialist_patient(
-            &self,
-            _specialist_id: &Id,
-            _patient_id: &Id,
-        ) -> Result<SpecialistPatient> {
+    impl AddSpecialistPatient for MockAddSpecialistPatientWrite {
+        async fn add_specialist_patient(&self, _patient_id: &Id) -> Result<SpecialistPatient> {
             Ok(self.link.clone())
         }
     }

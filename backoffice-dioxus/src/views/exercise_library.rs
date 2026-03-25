@@ -3,21 +3,16 @@ use dioxus::prelude::*;
 use dioxus_i18n::t;
 use dioxus_router::Link;
 
-use crate::app_context::AppContext;
 use crate::hooks::create_exercise::use_create_exercise;
 use crate::hooks::exercise_library::use_exercise_library;
 use crate::hooks::restore_exercise::use_restore_exercise;
 use crate::hooks::soft_delete_exercise::use_soft_delete_exercise;
 use crate::hooks::update_exercise::use_update_exercise;
-use crate::hooks::AsyncState;
 use crate::Route;
 
 #[component]
 pub fn ExerciseLibrary() -> Element {
-    let app_context = use_context::<AppContext>();
-    let session_signal = app_context.session();
-    let mut filter = use_signal(|| String::new());
-    let exercises = use_exercise_library(filter);
+    let mut exercises = use_exercise_library();
     let create_exercise = use_create_exercise();
     let update_exercise = use_update_exercise();
     let soft_delete_exercise = use_soft_delete_exercise();
@@ -31,22 +26,16 @@ pub fn ExerciseLibrary() -> Element {
     let mut edit_desc = use_signal(|| String::new());
     let mut edit_video_url = use_signal(|| String::new());
 
-    let session = session_signal.read().clone();
-    if session.is_none() {
-        return rsx! {
-            div {
-                { t!("must_login_message") }
-                " "
-                Link { to: Route::LoginView {}, { t!("go_to_login") } }
-            }
-        };
+    if let Some(e) = exercises.state.read().auth_error() {
+        return Err(e.clone().into());
     }
+    let (list, list_len, empty_ready) = exercises
+        .state
+        .read()
+        .data()
+        .map(|data| (data.clone(), data.len(), true))
+        .unwrap_or_default();
 
-    let (list, list_len, empty_ok) = match &*exercises.state.read() {
-        AsyncState::Idle | AsyncState::Loading => (Vec::new(), 0, false),
-        AsyncState::Error(_) => (Vec::new(), 0, false),
-        AsyncState::Ready(data) => (data.clone(), data.len(), true),
-    };
     let rows: Vec<Element> = list
         .into_iter()
         .map(|ex| {
@@ -179,8 +168,8 @@ pub fn ExerciseLibrary() -> Element {
                 input {
                     class: "w-full min-h-11 px-4 border border-border rounded-md mb-4 focus:outline-none focus:border-primary",
                     placeholder: "{t!(\"exercise_library_filter_placeholder\")}",
-                    value: "{filter()}",
-                    oninput: move |ev| filter.set(ev.value().clone()),
+                    value: exercises.filter.read().clone(),
+                    oninput: move |ev| exercises.filter.set(ev.value().clone()),
                 }
                 section { class: "bg-surface rounded-lg p-4 mb-6 border border-border",
                     h2 { class: "text-xl font-semibold mt-0 mb-4", { t!("exercise_library_new_section") } }
@@ -233,7 +222,7 @@ pub fn ExerciseLibrary() -> Element {
                     ul { class: "list-none p-0 m-0",
                         {rows.into_iter()}
                     }
-                    if list_len == 0 && empty_ok {
+                    if list_len == 0 && empty_ready {
                         p { class: "text-text-muted italic py-4", { t!("exercise_library_empty") } }
                     }
                 }

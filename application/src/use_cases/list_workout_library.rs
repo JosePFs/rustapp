@@ -1,13 +1,11 @@
 use std::sync::Arc;
 
 use crate::ports::error::{ApplicationError, Result};
-use domain::repositories::ListWorkoutLibraryRead;
-use domain::vos::id::Id;
+use domain::repositories::ListWorkoutLibrary;
 use domain::vos::LibraryNameFilter;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ListWorkoutLibraryArgs {
-    pub specialist_id: String,
     pub name_filter: Option<String>,
 }
 
@@ -19,11 +17,11 @@ pub struct WorkoutLibraryItem {
     pub order_index: i32,
 }
 
-pub struct ListWorkoutLibraryUseCase<R: ListWorkoutLibraryRead> {
+pub struct ListWorkoutLibraryUseCase<R: ListWorkoutLibrary> {
     catalog_read: Arc<R>,
 }
 
-impl<R: ListWorkoutLibraryRead> ListWorkoutLibraryUseCase<R> {
+impl<R: ListWorkoutLibrary> ListWorkoutLibraryUseCase<R> {
     pub fn new(catalog_read: Arc<R>) -> Self {
         Self { catalog_read }
     }
@@ -36,10 +34,9 @@ impl<R: ListWorkoutLibraryRead> ListWorkoutLibraryUseCase<R> {
             .map(LibraryNameFilter::try_from)
             .transpose()?;
         let name_filter_ref = name_filter.as_ref();
-        let specialist_id = Id::try_from(args.specialist_id)?;
         let rows = self
             .catalog_read
-            .list_workout_library(&specialist_id, name_filter_ref)
+            .list_workout_library(name_filter_ref)
             .await
             .map_err(ApplicationError::from)?;
         Ok(rows
@@ -62,7 +59,7 @@ mod tests {
 
     use domain::entities::Workout;
     use domain::error::Result;
-    use domain::repositories::ListWorkoutLibraryRead;
+    use domain::repositories::ListWorkoutLibrary;
     use domain::vos::id::Id;
     use domain::vos::library_name_filter::LibraryNameFilter;
     use domain::vos::ScheduleOrderIndex;
@@ -83,10 +80,7 @@ mod tests {
         let uc = ListWorkoutLibraryUseCase::new(Arc::new(fake));
 
         let rows = uc
-            .execute(ListWorkoutLibraryArgs {
-                specialist_id: "550e8400-e29b-41d4-a716-446655440210".to_string(),
-                name_filter: None,
-            })
+            .execute(ListWorkoutLibraryArgs { name_filter: None })
             .await
             .unwrap();
 
@@ -108,10 +102,9 @@ mod tests {
     }
 
     #[common::async_trait_platform]
-    impl ListWorkoutLibraryRead for MockListWorkoutLibraryRead {
+    impl ListWorkoutLibrary for MockListWorkoutLibraryRead {
         async fn list_workout_library(
             &self,
-            _specialist_id: &Id,
             _name_filter: Option<&LibraryNameFilter>,
         ) -> Result<Vec<Workout>> {
             self.workouts.lock().unwrap().clone()

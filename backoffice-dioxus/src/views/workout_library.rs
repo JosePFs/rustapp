@@ -3,7 +3,6 @@ use dioxus::prelude::*;
 use dioxus_i18n::t;
 use dioxus_router::Link;
 
-use crate::app_context::AppContext;
 use crate::hooks::{
     create_workout::use_create_workout, delete_workout::use_delete_workout,
     update_workout::use_update_workout, workout_library::use_workout_library, AsyncState,
@@ -13,8 +12,6 @@ use application::use_cases::update_workout::UpdateWorkoutInput;
 
 #[component]
 pub fn WorkoutLibrary() -> Element {
-    let app_context = use_context::<AppContext>();
-    let session_signal = app_context.session();
     let mut filter = use_signal(|| String::new());
     let workouts = use_workout_library(filter);
     let update_workout = use_update_workout();
@@ -26,17 +23,6 @@ pub fn WorkoutLibrary() -> Element {
     let mut editing_id = use_signal(|| Option::<String>::None);
     let mut edit_name = use_signal(|| String::new());
     let mut edit_desc = use_signal(|| String::new());
-
-    let session = session_signal.read().clone();
-    if session.is_none() {
-        return rsx! {
-            div {
-                { t!("must_login_message") }
-                " "
-                Link { to: Route::LoginView {}, { t!("go_to_login") } }
-            }
-        };
-    }
 
     let (list, list_len, empty_ok) = match &*workouts.state.read() {
         AsyncState::Idle | AsyncState::Loading => (Vec::new(), 0, false),
@@ -183,7 +169,7 @@ pub fn WorkoutLibrary() -> Element {
                                 let mut action = create_workout.action.clone();
                                 let mut resource = workouts.resource.clone();
                                 spawn(async move {
-                                    action.call((name, desc)).await;
+                                    action.call(name, desc).await;
                                     new_name.set(String::new());
                                     new_desc.set(String::new());
                                     resource.restart();

@@ -117,16 +117,12 @@ impl GetProgramRead for SupabaseRestRepository {
 }
 
 #[common::async_trait_platform]
-impl ListWorkoutLibraryRead for SupabaseRestRepository {
+impl ListWorkoutLibrary for SupabaseRestRepository {
     async fn list_workout_library(
         &self,
-        specialist_id: &Id,
         name_filter: Option<&LibraryNameFilter>,
     ) -> Result<Vec<Workout>> {
-        let path = format!(
-            "/workouts?specialist_id=eq.{}&select=id,specialist_id,name,description,order_index,created_at,updated_at&order=order_index.asc,name.asc",
-            specialist_id.to_string()
-        );
+        let path = "/workouts?select=id,specialist_id,name,description,order_index,created_at,updated_at&order=order_index.asc,name.asc".to_string();
         let body = self.client.get(&path).await?;
         let rows: Vec<WorkoutDto> = parse_json(&body)?;
         let filtered: Vec<WorkoutDto> = if let Some(f) = name_filter {
@@ -208,15 +204,13 @@ impl ListExercisesForWorkoutRead for SupabaseRestRepository {
 }
 
 #[common::async_trait_platform]
-impl ListExerciseLibraryRead for SupabaseRestRepository {
+impl ListExerciseLibrary for SupabaseRestRepository {
     async fn list_exercise_library(
         &self,
-        specialist_id: &Id,
         name_filter: Option<&LibraryNameFilter>,
     ) -> Result<Vec<Exercise>> {
         let path = format!(
-            "/exercises?specialist_id=eq.{}&select=id,specialist_id,name,description,order_index,video_url,deleted_at,created_at&order=name.asc",
-            specialist_id.to_string()
+            "/exercises?&select=id,specialist_id,name,description,order_index,video_url,deleted_at,created_at&order=name.asc",
         );
         let body = self.client.get(&path).await?;
         let rows: Vec<ExerciseDto> = parse_json(&body)?;
@@ -348,24 +342,18 @@ impl GetPatientProgramFullRead for SupabaseRestRepository {
 
 #[common::async_trait_platform]
 impl GetSpecialistDashboardRead for SupabaseRestRepository {
-    async fn get_specialist_dashboard(&self, specialist_id: &Id) -> Result<SpecialistDashboard> {
+    async fn get_specialist_dashboard(&self) -> Result<SpecialistDashboard> {
         let path = "/rpc/get_specialist_dashboard";
-        let body = serde_json::json!({ "p_specialist_id": specialist_id.to_string() });
-        let response = self.client.post(path, &body.to_string()).await?;
+        let response = self.client.post(path, "").await?;
         let dto: SpecialistDashboardRpcDto = parse_json(&response)?;
         Ok(dto.into())
     }
 }
 
 #[common::async_trait_platform]
-impl AddSpecialistPatientWrite for SupabaseRestRepository {
-    async fn add_specialist_patient(
-        &self,
-        specialist_id: &Id,
-        patient_id: &Id,
-    ) -> Result<SpecialistPatient> {
+impl AddSpecialistPatient for SupabaseRestRepository {
+    async fn add_specialist_patient(&self, patient_id: &Id) -> Result<SpecialistPatient> {
         let payload = serde_json::json!({
-            "specialist_id": specialist_id.to_string(),
             "patient_id": patient_id.to_string()
         });
         let body = self
@@ -382,15 +370,13 @@ impl AddSpecialistPatientWrite for SupabaseRestRepository {
 }
 
 #[common::async_trait_platform]
-impl CreateProgramWrite for SupabaseRestRepository {
+impl CreateProgram for SupabaseRestRepository {
     async fn create_program(
         &self,
-        specialist_id: &Id,
         name: &ProgramName,
         description: Option<&Description>,
     ) -> Result<Program> {
         let payload = serde_json::json!({
-            "specialist_id": specialist_id.to_string(),
             "name": name.value(),
             "description": description.map(|d| d.value())
         });
@@ -405,15 +391,13 @@ impl CreateProgramWrite for SupabaseRestRepository {
 }
 
 #[common::async_trait_platform]
-impl CreateWorkoutWrite for SupabaseRestRepository {
+impl CreateWorkout for SupabaseRestRepository {
     async fn create_workout(
         &self,
-        specialist_id: &Id,
         name: &WorkoutName,
         description: Option<&Description>,
     ) -> Result<Workout> {
         let payload = serde_json::json!({
-            "specialist_id": specialist_id.to_string(),
             "name": name.value(),
             "description": description.map(|d| d.value()),
             "order_index": 0
@@ -513,14 +497,12 @@ impl DeleteProgramScheduleItemWrite for SupabaseRestRepository {
 impl CreateExerciseWrite for SupabaseRestRepository {
     async fn create_exercise(
         &self,
-        specialist_id: &Id,
         name: &ExerciseName,
         description: Option<&Description>,
         order_index: ScheduleOrderIndex,
         video_url: Option<&VideoUrl>,
     ) -> Result<Exercise> {
         let mut payload = serde_json::json!({
-            "specialist_id": specialist_id.to_string(),
             "name": name.value(),
             "description": description.map(|d| d.value()),
             "order_index": order_index.value()
@@ -799,7 +781,7 @@ impl UncompleteSessionCatalogWrite for SupabaseRestRepository {
 }
 
 #[common::async_trait_platform]
-impl PatientSessionWriteRepository for SupabaseRestRepository {
+impl PatientSessionRepository for SupabaseRestRepository {
     async fn get_or_create_session(
         &self,
         patient_program_id: &Id,

@@ -2,10 +2,6 @@ use std::collections::HashMap;
 
 use dioxus::prelude::*;
 
-use dioxus_i18n::t;
-use dioxus_router::Link;
-
-use crate::app_context::AppContext;
 use crate::hooks::create_program_schedule_item::use_create_program_schedule_item;
 use crate::hooks::delete_program_schedule_item::use_delete_program_schedule_item;
 use crate::hooks::list_program_schedule::use_program_schedule_data;
@@ -14,8 +10,6 @@ use crate::Route;
 
 #[component]
 pub fn ProgramEditor(id: String) -> Element {
-    let app_context = use_context::<AppContext>();
-    let session_signal = app_context.session();
     let program_id = id.clone();
 
     let create_schedule_item = use_create_program_schedule_item();
@@ -26,17 +20,6 @@ pub fn ProgramEditor(id: String) -> Element {
     let mut schedule_block_rest = use_signal(|| true);
     let mut schedule_workout_id = use_signal(|| Option::<String>::None);
     let mut schedule_days = use_signal(|| 1i32);
-
-    let session = session_signal.read().clone();
-    if session.is_none() {
-        return rsx! {
-            div {
-                { t!("must_login_message") }
-                " "
-                Link { to: Route::LoginView {}, { t!("go_to_login") } }
-            }
-        };
-    }
 
     let schedule_data_value = schedule_data
         .resource

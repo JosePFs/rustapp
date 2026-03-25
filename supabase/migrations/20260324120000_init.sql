@@ -29,7 +29,7 @@ COMMENT ON TABLE profiles IS 'User profiles; id is auth.uid()';
 -- Specialist–patient relationship (a specialist has many patients)
 CREATE TABLE specialist_patients (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    specialist_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    specialist_id UUID NOT NULL DEFAULT auth.uid() REFERENCES profiles(id) ON DELETE CASCADE,
     patient_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT uq_specialist_patient UNIQUE (specialist_id, patient_id),
@@ -689,7 +689,7 @@ ALTER TABLE workouts DROP COLUMN IF EXISTS days_count;
 ALTER TABLE workouts DROP COLUMN IF EXISTS rest_days_after;
 
 -- 3) Exercises: add specialist_id (exercise library per specialist)
-ALTER TABLE exercises ADD COLUMN IF NOT EXISTS specialist_id UUID REFERENCES profiles(id) ON DELETE CASCADE;
+ALTER TABLE exercises ADD COLUMN IF NOT EXISTS specialist_id UUID DEFAULT auth.uid() REFERENCES profiles(id) ON DELETE CASCADE;
 
 UPDATE exercises e
 SET specialist_id = (SELECT p.specialist_id FROM workouts w JOIN programs p ON p.id = w.program_id WHERE w.id = e.workout_id LIMIT 1);
@@ -1253,7 +1253,7 @@ COMMENT ON FUNCTION public.get_patient_program_full(uuid) IS
 GRANT EXECUTE ON FUNCTION public.get_patient_program_full(uuid) TO authenticated;
 
 -- RPC: get_specialist_dashboard
-CREATE OR REPLACE FUNCTION public.get_specialist_dashboard(p_specialist_id uuid)
+CREATE OR REPLACE FUNCTION public.get_specialist_dashboard()
 RETURNS jsonb
 LANGUAGE sql
 STABLE
@@ -1271,7 +1271,7 @@ AS $$
                 )
             )
             FROM specialist_patients sp
-            WHERE sp.specialist_id = p_specialist_id
+            WHERE sp.specialist_id = auth.uid()
         ), '[]'::jsonb),
         'profiles', COALESCE((
             SELECT jsonb_agg(
@@ -1287,7 +1287,7 @@ AS $$
             FROM profiles prof
             WHERE prof.id IN (
                 SELECT sp2.patient_id FROM specialist_patients sp2
-                WHERE sp2.specialist_id = p_specialist_id
+                WHERE sp2.specialist_id = auth.uid()
             )
         ), '[]'::jsonb),
         'programs', COALESCE((
@@ -1300,7 +1300,7 @@ AS $$
                 ) ORDER BY prog.created_at DESC
             )
             FROM programs prog
-            WHERE prog.specialist_id = p_specialist_id
+            WHERE prog.specialist_id = auth.uid()
         ), '[]'::jsonb),
         'assignments', COALESCE((
             SELECT jsonb_agg(
@@ -1314,7 +1314,7 @@ AS $$
             FROM patient_programs pp
             WHERE pp.patient_id IN (
                 SELECT sp3.patient_id FROM specialist_patients sp3
-                WHERE sp3.specialist_id = p_specialist_id
+                WHERE sp3.specialist_id = auth.uid()
             )
         ), '[]'::jsonb)
     );

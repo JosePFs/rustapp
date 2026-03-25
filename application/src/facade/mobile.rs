@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::ports::error::Result;
-use domain::repositories::{PatientSessionWriteRepository, SpecialistCatalogReadRepository};
+use domain::repositories::{PatientSessionRepository, SpecialistCatalogReadRepository};
 
 use crate::ports::api::MobileApi;
 use crate::ports::auth::AuthService;
@@ -20,7 +20,7 @@ use crate::use_cases::uncomplete_patient_workout_session::{
 
 pub struct MobileFacade<D, A>
 where
-    D: SpecialistCatalogReadRepository + PatientSessionWriteRepository + Send + Sync,
+    D: SpecialistCatalogReadRepository + PatientSessionRepository + Send + Sync,
     A: AuthService + Send + Sync,
 {
     pub(crate) login_uc: Arc<MobileLoginUseCase<D, A>>,
@@ -33,7 +33,7 @@ where
 
 impl<D, A> MobileFacade<D, A>
 where
-    D: SpecialistCatalogReadRepository + PatientSessionWriteRepository + Send + Sync,
+    D: SpecialistCatalogReadRepository + PatientSessionRepository + Send + Sync,
     A: AuthService + Send + Sync,
 {
     pub fn builder(repository: Arc<D>, auth: Arc<A>) -> MobileFacadeBuilder<D, A> {
@@ -44,7 +44,7 @@ where
 #[common::async_trait_platform]
 impl<D, A> MobileApi for MobileFacade<D, A>
 where
-    D: SpecialistCatalogReadRepository + PatientSessionWriteRepository + Send + Sync,
+    D: SpecialistCatalogReadRepository + PatientSessionRepository + Send + Sync,
     A: AuthService + Send + Sync,
 {
     async fn login(&self, args: LoginUseCaseArgs) -> Result<LoginUseCaseResult> {
@@ -78,7 +78,7 @@ where
 
 pub struct MobileFacadeBuilder<D, A>
 where
-    D: SpecialistCatalogReadRepository + PatientSessionWriteRepository + Send + Sync,
+    D: SpecialistCatalogReadRepository + PatientSessionRepository + Send + Sync,
     A: AuthService + Send + Sync,
 {
     repository: Arc<D>,
@@ -87,7 +87,7 @@ where
 
 impl<D, A> MobileFacadeBuilder<D, A>
 where
-    D: SpecialistCatalogReadRepository + PatientSessionWriteRepository + Send + Sync,
+    D: SpecialistCatalogReadRepository + PatientSessionRepository + Send + Sync,
     A: AuthService + Send + Sync,
 {
     pub fn new(repository: Arc<D>, auth: Arc<A>) -> Self {
@@ -97,7 +97,7 @@ where
 
 impl<D, A> MobileFacadeBuilder<D, A>
 where
-    D: SpecialistCatalogReadRepository + PatientSessionWriteRepository + Send + Sync,
+    D: SpecialistCatalogReadRepository + PatientSessionRepository + Send + Sync,
     A: AuthService + Send + Sync,
 {
     pub fn build(self) -> Arc<MobileFacade<D, A>> {

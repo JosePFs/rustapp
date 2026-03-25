@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use domain::entities::{Exercise, PatientProgram, Program, SpecialistPatient};
 use domain::entities::{ProgramScheduleItem, Workout};
-use domain::repositories::{SpecialistCatalogReadRepository, SpecialistCatalogWriteRepository};
+use domain::repositories::SpecialistRepository;
 
 use crate::ports::api::BackofficeApi;
 use crate::ports::auth::AuthService;
@@ -49,7 +49,7 @@ use crate::use_cases::remove_exercise_from_workout::{
 use crate::use_cases::restore_exercise::{RestoreExerciseArgs, RestoreExerciseUseCase};
 use crate::use_cases::soft_delete_exercise::{SoftDeleteExerciseArgs, SoftDeleteExerciseUseCase};
 use crate::use_cases::specialist_programs_data::{
-    SpecialistProgramsDataArgs, SpecialistProgramsDataResult, SpecialistProgramsDataUseCase,
+    SpecialistProgramsDataResult, SpecialistProgramsDataUseCase,
 };
 use crate::use_cases::update_exercise::{UpdateExerciseArgs, UpdateExerciseUseCase};
 use crate::use_cases::update_workout::{UpdateWorkoutArgs, UpdateWorkoutUseCase};
@@ -62,8 +62,8 @@ use crate::use_cases::workout_editor_data::{
 
 pub struct BackofficeFacade<D, A>
 where
-    D: SpecialistCatalogReadRepository + SpecialistCatalogWriteRepository + Send + Sync,
-    A: AuthService + Send + Sync,
+    D: SpecialistRepository,
+    A: AuthService,
 {
     pub login_uc: Arc<LoginUseCase<D, A>>,
     pub add_specialist_patient_uc: Arc<AddSpecialistPatientUseCase<D>>,
@@ -93,8 +93,8 @@ where
 #[common::async_trait_platform]
 impl<D, A> BackofficeApi for BackofficeFacade<D, A>
 where
-    D: SpecialistCatalogReadRepository + SpecialistCatalogWriteRepository + Send + Sync,
-    A: AuthService + Send + Sync,
+    D: SpecialistRepository,
+    A: AuthService,
 {
     async fn login(&self, args: LoginUseCaseArgs) -> Result<LoginUseCaseResult> {
         self.login_uc.execute(args).await
@@ -157,11 +157,8 @@ where
             .await
     }
 
-    async fn specialist_programs_data(
-        &self,
-        args: SpecialistProgramsDataArgs,
-    ) -> Result<SpecialistProgramsDataResult> {
-        self.specialist_programs_data_uc.execute(args).await
+    async fn specialist_programs_data(&self) -> Result<SpecialistProgramsDataResult> {
+        self.specialist_programs_data_uc.execute().await
     }
 
     async fn list_exercise_library(

@@ -40,6 +40,8 @@ mark_as_uncompleted = Marcar como no completado
 # Errors
 error_config = Configuration error: { $detail }
 error_unexpected = Ocurrió un error: { $detail }
+error_unexpected_title = Algo salió mal
+error_retry = Intentar de nuevo
 wrong_credentials = Correo electrónico o contraseña incorrectos
 error_programs = Error al obtener programas
 error_no_active_assignment = No se encuentra la asignación activa
@@ -77,6 +79,10 @@ specialist_programs_all_filtered = Todos
 specialist_programs_none = Ninguno
 specialist_programs_eligible_patients = Pacientes elegibles
 specialist_programs_select_programs_first = Selecciona primero uno o más programas para ver los pacientes disponibles.
+specialist_programs_nav_patients = Pacientes
+specialist_programs_nav_exercises = Biblioteca de ejercicios
+specialist_programs_nav_workouts = Biblioteca de entrenamientos
+specialist_programs_logout = Cerrar sesión
 
 # Patient workout session
 workout_no_exercises = Este entrenamiento no tiene ejercicios configurados.

@@ -6,12 +6,12 @@ pub trait SpecialistCatalogReadRepository:
     + ListSpecialistPatientsRead
     + ListProgramsRead
     + GetProgramRead
-    + ListWorkoutLibraryRead
+    + ListWorkoutLibrary
     + GetWorkoutsByIdsRead
     + ListWorkoutsForProgramRead
     + ListProgramScheduleRead
     + ListExercisesForWorkoutRead
-    + ListExerciseLibraryRead
+    + ListExerciseLibrary
     + ListPatientProgramsForSpecialistRead
     + GetPatientProgramByIdRead
     + ListWorkoutSessionsRead
@@ -31,12 +31,12 @@ impl<T> SpecialistCatalogReadRepository for T where
         + ListSpecialistPatientsRead
         + ListProgramsRead
         + GetProgramRead
-        + ListWorkoutLibraryRead
+        + ListWorkoutLibrary
         + GetWorkoutsByIdsRead
         + ListWorkoutsForProgramRead
         + ListProgramScheduleRead
         + ListExercisesForWorkoutRead
-        + ListExerciseLibraryRead
+        + ListExerciseLibrary
         + ListPatientProgramsForSpecialistRead
         + GetPatientProgramByIdRead
         + ListWorkoutSessionsRead

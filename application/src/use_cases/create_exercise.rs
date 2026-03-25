@@ -3,12 +3,10 @@ use std::sync::Arc;
 use crate::ports::error::{ApplicationError, Result};
 use domain::entities::Exercise;
 use domain::repositories::CreateExerciseWrite;
-use domain::vos::id::Id;
 use domain::vos::{Description, ExerciseName, ScheduleOrderIndex, VideoUrl};
 
 #[derive(Clone)]
 pub struct CreateExerciseArgs {
-    pub specialist_id: String,
     pub name: String,
     pub description: Option<String>,
     pub order_index: i32,
@@ -25,7 +23,6 @@ impl<W: CreateExerciseWrite> CreateExerciseUseCase<W> {
     }
 
     pub async fn execute(&self, args: CreateExerciseArgs) -> Result<Exercise> {
-        let specialist_id = Id::try_from(args.specialist_id)?;
         let name = ExerciseName::try_from(args.name)?;
         let description = args
             .description
@@ -41,13 +38,7 @@ impl<W: CreateExerciseWrite> CreateExerciseUseCase<W> {
             .transpose()?;
         let video_url_ref = video_url.as_ref();
         self.catalog_write
-            .create_exercise(
-                &specialist_id,
-                &name,
-                description_ref,
-                order_index,
-                video_url_ref,
-            )
+            .create_exercise(&name, description_ref, order_index, video_url_ref)
             .await
             .map_err(ApplicationError::from)
     }
@@ -61,6 +52,7 @@ mod tests {
 
     use domain::error::DomainError;
     use domain::error::Result;
+    use domain::vos::id::Id;
 
     const SPEC: &str = "550e8400-e29b-41d4-a716-446655440310";
 
@@ -81,7 +73,6 @@ mod tests {
 
         let err = uc
             .execute(CreateExerciseArgs {
-                specialist_id: SPEC.to_string(),
                 name: "".to_string(),
                 description: None,
                 order_index: 0,
@@ -113,7 +104,6 @@ mod tests {
 
         let got = uc
             .execute(CreateExerciseArgs {
-                specialist_id: SPEC.to_string(),
                 name: "Push-up".to_string(),
                 description: None,
                 order_index: 1,
@@ -145,7 +135,6 @@ mod tests {
     impl CreateExerciseWrite for MockCreateExerciseWrite {
         async fn create_exercise(
             &self,
-            _specialist_id: &Id,
             name: &ExerciseName,
             _description: Option<&Description>,
             _order_index: ScheduleOrderIndex,

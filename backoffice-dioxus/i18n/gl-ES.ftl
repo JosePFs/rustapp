@@ -77,6 +77,10 @@ specialist_programs_all_filtered = Todos
 specialist_programs_none = Ningún
 specialist_programs_eligible_patients = Pacientes elexibles
 specialist_programs_select_programs_first = Selecciona primeiro un ou máis programas para ver os pacientes dispoñibles.
+specialist_programs_nav_patients = Pacientes
+specialist_programs_nav_exercises = Biblioteca de exercicios
+specialist_programs_nav_workouts = Biblioteca de adestramentos
+specialist_programs_logout = Pechar sesión
 
 # Patient workout session
 workout_no_exercises = Este adestramento non ten exercicios configurados.

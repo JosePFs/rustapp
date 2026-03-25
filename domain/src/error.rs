@@ -11,6 +11,12 @@ pub enum DomainError {
     AuthenticationFailed(String),
 }
 
+impl DomainError {
+    pub fn is_auth_error(&self) -> bool {
+        matches!(self, Self::AuthenticationFailed(_) | Self::Login(_))
+    }
+}
+
 impl Display for DomainError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {

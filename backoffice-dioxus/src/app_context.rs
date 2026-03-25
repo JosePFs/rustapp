@@ -1,9 +1,6 @@
 use std::sync::Arc;
 
-use dioxus::signals::Signal;
-
 use application::facade::BackofficeFacade;
-use application::ports::auth::Session;
 use application::{
     use_cases::add_exercise_to_workout::AddExerciseToWorkoutUseCase,
     use_cases::add_specialist_patient::AddSpecialistPatientUseCase,
@@ -37,20 +34,12 @@ use infrastructure::supabase::repositories::{
 
 #[derive(Clone)]
 pub struct AppContext {
-    session: Signal<Option<Session>>,
     backoffice: BackofficeFacadeHandle,
 }
 
 impl AppContext {
-    pub fn new(session: Option<Session>, backoffice: BackofficeFacadeHandle) -> Self {
-        Self {
-            session: Signal::new(session),
-            backoffice,
-        }
-    }
-
-    pub fn session(&self) -> Signal<Option<Session>> {
-        self.session
+    pub fn new(backoffice: BackofficeFacadeHandle) -> Self {
+        Self { backoffice }
     }
 
     pub fn backoffice_facade(&self) -> BackofficeFacadeHandle {
@@ -158,7 +147,7 @@ pub fn build_app_context() -> Result<AppContext> {
         workout_editor_data_uc: workout_editor_data_use_case,
     });
 
-    Ok(AppContext::new(None, backoffice_facade))
+    Ok(AppContext::new(backoffice_facade))
 }
 
 pub type BackofficeFacadeHandle = Arc<BackofficeFacade<SupabaseRestRepository, SupabaseAuth>>;

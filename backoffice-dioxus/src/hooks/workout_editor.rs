@@ -1,4 +1,3 @@
-use application::ports::error::ApplicationError;
 use dioxus::prelude::*;
 
 use crate::{hooks::app_context::use_app_context, hooks::AsyncState};
@@ -14,28 +13,17 @@ pub struct UseWorkoutEditor {
 
 pub fn use_workout_editor(workout_id: String) -> UseWorkoutEditor {
     let app_context = use_app_context();
-    let app_session = app_context.session();
     let facade = app_context.backoffice_facade();
     let mut state = use_signal(|| AsyncState::<WorkoutEditorDataResult>::Loading);
 
     let facade = facade.clone();
     let resource = use_resource(move || {
-        let maybe_session_ref = app_session.read().clone();
         let facade = facade.clone();
         let workout_id = workout_id.clone();
 
         async move {
-            let Some(session) = maybe_session_ref.as_ref() else {
-                return Err(ApplicationError::NoSession);
-            };
-
-            let specialist_id = session.user_id().to_string();
-
             facade
-                .workout_editor_data(WorkoutEditorDataArgs {
-                    specialist_id,
-                    workout_id,
-                })
+                .workout_editor_data(WorkoutEditorDataArgs { workout_id })
                 .await
         }
     });

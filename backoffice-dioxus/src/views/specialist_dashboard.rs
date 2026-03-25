@@ -6,7 +6,6 @@ use dioxus_i18n::t;
 use dioxus_primitives::ContentSide;
 use dioxus_router::Link;
 
-use crate::app_context::AppContext;
 use crate::components::{Tooltip, TooltipContent, TooltipTrigger};
 use crate::hooks::{
     add_specialist_patient::use_add_specialist_patient,
@@ -16,8 +15,6 @@ use crate::Route;
 
 #[component]
 pub fn SpecialistPatients() -> Element {
-    let app_context = use_context::<AppContext>();
-    let session_signal = app_context.session();
     let patients = use_specialist_patients();
     let add_patient = use_add_specialist_patient();
 
@@ -28,19 +25,6 @@ pub fn SpecialistPatients() -> Element {
             add_patient_email.set(String::new());
         }
     });
-
-    let session = session_signal.read().clone();
-
-    if session.is_none() {
-        return rsx! {
-            div { class: "p-6 text-center",
-                p { { t!("must_login_message") } }
-                Link { to: Route::LoginView {}, class: "text-primary underline", { t!("go_to_login") } }
-            }
-        };
-    }
-
-    let _sess = session.as_ref().unwrap();
 
     let resource = patients.resource.clone();
 

@@ -3,7 +3,6 @@ use dioxus::prelude::*;
 use dioxus_i18n::t;
 use dioxus_router::Link;
 
-use crate::app_context::AppContext;
 use crate::hooks::{
     add_exercise_to_workout::use_add_exercise_to_workout,
     remove_exercise_from_workout::use_remove_exercise_from_workout,
@@ -15,8 +14,6 @@ use application::use_cases::workout_editor_data::WorkoutEditorExerciseItem;
 
 #[component]
 pub fn WorkoutEditor(id: String) -> Element {
-    let app_context = use_context::<AppContext>();
-    let session_signal = app_context.session();
     let data = use_workout_editor(id.clone());
     let add_exercise = use_add_exercise_to_workout();
     let remove_exercise = use_remove_exercise_from_workout();
@@ -24,17 +21,6 @@ pub fn WorkoutEditor(id: String) -> Element {
 
     let mut add_exercise_id = use_signal(|| Option::<String>::None);
     let sets_reps = use_signal(|| std::collections::HashMap::<String, (i32, i32)>::new());
-
-    let session = session_signal.read().clone();
-    if session.is_none() {
-        return rsx! {
-            div {
-                { t!("must_login_message") }
-                " "
-                Link { to: Route::LoginView {}, { t!("go_to_login") } }
-            }
-        };
-    }
 
     let (workout_opt, exs, library_list) = match &*data.state.read() {
         AsyncState::Idle | AsyncState::Loading => (None, Vec::new(), Vec::new()),

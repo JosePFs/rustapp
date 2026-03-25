@@ -4,7 +4,7 @@ use crate::vos::id::Id;
 use crate::vos::{DayIndex, EffortScore, FeedbackComment, PainScore, SessionDate};
 
 #[common::async_trait_platform]
-pub trait PatientSessionWriteRepository: Send + Sync {
+pub trait PatientSessionRepository: Send + Sync {
     async fn get_or_create_session(
         &self,
         patient_program_id: &Id,

@@ -5,12 +5,11 @@ use futures::TryFutureExt;
 
 use crate::ports::error::{ApplicationError, Result};
 use domain::entities::Exercise;
-use domain::repositories::{GetWorkoutWithExercisesRead, ListExerciseLibraryRead};
+use domain::repositories::{GetWorkoutWithExercisesRead, ListExerciseLibrary};
 use domain::vos::id::Id;
 
 #[derive(Clone)]
 pub struct WorkoutEditorDataArgs {
-    pub specialist_id: String,
     pub workout_id: String,
 }
 
@@ -60,17 +59,16 @@ pub struct WorkoutEditorDataResult {
     pub library: Vec<WorkoutEditorExerciseItem>,
 }
 
-pub struct WorkoutEditorDataUseCase<R: GetWorkoutWithExercisesRead + ListExerciseLibraryRead> {
+pub struct WorkoutEditorDataUseCase<R: GetWorkoutWithExercisesRead + ListExerciseLibrary> {
     catalog_read: Arc<R>,
 }
 
-impl<R: GetWorkoutWithExercisesRead + ListExerciseLibraryRead> WorkoutEditorDataUseCase<R> {
+impl<R: GetWorkoutWithExercisesRead + ListExerciseLibrary> WorkoutEditorDataUseCase<R> {
     pub fn new(catalog_read: Arc<R>) -> Self {
         Self { catalog_read }
     }
 
     pub async fn execute(&self, args: WorkoutEditorDataArgs) -> Result<WorkoutEditorDataResult> {
-        let specialist_id = Id::try_from(args.specialist_id)?;
         let workout_id = Id::try_from(args.workout_id)?;
 
         let (workout_with_exercises, library_domain) = try_join!(
@@ -78,7 +76,7 @@ impl<R: GetWorkoutWithExercisesRead + ListExerciseLibraryRead> WorkoutEditorData
                 .get_workout_with_exercises(&workout_id)
                 .map_err(ApplicationError::from),
             self.catalog_read
-                .list_exercise_library(&specialist_id, None)
+                .list_exercise_library(None)
                 .map_err(ApplicationError::from),
         )?;
 
@@ -124,7 +122,7 @@ mod tests {
     use domain::aggregates::WorkoutWithExercises;
     use domain::entities::{Exercise, Workout};
     use domain::error::Result;
-    use domain::repositories::{GetWorkoutWithExercisesRead, ListExerciseLibraryRead};
+    use domain::repositories::{GetWorkoutWithExercisesRead, ListExerciseLibrary};
     use domain::vos::library_name_filter::LibraryNameFilter;
     use domain::vos::ScheduleOrderIndex;
 
@@ -138,7 +136,6 @@ mod tests {
 
         let res = uc
             .execute(WorkoutEditorDataArgs {
-                specialist_id: SPEC.to_string(),
                 workout_id: WID.to_string(),
             })
             .await
@@ -183,7 +180,6 @@ mod tests {
 
         let res = uc
             .execute(WorkoutEditorDataArgs {
-                specialist_id: SPEC.to_string(),
                 workout_id: WID.to_string(),
             })
             .await
@@ -226,10 +222,9 @@ mod tests {
     }
 
     #[common::async_trait_platform]
-    impl ListExerciseLibraryRead for MockWorkoutEditorRead {
+    impl ListExerciseLibrary for MockWorkoutEditorRead {
         async fn list_exercise_library(
             &self,
-            _specialist_id: &Id,
             _name_filter: Option<&LibraryNameFilter>,
         ) -> Result<Vec<Exercise>> {
             self.library.lock().unwrap().clone()

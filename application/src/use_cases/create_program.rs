@@ -2,28 +2,25 @@ use std::sync::Arc;
 
 use crate::ports::error::{ApplicationError, Result};
 use domain::entities::Program;
-use domain::repositories::CreateProgramWrite;
-use domain::vos::id::Id;
+use domain::repositories::CreateProgram;
 use domain::vos::{Description, ProgramName};
 
 #[derive(Clone)]
 pub struct CreateProgramArgs {
-    pub specialist_id: String,
     pub name: String,
     pub description: Option<String>,
 }
 
-pub struct CreateProgramUseCase<W: CreateProgramWrite> {
+pub struct CreateProgramUseCase<W: CreateProgram> {
     catalog_write: Arc<W>,
 }
 
-impl<W: CreateProgramWrite> CreateProgramUseCase<W> {
+impl<W: CreateProgram> CreateProgramUseCase<W> {
     pub fn new(catalog_write: Arc<W>) -> Self {
         Self { catalog_write }
     }
 
     pub async fn execute(&self, args: CreateProgramArgs) -> Result<Program> {
-        let specialist_id = Id::try_from(args.specialist_id)?;
         let name = ProgramName::try_from(args.name)?;
         let description = args
             .description
@@ -32,7 +29,7 @@ impl<W: CreateProgramWrite> CreateProgramUseCase<W> {
             .transpose()?;
         let description_ref = description.as_ref();
         self.catalog_write
-            .create_program(&specialist_id, &name, description_ref)
+            .create_program(&name, description_ref)
             .await
             .map_err(ApplicationError::from)
     }
@@ -46,6 +43,7 @@ mod tests {
 
     use domain::error::DomainError;
     use domain::error::Result;
+    use domain::vos::id::Id;
 
     const SPEC: &str = "550e8400-e29b-41d4-a716-446655440010";
 
@@ -62,7 +60,6 @@ mod tests {
 
         let err = uc
             .execute(CreateProgramArgs {
-                specialist_id: SPEC.to_string(),
                 name: "".to_string(),
                 description: None,
             })
@@ -88,7 +85,6 @@ mod tests {
 
         let got = uc
             .execute(CreateProgramArgs {
-                specialist_id: SPEC.to_string(),
                 name: "My prog".to_string(),
                 description: None,
             })
@@ -115,10 +111,9 @@ mod tests {
     }
 
     #[common::async_trait_platform]
-    impl CreateProgramWrite for MockCreateProgramWrite {
+    impl CreateProgram for MockCreateProgramWrite {
         async fn create_program(
             &self,
-            _specialist_id: &Id,
             name: &ProgramName,
             _description: Option<&Description>,
         ) -> Result<Program> {

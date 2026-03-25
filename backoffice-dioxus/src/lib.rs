@@ -1,3 +1,4 @@
+use application::ports::error::ApplicationError;
 use dioxus::prelude::*;
 
 use dioxus_i18n::prelude::*;
@@ -20,6 +21,7 @@ mod views;
 pub enum Route {
     #[route("/")]
     LoginView {},
+    #[layout(AppLayout)]
     #[route("/specialist")]
     SpecialistPatients {},
     #[route("/specialist/programs")]
@@ -36,10 +38,57 @@ pub enum Route {
     ProgramEditor { id: String },
 }
 
-pub fn launch() {
-    init_logging();
-    log::debug!("Launching backoffice app");
-    dioxus::launch(App);
+#[component]
+fn ErrorView(error: ErrorContext) -> Element {
+    let nav = use_navigator();
+
+    let is_auth_error = match error.error() {
+        Some(e) if e.downcast_ref::<ApplicationError>().is_some() => e
+            .downcast_ref::<ApplicationError>()
+            .map(|ae| ae.is_auth_error())
+            .unwrap_or(false),
+        _ => false,
+    };
+
+    use_effect(move || {
+        if is_auth_error {
+            nav.push(Route::LoginView {});
+        }
+    });
+
+    if is_auth_error {
+        return rsx! {};
+    }
+
+    let msg = error.error().map(|e| e.to_string()).unwrap_or_default();
+
+    rsx! {
+        div { class: "min-h-screen flex items-center justify-center bg-gray-50 p-4",
+        div { class: "max-w-md w-full bg-white rounded-lg shadow-lg p-6 border-l-4 border-red-500",
+            div { class: "flex items-center gap-3 mb-4",
+                svg { class: "w-8 h-8 text-red-500 flex-shrink-0", view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "2",
+                    circle { cx: "12", cy: "12", r: "10" }
+                    line { x1: "12", y1: "8", x2: "12", y2: "12" }
+                    line { x1: "12", y1: "16", x2: "12.01", y2: "16" }
+                }
+                h2 { class: "text-xl font-semibold text-gray-800", { t!("error_unexpected_title") } }
+            }
+            p { class: "text-gray-600 text-sm mb-4", { t!("error_unexpected", detail: msg) } }
+        }
+    }
+    }
+}
+
+#[component]
+fn AppLayout() -> Element {
+    rsx! {
+        ErrorBoundary {
+            handle_error: |error: ErrorContext| rsx! {
+                ErrorView { error }
+            },
+            Outlet::<Route> {}
+        }
+    }
 }
 
 #[component]
@@ -67,19 +116,15 @@ fn App() -> Element {
     rsx! {
         document::Link { rel: "icon", href: asset!("/assets/favicon.png") }
         document::Stylesheet { href: asset!("/assets/app.css") }
-
-        Title { "Eixe - Backoffice" }
-
-        ErrorBoundary {
-            handle_error: |error: ErrorContext| {
-                let msg = error.error().map(|e| e.to_string()).unwrap_or_default();
-                rsx! {
-                    div { { t!("error_unexpected", detail: msg) } }
-                }
-            },
-            Router::<Route> {}
-        }
+        Title { "Eixe" }
+        Router::<Route> {}
     }
+}
+
+pub fn launch() {
+    init_logging();
+    log::debug!("Launching backoffice app");
+    dioxus::launch(App);
 }
 
 fn init_logging() {

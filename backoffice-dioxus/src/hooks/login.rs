@@ -15,7 +15,6 @@ pub struct UseLogin {
 pub fn use_login() -> UseLogin {
     let app_context = use_app_context();
     let facade = app_context.backoffice_facade();
-    let mut app_session = app_context.session();
     let mut state = use_signal(|| AsyncState::<LoginUseCaseResult>::Idle);
 
     let facade_for_action = facade.clone();
@@ -40,12 +39,6 @@ pub fn use_login() -> UseLogin {
                     state.set(AsyncState::<LoginUseCaseResult>::Error(e.clone()));
                     e
                 })
-        }
-    });
-
-    use_effect(move || {
-        if let Some(Ok(login_use_case_result)) = action.value() {
-            app_session.set(Some(login_use_case_result().session));
         }
     });
 

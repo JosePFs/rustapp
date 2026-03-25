@@ -26,7 +26,7 @@ pub enum ApplicationError {
 impl ApplicationError {
     pub fn is_auth_error(&self) -> bool {
         match self {
-            ApplicationError::DomainError(_) => false,
+            ApplicationError::DomainError(e) => e.is_auth_error(),
             ApplicationError::NoSession => true,
             ApplicationError::NoRefreshToken => true,
             ApplicationError::RefreshFailed => true,
@@ -42,7 +42,7 @@ impl ApplicationError {
 impl Display for ApplicationError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ApplicationError::DomainError(error) => write!(f, "Domain error: {error}"),
+            ApplicationError::DomainError(error) => write!(f, "{error}"),
             ApplicationError::Api(status, message) => {
                 write!(f, "API error: {}: {}", status.0, message)
             }

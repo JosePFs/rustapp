@@ -2,12 +2,6 @@ use std::sync::Arc;
 
 use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::GetSpecialistDashboardRead;
-use domain::vos::id::Id;
-
-#[derive(Clone)]
-pub struct SpecialistProgramsDataArgs {
-    pub specialist_id: String,
-}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SpecialistPatientLink {
@@ -54,14 +48,10 @@ impl<R: GetSpecialistDashboardRead> SpecialistProgramsDataUseCase<R> {
         Self { catalog_read }
     }
 
-    pub async fn execute(
-        &self,
-        args: SpecialistProgramsDataArgs,
-    ) -> Result<SpecialistProgramsDataResult> {
-        let specialist_id = Id::try_from(args.specialist_id)?;
+    pub async fn execute(&self) -> Result<SpecialistProgramsDataResult> {
         let dashboard = self
             .catalog_read
-            .get_specialist_dashboard(&specialist_id)
+            .get_specialist_dashboard()
             .await
             .map_err(ApplicationError::from)?;
 
@@ -123,7 +113,6 @@ mod tests {
     use domain::aggregates::SpecialistDashboard;
     use domain::error::Result;
     use domain::repositories::GetSpecialistDashboardRead;
-    use domain::vos::id::Id;
 
     #[tokio::test]
     async fn maps_empty_dashboard() {
@@ -136,12 +125,7 @@ mod tests {
         let fake = MockGetSpecialistDashboardRead::new_ok(dash);
         let uc = SpecialistProgramsDataUseCase::new(Arc::new(fake));
 
-        let res = uc
-            .execute(SpecialistProgramsDataArgs {
-                specialist_id: "550e8400-e29b-41d4-a716-446655440200".to_string(),
-            })
-            .await
-            .unwrap();
+        let res = uc.execute().await.unwrap();
 
         assert!(res.links.is_empty());
         assert!(res.programs.is_empty());
@@ -162,10 +146,7 @@ mod tests {
 
     #[common::async_trait_platform]
     impl GetSpecialistDashboardRead for MockGetSpecialistDashboardRead {
-        async fn get_specialist_dashboard(
-            &self,
-            _specialist_id: &Id,
-        ) -> Result<SpecialistDashboard> {
+        async fn get_specialist_dashboard(&self) -> Result<SpecialistDashboard> {
             self.dashboard.lock().unwrap().clone()
         }
     }

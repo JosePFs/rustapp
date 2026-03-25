@@ -40,6 +40,8 @@ mark_as_uncompleted = Mark as uncompleted
 # Errors
 error_config = Configuration error: { $detail }
 error_unexpected = Oops, we encountered an error: { $detail }
+error_unexpected_title = Something went wrong
+error_retry = Try again
 wrong_credentials = Incorrect email address or password
 error_programs = Error fetching programs
 error_no_active_assignment = Active assignment not found
@@ -77,6 +79,10 @@ specialist_programs_all_filtered = All
 specialist_programs_none = None
 specialist_programs_eligible_patients = Eligible patients
 specialist_programs_select_programs_first = Select one or more programs first to see available patients.
+specialist_programs_nav_patients = Patients
+specialist_programs_nav_exercises = Exercise library
+specialist_programs_nav_workouts = Workout library
+specialist_programs_logout = Log out
 
 # Patient workout session
 workout_no_exercises = This workout has no exercises configured.
