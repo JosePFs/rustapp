@@ -3,6 +3,7 @@ use dioxus::prelude::*;
 
 use dioxus_i18n::prelude::*;
 use dioxus_i18n::t;
+use dioxus_primitives::separator::Separator;
 use dioxus_router::{Routable, Router};
 use unic_langid::langid;
 
@@ -11,6 +12,14 @@ use views::{
     ExerciseLibrary, LoginView, PatientProgress, ProgramEditor, SpecialistPatients,
     SpecialistPrograms, WorkoutEditor, WorkoutLibrary,
 };
+
+use crate::components::sidebar::{
+    Sidebar, SidebarCollapsible, SidebarContent, SidebarFooter, SidebarHeader, SidebarInset,
+    SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
+    SidebarVariant,
+};
+use dioxus_free_icons::icons::io_icons::{IoBarbell, IoFitness, IoFolderOpen, IoLogOut, IoPeople};
+use dioxus_free_icons::Icon;
 
 mod app_context;
 mod components;
@@ -86,7 +95,73 @@ fn AppLayout() -> Element {
             handle_error: |error: ErrorContext| rsx! {
                 ErrorView { error }
             },
-            Outlet::<Route> {}
+            SidebarProvider {
+                default_open: true,
+                Sidebar {
+                    collapsible: SidebarCollapsible::Icon,
+                    variant: SidebarVariant::Sidebar,
+                    class: "bg-surface border-r border-border",
+                    SidebarContent { class: "p-2",
+                        SidebarMenu {
+                            SidebarMenuItem {
+                                SidebarMenuButton {
+                                    Link { to: Route::SpecialistPatients {}, class: "flex items-center gap-3 w-full text-left",
+                                        Icon { width: 20, height: 20, icon: IoPeople }
+                                        span { "Pacientes" }
+                                    }
+                                }
+                            }
+                            SidebarMenuItem {
+                                SidebarMenuButton {
+                                    Link { to: Route::SpecialistPrograms {}, class: "flex items-center gap-3 w-full text-left",
+                                        Icon { width: 20, height: 20, icon: IoFolderOpen }
+                                        span { "Programas" }
+                                    }
+                                }
+                            }
+                            SidebarMenuItem {
+                                SidebarMenuButton {
+                                    Link { to: Route::ExerciseLibrary {}, class: "flex items-center gap-3 w-full text-left",
+                                        Icon { width: 20, height: 20, icon: IoBarbell }
+                                        span { "Ejercicios" }
+                                    }
+                                }
+                            }
+                            SidebarMenuItem {
+                                SidebarMenuButton {
+                                    Link { to: Route::WorkoutLibrary {}, class: "flex items-center gap-3 w-full text-left",
+                                        Icon { width: 20, height: 20, icon: IoFitness }
+                                        span { "Entrenamientos" }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    SidebarFooter { class: "p-2 border-t border-border",
+                        SidebarMenuItem {
+                            SidebarMenuButton {
+                                Link { to: Route::LoginView {}, class: "flex items-center gap-3 w-full text-left text-error",
+                                    Icon { width: 20, height: 20, icon: IoLogOut }
+                                    span { "Cerrar sesión" }
+                                }
+                            }
+                        }
+                    }
+                }
+                SidebarInset {
+                    header { class: "flex items-center justify-between h-14 flex-shrink-0 p-4 border-b border-border",
+                        div { class: "flex items-center gap-2",
+                            SidebarTrigger {}
+                            Separator { height: "1rem", horizontal: false }
+                            h1 { class: "text-xl font-semibold text-text", "Eixe" }
+                        }
+                    }
+
+                    div { class: "flex-1 min-h-screen overflow-auto",
+                        Outlet::<Route> {}
+                    }
+                }
+            }
         }
     }
 }
@@ -116,8 +191,11 @@ fn App() -> Element {
     rsx! {
         document::Link { rel: "icon", href: asset!("/assets/favicon.png") }
         document::Stylesheet { href: asset!("/assets/app.css") }
+        a { href: "#main-content", class: "skip-link", "Saltar al contenido principal" }
         Title { "Eixe" }
-        Router::<Route> {}
+        div { id: "main-content",
+            Router::<Route> {}
+        }
     }
 }
 

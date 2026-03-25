@@ -31,4 +31,20 @@
     padding-right: max(1rem, env(safe-area-inset-right));
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+
+  .focus-ring-inset {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset;
+  }
+
+  .skip-link {
+    @apply absolute -top-10 left-4 z-50 bg-primary text-white px-4 py-2 rounded-md transition-all;
+  }
+
+  .skip-link:focus {
+    @apply top-4;
+  }
 }

@@ -33,30 +33,7 @@ pub fn SpecialistPrograms() -> Element {
         div {
             class: "view container mx-auto specialist-dashboard",
             div {
-                class: "content min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
-                {
-                    let mut nav_open = use_signal(|| false);
-                    rsx! {
-                        nav { class: "relative mb-6",
-                            button {
-                                class: "min-h-11 px-0 bg-transparent text-2xl font-semibold inline-flex items-center gap-2 text-text",
-                                onclick: move |_| {
-                                    nav_open.set(!nav_open());
-                                },
-                                span { { t!("specialist_programs_title") } }
-                                span { class: "text-xs", if nav_open() { "▲" } else { "▼" } }
-                            }
-                            if nav_open() {
-                                div { class: "absolute z-10 mt-2 w-56 bg-surface border border-border rounded-md shadow-md flex flex-col py-1",
-                                    Link { to: Route::SpecialistPatients {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", { t!("specialist_programs_nav_patients") } }
-                                    Link { to: Route::ExerciseLibrary {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", { t!("specialist_programs_nav_exercises") } }
-                                    Link { to: Route::WorkoutLibrary {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", { t!("specialist_programs_nav_workouts") } }
-                                    Link { to: Route::LoginView {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", { t!("specialist_programs_logout") } }
-                                }
-                            }
-                        }
-                    }
-                }
+                class: "content w-full",
 
                 section { class: "bg-surface rounded-lg p-4 mb-6 shadow-sm border border-border",
                     div { class: "flex items-center gap-2 mt-0 mb-2",
@@ -89,7 +66,7 @@ pub fn SpecialistPrograms() -> Element {
                                 ul { class: "list-none p-0 m-0 mb-4",
                                     for p in d.programs.iter() {
                                         li { key: "{p.id}", class: "mb-1",
-                                            Link { to: Route::ProgramEditor { id: p.id.clone() }, class: "text-primary no-underline hover:underline", "{p.name}" }
+                                            Link { to: Route::ProgramEditor { id: p.id.clone() }, class: "text-primary no-underline hover:underline focus-ring", "{p.name}" }
                                         }
                                     }
                                 }
@@ -97,15 +74,19 @@ pub fn SpecialistPrograms() -> Element {
                         }
                     }
                     div { class: "flex flex-col gap-4 mt-4",
+                        label { class: "text-sm font-medium text-text", "Nombre del programa" }
                         input {
                             class: "w-full min-h-11 px-4 border border-border rounded-md bg-surface focus:outline-none focus:border-primary",
                             placeholder:  t!("program_name"),
+                            r#type: "text",
                             value: "{new_program_name()}",
                             oninput: move |ev| new_program_name.set(ev.value().clone()),
                         }
+                        label { class: "text-sm font-medium text-text", "Descripción" }
                         input {
                             class: "w-full min-h-11 px-4 border border-border rounded-md bg-surface focus:outline-none focus:border-primary",
                             placeholder:  t!("program_description"),
+                            r#type: "text",
                             value: "{new_program_desc()}",
                             oninput: move |ev| new_program_desc.set(ev.value().clone()),
                         }
@@ -155,6 +136,7 @@ pub fn SpecialistPrograms() -> Element {
 
                         div { class: "mb-6",
                             h3 { class: "text-lg font-semibold mb-2", { t!("specialist_programs_programs_section") } }
+                            label { class: "text-sm font-medium text-text", "Filtrar programas" }
                             input {
                                 class: "w-full min-h-11 px-4 border border-border rounded-md bg-surface mb-4 focus:outline-none focus:border-primary",
                                 r#type: "text",
@@ -235,6 +217,7 @@ pub fn SpecialistPrograms() -> Element {
                             if selected_program_ids().is_empty() {
                                 p { class: "text-sm text-text-muted", { t!("specialist_programs_select_programs_first") } }
                             } else {
+                                label { class: "text-sm font-medium text-text", "Filtrar pacientes" }
                                 input {
                                     class: "w-full min-h-11 px-4 border border-border rounded-md bg-surface mb-4 focus:outline-none focus:border-primary",
                                     r#type: "text",

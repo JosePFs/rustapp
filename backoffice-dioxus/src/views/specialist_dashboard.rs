@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use dioxus_free_icons::icons::io_icons::IoInformationCircle;
+use dioxus_free_icons::icons::io_icons::{IoAdd, IoInformationCircle};
 use dioxus_free_icons::Icon;
 use dioxus_i18n::t;
 use dioxus_primitives::ContentSide;
@@ -30,33 +30,8 @@ pub fn SpecialistPatients() -> Element {
 
     rsx! {
         div {
-            class: "view container mx-auto specialist-dashboard",
-            div {
-                class: "content min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
-                {
-                    let mut nav_open = use_signal(|| false);
-                    rsx! {
-                        nav { class: "relative mb-6",
-                            button {
-                                class: "min-h-11 px-0 bg-transparent text-2xl font-semibold inline-flex items-center gap-2 text-text",
-                                onclick: move |_| {
-                                    nav_open.set(!nav_open());
-                                },
-                                span { "Pacientes" }
-                                span { class: "text-xs", if nav_open() { "▲" } else { "▼" } }
-                            }
-                            if nav_open() {
-                                div { class: "absolute z-10 mt-2 w-56 bg-surface border border-border rounded-md shadow-md flex flex-col py-1",
-                                    Link { to: Route::SpecialistPrograms {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", "Programas y asignación" }
-                                    Link { to: Route::ExerciseLibrary {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", "Biblioteca de ejercicios" }
-                                    Link { to: Route::WorkoutLibrary {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", "Biblioteca de entrenamientos" }
-                                    Link { to: Route::LoginView {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", "Cerrar sesión" }
-                                }
-                            }
-                        }
-                    }
-                }
-
+            class: "view container mx-auto specialist-dashboard w-full",
+            div { class: "content w-full",
                 section { class: "bg-surface rounded-lg p-4 mb-6 shadow-sm border border-border",
                     div { class: "flex items-center gap-2 mt-0 mb-2",
                         h2 { class: "text-xl font-semibold m-0", "Pacientes" }
@@ -90,7 +65,7 @@ pub fn SpecialistPatients() -> Element {
                                         li { key: "{link.link_id}", class: "mb-1",
                                             Link {
                                                 to: Route::PatientProgress { id: link.patient_id.clone() },
-                                                class: "block p-4 min-h-11 text-primary no-underline rounded-md border border-border bg-surface hover:bg-gray-50 hover:border-primary",
+                                                class: "block p-4 min-h-11 text-primary no-underline rounded-md border border-border bg-surface hover:bg-gray-50 hover:border-primary focus-ring",
                                                 {
                                                     data.profiles
                                                         .iter()
@@ -113,7 +88,7 @@ pub fn SpecialistPatients() -> Element {
                                             oninput: move |ev| add_patient_email.set(ev.value().clone()),
                                         }
                                         button {
-                                            class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed",
+                                            class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2",
                                             disabled: add_patient.state.read().is_loading() || add_patient_email().trim().is_empty(),
                                             onclick: move |_| {
                                                 let email_val = add_patient_email().trim().to_string();
@@ -125,6 +100,7 @@ pub fn SpecialistPatients() -> Element {
                                                     resource_clone.restart();
                                                 });
                                             },
+                                            Icon { width: 18, height: 18, icon: IoAdd }
                                             { t!("add_patient_link") }
                                         }
                                     }

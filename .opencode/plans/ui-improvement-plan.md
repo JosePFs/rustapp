@@ -1,13 +1,14 @@
 # Plan: Mejoras en UI del Backoffice Dioxus
 
 ## Objetivo
-Identificar y proponer mejoras en la interfaz de usuario del crate `backoffice-dioxus`.
+Identificar y proponer mejoras en la interfaz de usuario del crate `backoffice-dioxus` con foco en **accesibilidad**.
 
 ## Target
-- **Plataforma**: Web (navegador de escritorio)
-- **Dispositivos**: Pantalla normal (desktop 1024px+) y Tablet (768px-1023px)
-- **Interacción**: Mouse y teclado (no touch)
-- **Soporte**: Navegadores modernos (Chrome, Firefox, Safari, Edge)
+- **Plataforma**: Web (navegador)
+- **Dispositivos**: Desktop (≥1024px) - Prioridad principal
+- **Dispositivos**: Tablet (768px-1023px) - Soporte secundario
+- **Interacción**: Mouse y teclado
+- **Navegadores**: Chrome, Firefox, Safari, Edge (últimas versiones)
 
 ## Análisis de la UI Actual
 
@@ -33,60 +34,52 @@ Identificar y proponer mejoras en la interfaz de usuario del crate `backoffice-d
 - Colores definidos: primary, surface, text-muted, border, error, success
 - Radio: sm (4px), md (8px), lg (12px)
 
-### Breakpoints actuales en uso
-- min-w-[280px] - Móvil
-- sm:min-w-[320px] - Tablets pequeñas
-- md:min-w-[400px] - Tablets grandes
-- lg:min-w-2xl - Desktop
+### Breakpoints en uso
+- min-w-[280px], sm:min-w-[320px], md:min-w-[400px], lg:min-w-2xl
 
-## Target
-- **Plataforma**: Web (navegador)
-- **Dispositivos**: Desktop (≥1024px) y Tablet (768px-1023px)
-- **Interacción**: Mouse y teclado
-- **Navegadores**: Chrome, Firefox, Safari, Edge (últimas versiones)
+## Prioridades del usuario
+1. **Prioridad**: Accesibilidad
+2. **Dispositivo principal**: Desktop
+3. **Componentes**: Todos
 
-## Áreas de Mejora Identificadas
+## Áreas de Mejora (Foco: Accesibilidad)
 
-### 1. Consistencia Visual
-- Estandarizar uso de espaciados
-- Unificar tratamiento de bordes y sombras
-- Revisar jerarquía tipográfica
+### 1. Accesibilidad (PRIORITARIO)
+- **Focus states**: Añadir indicadores de foco visibles en todos los elementos interactivos
+- **ARIA labels**: Añadir atributos aria-label, aria-describedby donde falten
+- **Contrast**: Revisar contraste de texto contra fondos (WCAG AA mínimo 4.5:1)
+- **Keyboard navigation**: Asegurar que todos los elementos sean accesibles por teclado
+- **Skip links**: Añadir enlace para saltar navegación
+- **Form labels**: Garantizar que todos los inputs tengan labels asociados
 
-### 2. Accesibilidad
-- Añadir atributos ARIA donde faltan
-- Mejorar contraste en elementos
-- Añadir estados de focus visibles
+### 2. Consistencia Visual
+- Unificar espaciados y bordes
+- Estandarizar jerarquía tipográfica
+- Unificar sombras
 
 ### 3. UX/Interacción
-- Mejorar feedback de carga
-- Añadir transiciones suaves
-- Optimizar navegación móvil (no es target, pero mantener)
-
-### 4. Componentes
-- Expandir variantes de Button
-- Melhorar componentes de formulario
-- Añadir más estados (empty, error personalizado)
+- Mejorar feedback visual de interacciones
+- Añadir transiciones suaves para hover/focus
 
 ## Plan de Ejecución
 
-### Fase 1: Auditoría UI (Agente reviewer)
-- Revisar cada vista contra guidelines de diseño
-- Documentar inconsistencias
-- Proponer lista priorizada de mejoras
+### Fase 1: Auditoría de Accesibilidad (Agente reviewer)
+- Revisar cada vista contra checklist WCAG AA
+- Documentar problemas de contraste, focus, aria
+- Proponer lista priorizada de correcciones
 
 ### Fase 2: Implementación (Agente implementer)
-- Aplicar mejoras identificadas
-- Crear nuevos componentes si es necesario
-- Actualizar estilos globales
+- Aplicar mejoras de accesibilidad
+- Añadir estados de focus visibles
+- Corregir contrastes insuficientes
+- Añadir labels a formularios
 
 ### Fase 3: Verificación (Agente tester)
 - Verificar que cambios compilan
-- Revisar que UI funciona correctamente
-- Validar accesibilidad
+- Validar accesibilidad básica
 
 ## Agentes a utilizar
 
-1. **reviewer** - Análisis de UI actual
+1. **reviewer** - Auditoría de accesibilidad
 2. **implementer** - Aplicar mejoras
 3. **tester** - Verificar cambios
-4. **docs** - Documentar cambios si es necesario

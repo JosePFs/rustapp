@@ -149,28 +149,9 @@ pub fn ProgramEditor(id: String) -> Element {
     };
 
     rsx! {
-        div { class: "view container mx-auto program-editor",
+        div { class: "view container mx-auto program-editor w-full",
             div {
-                class: "content min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
-                {
-                    let mut nav_open = use_signal(|| false);
-                    rsx! {
-                        nav { class: "relative mb-6",
-                            button {
-                                class: "min-h-11 px-0 bg-transparent text-2xl font-semibold inline-flex items-center gap-2 text-text",
-                                onclick: move |_| nav_open.set(!nav_open()),
-                                span { "Editor de programa" }
-                                span { class: "text-xs", if nav_open() { "▲" } else { "▼" } }
-                            }
-                            if nav_open() {
-                                div { class: "absolute z-10 mt-2 w-56 bg-surface border border-border rounded-md shadow-md flex flex-col py-1",
-                                    Link { to: Route::SpecialistPatients {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100", "Pacientes" }
-                                    Link { to: Route::WorkoutLibrary {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100", "Biblioteca de entrenamientos" }
-                                }
-                            }
-                        }
-                    }
-                }
+                class: "content w-full",
                 section { class: "bg-surface rounded-lg p-4 mb-6 border border-border",
                     h2 { class: "text-xl font-semibold mt-0 mb-2", "Programación (días de entrenamiento y descanso)" }
                     p { class: "text-sm text-text-muted mb-4", "Añade bloques de entrenamiento (desde tu biblioteca) o de descanso. Los entrenamientos se gestionan en la Biblioteca de entrenamientos." }

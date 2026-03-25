@@ -1,5 +1,7 @@
 use dioxus::prelude::*;
 
+use dioxus_free_icons::icons::io_icons::{IoAdd, IoClose, IoEye, IoPencil, IoSave, IoTrash};
+use dioxus_free_icons::Icon;
 use dioxus_i18n::t;
 use dioxus_router::Link;
 
@@ -54,7 +56,7 @@ pub fn WorkoutLibrary() -> Element {
                                 oninput: move |ev| edit_desc.set(ev.value().clone()),
                             }
                             button {
-                                class: "min-h-9 px-2 text-sm rounded-md bg-primary text-white",
+                                class: "min-h-9 px-2 text-sm rounded-md bg-primary text-white focus-ring flex items-center gap-1",
                                 onclick: move |_| {
                                     let id = wid_edit.clone();
                                     let n = edit_name().clone();
@@ -71,9 +73,13 @@ pub fn WorkoutLibrary() -> Element {
                                         resource.restart();
                                     }
                                 },
+                                Icon { width: 14, height: 14, icon: IoSave }
                                 { t!("workout_library_save") }
                             }
-                            button { class: "min-h-9 px-2 text-sm rounded-md border border-border", onclick: move |_| editing_id.set(None), { t!("workout_library_cancel") } }
+                            button { class: "min-h-9 px-2 text-sm rounded-md border border-border focus-ring flex items-center gap-1", onclick: move |_| editing_id.set(None),
+                                Icon { width: 14, height: 14, icon: IoClose }
+                                { t!("workout_library_cancel") }
+                            }
                         }
                     } else {
                         span { class: "block",
@@ -82,20 +88,21 @@ pub fn WorkoutLibrary() -> Element {
                         }
                         Link {
                             to: Route::WorkoutEditor { id: wid.clone() },
-                            class: "inline-block min-h-9 px-2 text-sm rounded-md border border-border mt-2 mr-2 text-primary no-underline hover:bg-gray-50",
+                            class: "inline-block min-h-9 px-2 text-sm rounded-md border border-border mt-2 mr-2 text-primary no-underline hover:bg-gray-50 focus-ring flex items-center gap-1",
+                            Icon { width: 14, height: 14, icon: IoEye }
                             { t!("workout_library_exercises_link") }
                         }
                         button {
-                            class: "min-h-9 px-2 text-sm rounded-md border border-border mt-2 mr-2",
+                            class: "min-h-9 px-2 text-sm rounded-md border border-border mt-2 mr-2 focus-ring",
                             onclick: move |_| {
                                 edit_name.set(name.clone());
                                 edit_desc.set(desc.clone());
                                 editing_id.set(Some(wid_edit.clone()));
                             },
-                            { t!("workout_library_edit") }
+                            Icon { width: 14, height: 14, icon: IoPencil }
                         }
                         button {
-                            class: "min-h-9 px-2 text-sm rounded-md bg-error text-white mt-2",
+                            class: "min-h-9 px-2 text-sm rounded-md bg-error text-white mt-2 focus-ring",
                             onclick: move |_| {
                                 let id = wid_del.clone();
                                 let mut action = delete_workout.action.clone();
@@ -105,7 +112,7 @@ pub fn WorkoutLibrary() -> Element {
                                     resource.restart();
                                 }
                             },
-                            { t!("workout_library_delete") }
+                            Icon { width: 14, height: 14, icon: IoTrash }
                         }
                     }
                 }
@@ -115,28 +122,8 @@ pub fn WorkoutLibrary() -> Element {
         .collect();
 
     rsx! {
-        div { class: "view container mx-auto workout-library",
-            div {
-                class: "content min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-2xl",
-                {
-                    let mut nav_open = use_signal(|| false);
-                    rsx! {
-                        nav { class: "relative mb-6",
-                            button {
-                                class: "min-h-11 px-0 bg-transparent text-2xl font-semibold inline-flex items-center gap-2 text-text",
-                                onclick: move |_| nav_open.set(!nav_open()),
-                                span { { t!("workout_library_title") } }
-                                span { class: "text-xs", if nav_open() { "▲" } else { "▼" } }
-                            }
-                            if nav_open() {
-                                div { class: "absolute z-10 mt-2 w-56 bg-surface border border-border rounded-md shadow-md flex flex-col py-1",
-                                    Link { to: Route::SpecialistPatients {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", { t!("workout_library_nav_patients") } }
-                                    Link { to: Route::ExerciseLibrary {}, class: "px-3 py-2 text-sm text-primary no-underline hover:bg-gray-100 hover:text-primary-hover", { t!("workout_library_nav_exercises") } }
-                                }
-                            }
-                        }
-                    }
-                }
+        div { class: "view container mx-auto workout-library w-full",
+            div { class: "content w-full",
                 p { class: "text-sm text-text-muted mb-4", { t!("workout_library_intro") } }
                 input {
                     class: "w-full min-h-11 px-4 border border-border rounded-md mb-4 focus:outline-none focus:border-primary",
@@ -160,7 +147,7 @@ pub fn WorkoutLibrary() -> Element {
                             oninput: move |ev| new_desc.set(ev.value().clone()),
                         }
                         button {
-                            class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60",
+                            class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60 flex items-center gap-2",
                             disabled: create_workout.state.read().is_loading() || new_name().trim().is_empty(),
                             onclick: move |_| {
                                 let name = new_name().trim().to_string();
@@ -175,6 +162,7 @@ pub fn WorkoutLibrary() -> Element {
                                     resource.restart();
                                 });
                             },
+                            Icon { width: 18, height: 18, icon: IoAdd }
                             { t!("workout_library_create_btn") }
                         }
                         if let Some(e) = create_workout.state.read().error() {
