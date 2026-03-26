@@ -1,3 +1,13 @@
+# App titles
+specialist_patients_title = Patients
+specialist_programs_title = Programs
+exercise_library_title = Exercises
+workout_library_title = Workouts
+workout_editor_title = Workout
+patient_progress_title = Patient progress
+program_editor_title = Program
+app_title = App
+
 # Agenda
 completed = Completed
 average_effort = Esfuerzo medio
@@ -12,7 +22,6 @@ login_description = Enter your email and password to login to your account
 
 # Patient dashboard
 patient_dashboard_title = Mis programas
-patient_progress_title = Patient progress
 loading = Loading...
 loading_programs = Loading programs...
 no_programs_asigned = You have no active programs assigned.
@@ -21,7 +30,7 @@ patients_link = Patients
 
 # Patient progress (specialist view)
 error_patient_progress = Error loading patient progress
-patient_progress_of = Progress of { $name }
+patient_progress_of = { $name }
 patient_no_programs_assigned = No programs assigned to this patient.
 patient_program_status = Status: { $status }
 patient_no_sessions = No sessions yet.
@@ -62,7 +71,6 @@ add_patient_link = Link patient
 patient_not_found_by_email = No patient found with that email
 
 # Specialist programs
-specialist_programs_title = Programs
 assign_programs = Assign programs
 clear_selection = Clear selection
 specialist_programs_create_tooltip_1 = Create and edit programs.
@@ -92,9 +100,7 @@ mark_completed_and_send_feedback = Mark as completed and send feedback
 test_notification_body = Local test notification
 
 # Workout library
-workout_library_title = Workout library
 workout_library_nav_patients = Patients
-workout_library_nav_exercises = Exercise library
 workout_library_intro = Create and edit workouts here. Then add them to programs from the program editor (schedule).
 workout_library_filter_placeholder = Filter by name...
 workout_library_new_section = New workout

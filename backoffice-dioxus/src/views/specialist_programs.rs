@@ -2,13 +2,9 @@ use std::collections::HashSet;
 
 use dioxus::prelude::*;
 
-use dioxus_free_icons::icons::io_icons::IoInformationCircle;
-use dioxus_free_icons::Icon;
 use dioxus_i18n::t;
-use dioxus_primitives::ContentSide;
 use dioxus_router::Link;
 
-use crate::components::{Tooltip, TooltipContent, TooltipTrigger};
 use crate::hooks::{
     assign_program_to_patient::use_assign_program_to_patient, create_program::use_create_program,
     specialist_programs::use_specialist_programs, AsyncState,
@@ -36,23 +32,9 @@ pub fn SpecialistPrograms() -> Element {
                 class: "content w-full",
 
                 section { class: "bg-surface rounded-lg p-4 mb-6 shadow-sm border border-border",
-                    div { class: "flex items-center gap-2 mt-0 mb-2",
-                        h2 { class: "text-xl font-semibold m-0", { t!("specialist_programs_title") } }
-                        Tooltip {
-                            TooltipTrigger {
-                                style: "vertical-align: bottom;",
-                                Icon {
-                                    width: 24,
-                                    height: 24,
-                                    icon: IoInformationCircle,
-                                }
-                            }
-                            TooltipContent { side: ContentSide::Bottom, style: "width: 300px;",
-                                h4 { style: "margin-top: 0; margin-bottom: 8px;", { t!("specialist_programs_title") } }
-                                p { style: "margin: 0; margin-bottom: 4px;", { t!("specialist_programs_create_tooltip_1") } }
-                                p { style: "margin: 0;", { t!("specialist_programs_create_tooltip_2") } }
-                            }
-                        }
+                    div { class: "flex gap-2 mt-0 mb-2",
+                        p { class: "text-sm text-text-muted mb-4", { t!("specialist_programs_create_tooltip_1") } }
+                        p { class: "text-sm text-text-muted mb-4", { t!("specialist_programs_create_tooltip_2") } }
                     }
                     {
                         match &*data.state.read() {

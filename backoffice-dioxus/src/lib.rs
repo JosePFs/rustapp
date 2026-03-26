@@ -14,9 +14,8 @@ use views::{
 };
 
 use crate::components::sidebar::{
-    Sidebar, SidebarCollapsible, SidebarContent, SidebarFooter, SidebarHeader, SidebarInset,
-    SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
-    SidebarVariant,
+    Sidebar, SidebarCollapsible, SidebarContent, SidebarFooter, SidebarInset, SidebarMenu,
+    SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SidebarVariant,
 };
 use dioxus_free_icons::icons::io_icons::{IoBarbell, IoFitness, IoFolderOpen, IoLogOut, IoPeople};
 use dioxus_free_icons::Icon;
@@ -90,6 +89,9 @@ fn ErrorView(error: ErrorContext) -> Element {
 
 #[component]
 fn AppLayout() -> Element {
+    let route: Route = use_route();
+    let title = route_title(&route);
+
     rsx! {
         ErrorBoundary {
             handle_error: |error: ErrorContext| rsx! {
@@ -153,7 +155,7 @@ fn AppLayout() -> Element {
                         div { class: "flex items-center gap-2",
                             SidebarTrigger {}
                             Separator { height: "1rem", horizontal: false }
-                            h1 { class: "text-xl font-semibold text-text", "Eixe" }
+                            h1 { class: "text-xl font-semibold text-text", "Eixe - {title}" }
                         }
                     }
 
@@ -217,4 +219,17 @@ fn init_logging() {
             .with_max_level(log::LevelFilter::Debug)
             .with_tag("Backoffice"),
     );
+}
+
+fn route_title(route: &Route) -> String {
+    match route {
+        Route::SpecialistPatients {} => t!("specialist_patients_title"),
+        Route::SpecialistPrograms {} => t!("specialist_programs_title"),
+        Route::ExerciseLibrary {} => t!("exercise_library_title"),
+        Route::WorkoutLibrary {} => t!("workout_library_title"),
+        Route::WorkoutEditor { .. } => t!("workout_editor_title"),
+        Route::PatientProgress { .. } => t!("patient_progress_title"),
+        Route::ProgramEditor { .. } => t!("program_editor_title"),
+        _ => t!("app_title"),
+    }
 }

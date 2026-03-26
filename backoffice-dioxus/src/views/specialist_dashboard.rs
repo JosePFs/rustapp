@@ -1,12 +1,10 @@
 use dioxus::prelude::*;
 
-use dioxus_free_icons::icons::io_icons::{IoAdd, IoInformationCircle};
+use dioxus_free_icons::icons::io_icons::IoAdd;
 use dioxus_free_icons::Icon;
 use dioxus_i18n::t;
-use dioxus_primitives::ContentSide;
 use dioxus_router::Link;
 
-use crate::components::{Tooltip, TooltipContent, TooltipTrigger};
 use crate::hooks::{
     add_specialist_patient::use_add_specialist_patient,
     specialist_patients::use_specialist_patients, AsyncState,
@@ -33,23 +31,8 @@ pub fn SpecialistPatients() -> Element {
             class: "view container mx-auto specialist-dashboard w-full",
             div { class: "content w-full",
                 section { class: "bg-surface rounded-lg p-4 mb-6 shadow-sm border border-border",
-                    div { class: "flex items-center gap-2 mt-0 mb-2",
-                        h2 { class: "text-xl font-semibold m-0", "Pacientes" }
-                        Tooltip {
-                            TooltipTrigger {
-                                style: "vertical-align: bottom;",
-                                Icon {
-                                    width: 24,
-                                    height: 24,
-                                    icon: IoInformationCircle,
-                                }
-                            }
-                            TooltipContent { side: ContentSide::Bottom, style: "width: 300px;",
-                                h4 { style: "margin-top: 0; margin-bottom: 8px;", "Pacientes y progreso" }
-                                p { style: "margin: 0; margin-bottom: 4px;", "Haz clic en un paciente para ver su progreso." }
-                                p { style: "margin: 0;", "Puedes asignar programas desde la sección de Programas y asignación." }
-                            }
-                        }
+                    div { class: "flex gap-2 mt-0 mb-2",
+                        p { class: "text-sm text-text-muted mb-4", "Haz clic en un paciente para ver su progreso. Puedes asignar programas desde la sección de Programas y asignación." }
                     }
                     {
                         match &*patients.state.read() {

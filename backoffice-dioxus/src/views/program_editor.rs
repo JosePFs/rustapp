@@ -6,7 +6,6 @@ use crate::hooks::create_program_schedule_item::use_create_program_schedule_item
 use crate::hooks::delete_program_schedule_item::use_delete_program_schedule_item;
 use crate::hooks::list_program_schedule::use_program_schedule_data;
 use crate::hooks::workout_library_data::use_workout_library_data;
-use crate::Route;
 
 #[component]
 pub fn ProgramEditor(id: String) -> Element {

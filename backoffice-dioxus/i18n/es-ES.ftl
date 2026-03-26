@@ -1,3 +1,13 @@
+# App titles
+specialist_patients_title = Pacientes
+specialist_programs_title = Programas
+exercise_library_title = Ejercicios
+workout_library_title = Entrenamientos
+workout_editor_title = Entrenamiento
+patient_progress_title = Progreso del paciente
+program_editor_title = Programa
+app_title = Aplicación
+
 # Agenda
 completed = Completado
 average_effort = Esfuerzo medio
@@ -12,7 +22,6 @@ login_description = Ingrese su correo electrónico y contraseña para iniciar se
 
 # Patient dashboard
 patient_dashboard_title = Mis programas
-patient_progress_title = Progreso del paciente
 loading = Cargando...
 loading_programs = Cargando programas...
 no_programs_asigned = No tienes programas activos asignados.
@@ -21,7 +30,7 @@ patients_link = Pacientes
 
 # Patient progress (specialist view)
 error_patient_progress = Error al cargar el progreso del paciente
-patient_progress_of = Progreso de { $name }
+patient_progress_of = { $name }
 patient_no_programs_assigned = No hay programas asignados a este paciente.
 patient_program_status = Estado: { $status }
 patient_no_sessions = Aún no hay sesiones.
@@ -62,7 +71,6 @@ add_patient_link = Vincular paciente
 patient_not_found_by_email = No se encontró un paciente con ese email
 
 # Specialist programs
-specialist_programs_title = Programas
 assign_programs = Asignar programas
 clear_selection = Limpiar selección
 specialist_programs_create_tooltip_1 = Crea y edita programas.
@@ -80,7 +88,6 @@ specialist_programs_none = Ninguno
 specialist_programs_eligible_patients = Pacientes elegibles
 specialist_programs_select_programs_first = Selecciona primero uno o más programas para ver los pacientes disponibles.
 specialist_programs_nav_patients = Pacientes
-specialist_programs_nav_exercises = Biblioteca de ejercicios
 specialist_programs_nav_workouts = Biblioteca de entrenamientos
 specialist_programs_logout = Cerrar sesión
 
@@ -92,9 +99,7 @@ mark_completed_and_send_feedback = Marcar completada y enviar feedback
 test_notification_body = Notificación local de prueba
 
 # Workout library
-workout_library_title = Biblioteca de entrenamientos
 workout_library_nav_patients = Pacientes
-workout_library_nav_exercises = Biblioteca de ejercicios
 workout_library_intro = Crea y edita entrenamientos aquí. Luego añádelos a programas desde el editor del programa (programación).
 workout_library_filter_placeholder = Filtrar por nombre...
 workout_library_new_section = Nuevo entrenamiento
@@ -114,7 +119,6 @@ workout_editor_up_arrow = ↑
 workout_editor_down_arrow = ↓
 
 # Exercise library
-exercise_library_title = Biblioteca de ejercicios
 exercise_library_nav_patients = Pacientes
 exercise_library_intro = Crea y edita ejercicios aquí. Luego añádelos a entrenamientos desde el editor del programa.
 exercise_library_filter_placeholder = Filtrar por nombre...

@@ -1,10 +1,8 @@
 use dioxus::prelude::*;
 use dioxus_i18n::t;
-use dioxus_router::Link;
 
 use crate::components::Agenda;
 use crate::hooks::{patient_progress::use_patient_progress, AsyncState};
-use crate::Route;
 use application::use_cases::agenda_schedule::AgendaSessionFeedback;
 use application::use_cases::patient_progress::PatientProgressResult;
 

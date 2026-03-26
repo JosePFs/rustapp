@@ -1,3 +1,13 @@
+# App titles
+specialist_patients_title = Pacientes
+specialist_programs_title = Programas
+exercise_library_title = Exercicios
+workout_library_title = Adestramentos
+workout_editor_title = Adestramento
+patient_progress_title = Progreso do paciente
+program_editor_title = Programa
+app_title = App
+
 # Agenda
 completed = Completado
 average_effort = Esforzo medio
@@ -12,7 +22,6 @@ login_description = Introduza o seu correo electrónico e contrasinal a continua
 
 # Patient dashboard
 patient_dashboard_title = Meus programas
-patient_progress_title = Progreso do paciente
 loading = Cargando...
 loading_programs = Cargando programas...
 no_programs_asigned = Non ten programas activos asignados.
@@ -21,7 +30,7 @@ patients_link = Pacientes
 
 # Patient progress (specialist view)
 error_patient_progress = Erro ao cargar o progreso do paciente
-patient_progress_of = Progreso de { $name }
+patient_progress_of = { $name }
 patient_no_programs_assigned = Non hai programas asignados a este paciente.
 patient_program_status = Estado: { $status }
 patient_no_sessions = Aínda non hai sesións.
@@ -60,7 +69,6 @@ add_patient_link = Vincular paciente
 patient_not_found_by_email = Non se atopou un paciente con ese email
 
 # Specialist programs
-specialist_programs_title = Programas
 assign_programs = Asignar programas
 clear_selection = Limpar selección
 specialist_programs_create_tooltip_1 = Crea e edita programas.
@@ -90,9 +98,7 @@ mark_completed_and_send_feedback = Marcar como completado e enviar feedback
 test_notification_body = Notificación local de proba
 
 # Workout library
-workout_library_title = Biblioteca de adestramentos
 workout_library_nav_patients = Pacientes
-workout_library_nav_exercises = Biblioteca de exercicios
 workout_library_intro = Crea e edita adestramentos aquí. Despois engádeos aos programas desde o editor do programa (programación).
 workout_library_filter_placeholder = Filtrar por nome...
 workout_library_new_section = Novo adestramento

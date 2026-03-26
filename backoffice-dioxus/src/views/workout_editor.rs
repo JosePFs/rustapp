@@ -1,7 +1,6 @@
 use dioxus::prelude::*;
 
 use dioxus_i18n::t;
-use dioxus_router::Link;
 
 use crate::hooks::{
     add_exercise_to_workout::use_add_exercise_to_workout,
@@ -9,7 +8,6 @@ use crate::hooks::{
     update_workout_exercise::use_update_workout_exercise, workout_editor::use_workout_editor,
     AsyncState,
 };
-use crate::Route;
 use application::use_cases::workout_editor_data::WorkoutEditorExerciseItem;
 
 #[component]

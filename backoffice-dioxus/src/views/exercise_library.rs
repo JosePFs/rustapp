@@ -3,14 +3,12 @@ use dioxus::prelude::*;
 use dioxus_free_icons::icons::io_icons::{IoAdd, IoClose, IoPencil, IoSave, IoTrash};
 use dioxus_free_icons::Icon;
 use dioxus_i18n::t;
-use dioxus_router::Link;
 
 use crate::hooks::create_exercise::use_create_exercise;
 use crate::hooks::exercise_library::use_exercise_library;
 use crate::hooks::restore_exercise::use_restore_exercise;
 use crate::hooks::soft_delete_exercise::use_soft_delete_exercise;
 use crate::hooks::update_exercise::use_update_exercise;
-use crate::Route;
 
 #[component]
 pub fn ExerciseLibrary() -> Element {
