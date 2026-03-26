@@ -18,6 +18,8 @@ pub fn SpecialistPatients() -> Element {
     let unassigned_patients = use_unassigned_patients();
     let link_patient = use_link_patient();
     let mut selected_patient_ids = use_signal(|| HashSet::<String>::new());
+    let mut filter_linked = use_signal(|| String::new());
+    let mut filter_unassigned = use_signal(|| String::new());
 
     if let Some(_) = patients.state.read().auth_error() {
         nav.push(Route::Login {});
@@ -32,8 +34,15 @@ pub fn SpecialistPatients() -> Element {
             class: "view container mx-auto specialist-dashboard w-full",
             div { class: "content w-full",
                 section { class: "bg-surface rounded-lg p-4 mb-6 shadow-sm border border-border",
+                    h3 { class: "text-lg font-semibold mb-2", { t!("specialist_patients_title") } }
                     div { class: "flex gap-2 mt-0 mb-2",
                         p { class: "text-sm text-text-muted mb-4", { t!("specialist_dashboard_instructions") } }
+                    }
+                    input {
+                        class: "w-full min-h-11 px-4 border border-border rounded-md mb-4 focus:outline-none focus:border-primary",
+                        placeholder: "{t!(\"workout_library_filter_placeholder\")}",
+                        value: "{filter_linked()}",
+                        oninput: move |ev| filter_linked.set(ev.value().clone()),
                     }
                     {
                         match &*patients.state.read() {
@@ -43,19 +52,36 @@ pub fn SpecialistPatients() -> Element {
                             AsyncState::Error(_) => rsx! {
                                 p { class: "text-error", { t!("error_load_patients") } }
                             },
-                            AsyncState::Ready(data) => rsx! {
-                                ul { class: "list-none p-0 m-0 mb-4",
-                                    for link in data.links.iter() {
-                                        li { key: "{link.link_id}", class: "mb-1",
-                                            Link {
-                                                to: Route::PatientProgress { id: link.patient_id.clone() },
-                                                class: "block p-4 min-h-11 text-primary no-underline rounded-md border border-border bg-surface hover:bg-gray-50 hover:border-primary focus-ring",
-                                                {
-                                                    data.profiles
-                                                        .iter()
-                                                        .find(|p| p.patient_id == link.patient_id)
-                                                        .map(|p| rsx! { "{p.full_name} ({p.email})" })
-                                                        .unwrap_or(rsx! { "{link.patient_id}" })
+                            AsyncState::Ready(data) => {
+                                let filter = filter_linked().to_lowercase();
+                                let filtered_links: Vec<_> = data.links.iter()
+                                    .filter(|link| {
+                                        if filter.is_empty() { return true; }
+                                        if let Some(profile) = data.profiles.iter().find(|p| p.patient_id == link.patient_id) {
+                                            profile.full_name.to_lowercase().contains(&filter) || profile.email.to_lowercase().contains(&filter)
+                                        } else {
+                                            false
+                                        }
+                                    })
+                                    .collect();
+                                if filtered_links.is_empty() {
+                                    rsx! { p { class: "text-text-muted italic", { t!("specialist_dashboard_no_patients_found") } } }
+                                } else {
+                                    rsx! {
+                                        ul { class: "list-none p-0 m-0 mb-4",
+                                            for link in filtered_links {
+                                                li { key: "{link.link_id}", class: "mb-1",
+                                                    Link {
+                                                        to: Route::PatientProgress { id: link.patient_id.clone() },
+                                                        class: "block p-4 min-h-11 text-primary no-underline rounded-md border border-border bg-surface hover:bg-gray-50 hover:border-primary focus-ring",
+                                                        {
+                                                            data.profiles
+                                                                .iter()
+                                                                .find(|p| p.patient_id == link.patient_id)
+                                                                .map(|p| rsx! { "{p.full_name} ({p.email})" })
+                                                                .unwrap_or(rsx! { "{link.patient_id}" })
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -80,11 +106,24 @@ pub fn SpecialistPatients() -> Element {
                                 p { class: "text-error", { t!("error_load_unassigned_patients") } }
                             },
                             AsyncState::Ready(data) => {
-                                if data.patients.is_empty() {
-                                    rsx! { p { class: "text-text-muted italic", { t!("no_unassigned_patients") } } }
+                                let filter = filter_unassigned().to_lowercase();
+                                let filtered_patients: Vec<_> = data.patients.iter()
+                                    .filter(|p| {
+                                        if filter.is_empty() { return true; }
+                                        p.full_name.to_lowercase().contains(&filter) || p.email.to_lowercase().contains(&filter)
+                                    })
+                                    .collect();
+                                if filtered_patients.is_empty() {
+                                    rsx! { p { class: "text-text-muted italic", { t!("specialist_dashboard_no_unassigned_found") } } }
                                 } else {
-                                    let patients: Vec<_> = data.patients.iter().map(|p| (p.email.clone(), p.full_name.clone(), p.email.clone())).collect();
+                                    let patients: Vec<_> = filtered_patients.iter().map(|p| (p.email.clone(), p.full_name.clone(), p.email.clone())).collect();
                                     rsx! {
+                                        input {
+                                            class: "w-full min-h-11 px-4 border border-border rounded-md mb-4 focus:outline-none focus:border-primary",
+                                            placeholder: "{t!(\"workout_library_filter_placeholder\")}",
+                                            value: "{filter_unassigned()}",
+                                            oninput: move |ev| filter_unassigned.set(ev.value().clone()),
+                                        }
                                         div { class: "max-h-64 overflow-y-auto border border-border rounded-md p-2 mb-4",
                                             for (email_key, full_name, email) in patients {
                                                 label { class: "flex items-center gap-2 p-2 min-h-11 cursor-pointer rounded hover:bg-gray-50",
