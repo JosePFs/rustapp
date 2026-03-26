@@ -37,12 +37,12 @@ pub fn SpecialistPatients() -> Element {
             div { class: "content w-full",
                 section { class: "bg-surface rounded-lg p-4 mb-6 shadow-sm border border-border",
                     div { class: "flex gap-2 mt-0 mb-2",
-                        p { class: "text-sm text-text-muted mb-4", "Haz clic en un paciente para ver su progreso. Puedes asignar programas desde la sección de Programas y asignación." }
+                        p { class: "text-sm text-text-muted mb-4", { t!("specialist_dashboard_instructions") } }
                     }
                     {
                         match &*patients.state.read() {
                             AsyncState::Idle | AsyncState::Loading => rsx! {
-                                p { "Cargando pacientes..." }
+                                p { { t!("loading_patients") } }
                             },
                             AsyncState::Error(_) => rsx! {
                                 p { class: "text-error", { t!("error_load_patients") } }

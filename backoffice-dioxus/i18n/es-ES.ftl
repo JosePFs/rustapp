@@ -1,3 +1,8 @@
+# Common
+skip_link = Saltar al contenido principal
+yes = Sí
+no = No
+
 # App titles
 specialist_patients_title = Pacientes
 specialist_programs_title = Programas
@@ -24,9 +29,11 @@ login_description = Ingrese su correo electrónico y contraseña para iniciar se
 patient_dashboard_title = Mis programas
 loading = Cargando...
 loading_programs = Cargando programas...
+loading_patients = Cargando pacientes...
 no_programs_asigned = No tienes programas activos asignados.
 progress = Progreso
 patients_link = Pacientes
+specialist_dashboard_instructions = Haz clic en un paciente para ver su progreso. Puedes asignar programas desde la sección de Programas y asignación.
 
 # Patient progress (specialist view)
 error_patient_progress = Error al cargar el progreso del paciente
@@ -40,11 +47,6 @@ patient_progress_completed = Completado
 patient_progress_effort_avg = Esfuerzo (medio)
 patient_progress_pain_avg = Dolor (medio)
 patient_progress_day_label = Día { $day }
-yes = Sí
-no = No
-
-# Patient workout
-mark_as_uncompleted = Marcar como no completado
 
 # Errors
 error_config = Configuration error: { $detail }
@@ -80,7 +82,9 @@ specialist_programs_assign_section = Asignar programas a pacientes
 specialist_programs_assign_instructions = 1) Selecciona uno o varios programas. 2) Selecciona pacientes que aún no tengan ninguno de esos programas. 3) Pulsa Asignar.
 specialist_programs_programs_section = Programas
 program_name = Nombre del programa
+program_name_label = Nombre del programa
 program_description = Descripción del programa (Opcional)
+description_label = Descripción
 specialist_programs_filter_programs_by_name = Filtrar programas por nombre...
 specialist_programs_filter_patients_by_name_or_email = Filtrar pacientes por nombre o email...
 specialist_programs_all_filtered = Todos
@@ -90,6 +94,8 @@ specialist_programs_select_programs_first = Selecciona primero uno o más progra
 specialist_programs_nav_patients = Pacientes
 specialist_programs_nav_workouts = Biblioteca de entrenamientos
 specialist_programs_logout = Cerrar sesión
+filter_programs_label = Filtrar programas
+filter_patients_label = Filtrar pacientes
 
 # Patient workout session
 workout_no_exercises = Este entrenamiento no tiene ejercicios configurados.
@@ -117,6 +123,18 @@ workout_editor_move_up = Subir
 workout_editor_move_down = Bajar
 workout_editor_up_arrow = ↑
 workout_editor_down_arrow = ↓
+workout_editor_deleted_in_library = (eliminado en biblioteca)
+workout_editor_series = Series
+workout_editor_reps = Repeticiones
+workout_editor_remove = Eliminar
+workout_editor_not_found = Entrenamiento no encontrado
+workout_editor_loading = Cargando entrenamiento...
+workout_editor_exercises_in_workout = Ejercicios en este entrenamiento
+workout_editor_no_exercises = Aún no hay ejercicios en este entrenamiento
+workout_editor_add_from_library = Añadir desde biblioteca
+workout_editor_all_added = Todos los ejercicios ya han sido añadidos
+workout_editor_select_exercise = Selecciona un ejercicio
+workout_editor_add_to_workout = Añadir al entrenamiento
 
 # Exercise library
 exercise_library_nav_patients = Pacientes
@@ -135,3 +153,15 @@ exercise_library_deleted_label = (eliminado)
 exercise_library_create_btn = Crear ejercicio
 exercise_library_list_title = Ejercicios ({ $count })
 exercise_library_empty = Aún no hay ejercicios. Crea uno arriba.
+
+# Program editor
+program_schedule_title = Programación (días de entrenamiento y descanso)
+program_schedule_description = Añade bloques de entrenamiento (desde tu biblioteca) o de descanso. Los entrenamientos se gestionan en la Biblioteca de entrenamientos.
+rest_day_label = Descanso
+delete_action = Eliminar
+schedule_rest_days = Días de descanso
+schedule_training_days = Días de entrenamiento
+select_workout = Seleccionar entrenamiento
+days_label = Días:
+add_block = Añadir bloque
+days_count = día(s)

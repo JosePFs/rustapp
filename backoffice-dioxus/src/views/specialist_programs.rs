@@ -56,7 +56,7 @@ pub fn SpecialistPrograms() -> Element {
                         }
                     }
                     div { class: "flex flex-col gap-4 mt-4",
-                        label { class: "text-sm font-medium text-text", "Nombre del programa" }
+                        label { class: "text-sm font-medium text-text", { t!("program_name_label") } }
                         input {
                             class: "w-full min-h-11 px-4 border border-border rounded-md bg-surface focus:outline-none focus:border-primary",
                             placeholder:  t!("program_name"),
@@ -64,7 +64,7 @@ pub fn SpecialistPrograms() -> Element {
                             value: "{new_program_name()}",
                             oninput: move |ev| new_program_name.set(ev.value().clone()),
                         }
-                        label { class: "text-sm font-medium text-text", "Descripción" }
+                        label { class: "text-sm font-medium text-text", { t!("description_label") } }
                         input {
                             class: "w-full min-h-11 px-4 border border-border rounded-md bg-surface focus:outline-none focus:border-primary",
                             placeholder:  t!("program_description"),
@@ -118,7 +118,7 @@ pub fn SpecialistPrograms() -> Element {
 
                         div { class: "mb-6",
                             h3 { class: "text-lg font-semibold mb-2", { t!("specialist_programs_programs_section") } }
-                            label { class: "text-sm font-medium text-text", "Filtrar programas" }
+                            label { class: "text-sm font-medium text-text", { t!("filter_programs_label") } }
                             input {
                                 class: "w-full min-h-11 px-4 border border-border rounded-md bg-surface mb-4 focus:outline-none focus:border-primary",
                                 r#type: "text",
@@ -199,7 +199,7 @@ pub fn SpecialistPrograms() -> Element {
                             if selected_program_ids().is_empty() {
                                 p { class: "text-sm text-text-muted", { t!("specialist_programs_select_programs_first") } }
                             } else {
-                                label { class: "text-sm font-medium text-text", "Filtrar pacientes" }
+                                label { class: "text-sm font-medium text-text", { t!("filter_patients_label") } }
                                 input {
                                     class: "w-full min-h-11 px-4 border border-border rounded-md bg-surface mb-4 focus:outline-none focus:border-primary",
                                     r#type: "text",

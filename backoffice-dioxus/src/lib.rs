@@ -1,24 +1,23 @@
-use application::ports::error::ApplicationError;
 use dioxus::prelude::*;
 
+use dioxus_free_icons::icons::io_icons::{IoBarbell, IoFitness, IoFolderOpen, IoLogOut, IoPeople};
+use dioxus_free_icons::Icon;
 use dioxus_i18n::prelude::*;
 use dioxus_i18n::t;
 use dioxus_router::{Routable, Router};
 use unic_langid::langid;
-
-use app_context::build_app_context;
-use views::{
-    ExerciseLibrary, Login, PatientProgress, ProgramEditor, SpecialistPatients, SpecialistPrograms,
-    WorkoutEditor, WorkoutLibrary,
-};
 
 use crate::components::{
     Separator, Sidebar, SidebarCollapsible, SidebarContent, SidebarFooter, SidebarHeader,
     SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
     SidebarVariant,
 };
-use dioxus_free_icons::icons::io_icons::{IoBarbell, IoFitness, IoFolderOpen, IoLogOut, IoPeople};
-use dioxus_free_icons::Icon;
+use app_context::build_app_context;
+use application::ports::error::ApplicationError;
+use views::{
+    ExerciseLibrary, Login, PatientProgress, ProgramEditor, SpecialistPatients, SpecialistPrograms,
+    WorkoutEditor, WorkoutLibrary,
+};
 
 mod app_context;
 mod components;
@@ -85,7 +84,7 @@ fn App() -> Element {
     rsx! {
         document::Link { rel: "icon", href: asset!("/assets/favicon.png") }
         document::Stylesheet { href: asset!("/assets/app.css") }
-        a { href: "#main-content", class: "skip-link", "Saltar al contenido principal" }
+        a { href: "#main-content", class: "skip-link", { t!("skip_link") } }
         Title { "Eixe" }
         div { id: "main-content",
             Router::<Route> {}

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use dioxus::prelude::*;
+use dioxus_i18n::t;
 
 use crate::hooks::create_program_schedule_item::use_create_program_schedule_item;
 use crate::hooks::delete_program_schedule_item::use_delete_program_schedule_item;
@@ -48,14 +49,15 @@ pub fn ProgramEditor(id: String) -> Element {
                     .workout_id
                     .as_ref()
                     .and_then(|id| workout_names.get(id).cloned())
-                    .unwrap_or_else(|| "Descanso".to_string());
+                    .unwrap_or_else(|| t!("rest_day_label").to_string());
                 let days = item.days_count;
                 let item_id = item.id.clone();
                 let mut delete_action = delete_schedule_item.action.clone();
                 rsx! {
                     li { key: "{item_id}", class: "flex items-center gap-2 py-1 border-b border-border",
                         span { class: "font-medium", "{label}" }
-                        span { class: "text-sm text-text-muted", "{days} día(s)" }
+                        span { class: "text-sm text-text-muted", "{days} " }
+                        span { class: "text-sm text-text-muted", {t!("days_count")} }
                         button {
                             class: "min-h-9 px-2 text-sm rounded-md border border-border bg-error text-white ml-auto",
                             onclick: move |_| {
@@ -64,7 +66,7 @@ pub fn ProgramEditor(id: String) -> Element {
                                     delete_action.call((id,)).await;
                                 }   
                             },
-                            "Eliminar"
+                            { t!("delete_action") }
                         }
                     }
                 }
@@ -85,7 +87,7 @@ pub fn ProgramEditor(id: String) -> Element {
                         checked: is_rest,
                         onchange: move |_| { schedule_block_rest.set(true); schedule_workout_id.set(None); }
                     }
-                    "Días de descanso"
+                    { t!("schedule_rest_days") }
                 }
                 label { style: "display: flex; align-items: center; gap: 0.5rem;",
                     input {
@@ -94,7 +96,7 @@ pub fn ProgramEditor(id: String) -> Element {
                         checked: !is_rest,
                         onchange: move |_| schedule_block_rest.set(false)
                     }
-                    "Días de entrenamiento"
+                    { t!("schedule_training_days") }
                 }
                 if !is_rest {
                     select {
@@ -102,14 +104,14 @@ pub fn ProgramEditor(id: String) -> Element {
                             let v = ev.value();
                             schedule_workout_id.set(if v.is_empty() { None } else { Some(v) });
                         },
-                        option { value: "", "Seleccionar entrenamiento" }
+                        option { value: "", { t!("select_workout") } }
                         for workout in library_list.iter() {
                             option { value: "{workout.id}", "{workout.name}" }
                         }
                     }
                 }
                 div { style: "display: flex; align-items: center; gap: 0.5rem;",
-                    label { "Días: " }
+                    label { { t!("days_label") } }
                     input {
                         r#type: "number",
                         min: "1",
@@ -138,7 +140,7 @@ pub fn ProgramEditor(id: String) -> Element {
                             schedule_days.set(1);
                         }
                     },
-                    "Añadir bloque"
+                    { t!("add_block") }
                 }
             }
             if let Some(e) = create_schedule_item.state.read().error() {
@@ -152,8 +154,8 @@ pub fn ProgramEditor(id: String) -> Element {
             div {
                 class: "content w-full",
                 section { class: "bg-surface rounded-lg p-4 mb-6 border border-border",
-                    h2 { class: "text-xl font-semibold mt-0 mb-2", "Programación (días de entrenamiento y descanso)" }
-                    p { class: "text-sm text-text-muted mb-4", "Añade bloques de entrenamiento (desde tu biblioteca) o de descanso. Los entrenamientos se gestionan en la Biblioteca de entrenamientos." }
+                    h2 { class: "text-xl font-semibold mt-0 mb-2", { t!("program_schedule_title") } }
+                    p { class: "text-sm text-text-muted mb-4", { t!("program_schedule_description") } }
                     {schedule_section}
                 }
             }
