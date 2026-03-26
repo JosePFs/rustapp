@@ -13,9 +13,9 @@ use crate::Route;
 
 #[component]
 pub fn SpecialistPatients() -> Element {
+    let nav = use_navigator();
     let patients = use_specialist_patients();
     let add_patient = use_add_specialist_patient();
-
     let mut add_patient_email = use_signal(|| String::new());
 
     use_effect(move || {
@@ -23,6 +23,11 @@ pub fn SpecialistPatients() -> Element {
             add_patient_email.set(String::new());
         }
     });
+
+    if let Some(_) = patients.state.read().auth_error() {
+        nav.push(Route::Login {});
+        return rsx! {};
+    }
 
     let resource = patients.resource.clone();
 

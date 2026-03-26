@@ -8,7 +8,7 @@ mod workout_editor;
 mod workout_library;
 
 pub use exercise_library::ExerciseLibrary;
-pub use login::LoginView;
+pub use login::Login;
 pub use patient_progress::PatientProgress;
 pub use program_editor::ProgramEditor;
 pub use specialist_dashboard::SpecialistPatients;

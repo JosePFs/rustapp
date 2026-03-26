@@ -9,9 +9,11 @@ use crate::hooks::exercise_library::use_exercise_library;
 use crate::hooks::restore_exercise::use_restore_exercise;
 use crate::hooks::soft_delete_exercise::use_soft_delete_exercise;
 use crate::hooks::update_exercise::use_update_exercise;
+use crate::Route;
 
 #[component]
 pub fn ExerciseLibrary() -> Element {
+    let nav = use_navigator();
     let mut exercises = use_exercise_library();
     let create_exercise = use_create_exercise();
     let update_exercise = use_update_exercise();
@@ -26,9 +28,10 @@ pub fn ExerciseLibrary() -> Element {
     let mut edit_desc = use_signal(|| String::new());
     let mut edit_video_url = use_signal(|| String::new());
 
-    if let Some(e) = exercises.state.read().auth_error() {
-        return Err(e.clone().into());
+    if let Some(_) = exercises.state.read().auth_error() {
+        nav.replace(Route::Login {});
     }
+
     let (list, list_len, empty_ready) = exercises
         .state
         .read()

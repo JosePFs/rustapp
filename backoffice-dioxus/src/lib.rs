@@ -3,19 +3,19 @@ use dioxus::prelude::*;
 
 use dioxus_i18n::prelude::*;
 use dioxus_i18n::t;
-use dioxus_primitives::separator::Separator;
 use dioxus_router::{Routable, Router};
 use unic_langid::langid;
 
 use app_context::build_app_context;
 use views::{
-    ExerciseLibrary, LoginView, PatientProgress, ProgramEditor, SpecialistPatients,
-    SpecialistPrograms, WorkoutEditor, WorkoutLibrary,
+    ExerciseLibrary, Login, PatientProgress, ProgramEditor, SpecialistPatients, SpecialistPrograms,
+    WorkoutEditor, WorkoutLibrary,
 };
 
-use crate::components::sidebar::{
-    Sidebar, SidebarCollapsible, SidebarContent, SidebarFooter, SidebarInset, SidebarMenu,
-    SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SidebarVariant,
+use crate::components::{
+    Separator, Sidebar, SidebarCollapsible, SidebarContent, SidebarFooter, SidebarHeader,
+    SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
+    SidebarVariant,
 };
 use dioxus_free_icons::icons::io_icons::{IoBarbell, IoFitness, IoFolderOpen, IoLogOut, IoPeople};
 use dioxus_free_icons::Icon;
@@ -26,144 +26,36 @@ mod hooks;
 mod views;
 
 #[derive(Routable, Clone, PartialEq)]
+#[rustfmt::skip]
 pub enum Route {
-    #[route("/")]
-    LoginView {},
-    #[layout(AppLayout)]
-    #[route("/specialist")]
-    SpecialistPatients {},
-    #[route("/specialist/programs")]
-    SpecialistPrograms {},
-    #[route("/specialist/exercises")]
-    ExerciseLibrary {},
-    #[route("/specialist/workouts")]
-    WorkoutLibrary {},
-    #[route("/specialist/workouts/:id")]
-    WorkoutEditor { id: String },
-    #[route("/specialist/patient/:id")]
-    PatientProgress { id: String },
-    #[route("/programs/:id/edit")]
-    ProgramEditor { id: String },
+    #[layout(RootLayout)]
+        #[route("/")]
+        Login {},
+        #[layout(AppLayout)]
+            #[route("/specialist")]
+            SpecialistPatients {},
+            #[route("/specialist/programs")]
+            SpecialistPrograms {},
+            #[route("/specialist/exercises")]
+            ExerciseLibrary {},
+            #[route("/specialist/workouts")]
+            WorkoutLibrary {},
+            #[route("/specialist/workouts/:id")]
+            WorkoutEditor { id: String },
+            #[route("/specialist/patient/:id")]
+            PatientProgress { id: String },
+            #[route("/programs/:id/edit")]
+            ProgramEditor { id: String },
 }
 
 #[component]
-fn ErrorView(error: ErrorContext) -> Element {
-    let nav = use_navigator();
-
-    let is_auth_error = match error.error() {
-        Some(e) if e.downcast_ref::<ApplicationError>().is_some() => e
-            .downcast_ref::<ApplicationError>()
-            .map(|ae| ae.is_auth_error())
-            .unwrap_or(false),
-        _ => false,
-    };
-
-    use_effect(move || {
-        if is_auth_error {
-            nav.push(Route::LoginView {});
-        }
-    });
-
-    if is_auth_error {
-        return rsx! {};
-    }
-
-    let msg = error.error().map(|e| e.to_string()).unwrap_or_default();
-
-    rsx! {
-        div { class: "min-h-screen flex items-center justify-center bg-gray-50 p-4",
-        div { class: "max-w-md w-full bg-white rounded-lg shadow-lg p-6 border-l-4 border-red-500",
-            div { class: "flex items-center gap-3 mb-4",
-                svg { class: "w-8 h-8 text-red-500 flex-shrink-0", view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "2",
-                    circle { cx: "12", cy: "12", r: "10" }
-                    line { x1: "12", y1: "8", x2: "12", y2: "12" }
-                    line { x1: "12", y1: "16", x2: "12.01", y2: "16" }
-                }
-                h2 { class: "text-xl font-semibold text-gray-800", { t!("error_unexpected_title") } }
-            }
-            p { class: "text-gray-600 text-sm mb-4", { t!("error_unexpected", detail: msg) } }
-        }
-    }
-    }
-}
-
-#[component]
-fn AppLayout() -> Element {
-    let route: Route = use_route();
-    let title = route_title(&route);
-
+fn RootLayout() -> Element {
     rsx! {
         ErrorBoundary {
             handle_error: |error: ErrorContext| rsx! {
                 ErrorView { error }
             },
-            SidebarProvider {
-                default_open: true,
-                Sidebar {
-                    collapsible: SidebarCollapsible::Icon,
-                    variant: SidebarVariant::Sidebar,
-                    class: "bg-surface border-r border-border",
-                    SidebarContent { class: "p-2",
-                        SidebarMenu {
-                            SidebarMenuItem {
-                                SidebarMenuButton {
-                                    Link { to: Route::SpecialistPatients {}, class: "flex items-center gap-3 w-full text-left",
-                                        Icon { width: 20, height: 20, icon: IoPeople }
-                                        span { "Pacientes" }
-                                    }
-                                }
-                            }
-                            SidebarMenuItem {
-                                SidebarMenuButton {
-                                    Link { to: Route::SpecialistPrograms {}, class: "flex items-center gap-3 w-full text-left",
-                                        Icon { width: 20, height: 20, icon: IoFolderOpen }
-                                        span { "Programas" }
-                                    }
-                                }
-                            }
-                            SidebarMenuItem {
-                                SidebarMenuButton {
-                                    Link { to: Route::ExerciseLibrary {}, class: "flex items-center gap-3 w-full text-left",
-                                        Icon { width: 20, height: 20, icon: IoBarbell }
-                                        span { "Ejercicios" }
-                                    }
-                                }
-                            }
-                            SidebarMenuItem {
-                                SidebarMenuButton {
-                                    Link { to: Route::WorkoutLibrary {}, class: "flex items-center gap-3 w-full text-left",
-                                        Icon { width: 20, height: 20, icon: IoFitness }
-                                        span { "Entrenamientos" }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    SidebarFooter { class: "p-2 border-t border-border",
-                        SidebarMenuItem {
-                            SidebarMenuButton {
-                                Link { to: Route::LoginView {}, class: "flex items-center gap-3 w-full text-left text-error",
-                                    Icon { width: 20, height: 20, icon: IoLogOut }
-                                    span { "Cerrar sesión" }
-                                }
-                            }
-                        }
-                    }
-                }
-                SidebarInset {
-                    header { class: "flex items-center justify-between h-14 flex-shrink-0 p-4 border-b border-border",
-                        div { class: "flex items-center gap-2",
-                            SidebarTrigger {}
-                            Separator { height: "1rem", horizontal: false }
-                            h1 { class: "text-xl font-semibold text-text", "Eixe - {title}" }
-                        }
-                    }
-
-                    div { class: "flex-1 min-h-screen overflow-auto",
-                        Outlet::<Route> {}
-                    }
-                }
-            }
+            Outlet::<Route> {}
         }
     }
 }
@@ -198,6 +90,122 @@ fn App() -> Element {
         div { id: "main-content",
             Router::<Route> {}
         }
+    }
+}
+
+#[component]
+fn AppLayout() -> Element {
+    let route: Route = use_route();
+    let title = route_title(&route);
+
+    rsx! {
+        SidebarProvider {
+            default_open: true,
+            Sidebar {
+                collapsible: SidebarCollapsible::Icon,
+                variant: SidebarVariant::Sidebar,
+                class: "bg-surface border-r border-border",
+                SidebarHeader {
+                    h1 { class: "font-semibold pt-2", "Eixe" }
+                }
+                SidebarContent { class: "p-2",
+                    SidebarMenu {
+                        SidebarMenuItem {
+                            SidebarMenuButton {
+                                Link { to: Route::SpecialistPatients {}, class: "flex items-center gap-3 w-full text-left",
+                                    Icon { width: 20, height: 20, icon: IoPeople }
+                                    span { "Pacientes" }
+                                }
+                            }
+                        }
+                        SidebarMenuItem {
+                            SidebarMenuButton {
+                                Link { to: Route::SpecialistPrograms {}, class: "flex items-center gap-3 w-full text-left",
+                                    Icon { width: 20, height: 20, icon: IoFolderOpen }
+                                    span { "Programas" }
+                                }
+                            }
+                        }
+                        SidebarMenuItem {
+                            SidebarMenuButton {
+                                Link { to: Route::ExerciseLibrary {}, class: "flex items-center gap-3 w-full text-left",
+                                    Icon { width: 20, height: 20, icon: IoBarbell }
+                                    span { "Ejercicios" }
+                                }
+                            }
+                        }
+                        SidebarMenuItem {
+                            SidebarMenuButton {
+                                Link { to: Route::WorkoutLibrary {}, class: "flex items-center gap-3 w-full text-left",
+                                    Icon { width: 20, height: 20, icon: IoFitness }
+                                    span { "Entrenamientos" }
+                                }
+                            }
+                        }
+                    }
+                }
+                SidebarFooter { class: "p-2 border-t border-border",
+                    SidebarMenuItem {
+                        SidebarMenuButton {
+                            Link { to: Route::Login {}, class: "flex items-center gap-3 w-full text-left text-error",
+                                Icon { width: 20, height: 20, icon: IoLogOut }
+                                span { "Cerrar sesión" }
+                            }
+                        }
+                    }
+                }
+            }
+            SidebarInset {
+                header { class: "flex items-center justify-between h-14 flex-shrink-0 p-4 border-b border-border",
+                    div { class: "flex items-center gap-2",
+                        SidebarTrigger {}
+                        Separator { height: "1rem", horizontal: false }
+                        h1 { class: "text-xl font-semibold text-text", {title} }
+                    }
+                }
+
+                div { class: "flex-1 min-h-screen overflow-auto",
+                    Outlet::<Route> {}
+                }
+            }
+        }
+    }
+}
+
+#[component]
+fn ErrorView(error: ErrorContext) -> Element {
+    let nav = use_navigator();
+
+    let is_auth_error = match error.error() {
+        Some(e) if e.downcast_ref::<ApplicationError>().is_some() => e
+            .downcast_ref::<ApplicationError>()
+            .map(|ae| ae.is_auth_error())
+            .unwrap_or(false),
+        _ => false,
+    };
+
+    if is_auth_error {
+        log::info!("Redirecting to login");
+        nav.push(Route::Login {});
+        return rsx! {};
+    }
+
+    let msg = error.error().map(|e| e.to_string()).unwrap_or_default();
+
+    rsx! {
+        div { class: "min-h-screen flex items-center justify-center bg-gray-50 p-4",
+        div { class: "max-w-md w-full bg-white rounded-lg shadow-lg p-6 border-l-4 border-red-500",
+            div { class: "flex items-center gap-3 mb-4",
+                svg { class: "w-8 h-8 text-red-500 flex-shrink-0", view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "2",
+                    circle { cx: "12", cy: "12", r: "10" }
+                    line { x1: "12", y1: "8", x2: "12", y2: "12" }
+                    line { x1: "12", y1: "16", x2: "12.01", y2: "16" }
+                }
+                h2 { class: "text-xl font-semibold text-gray-800", { t!("error_unexpected_title") } }
+            }
+            p { class: "text-gray-600 text-sm mb-4", { t!("error_unexpected", detail: msg) } }
+        }
+    }
     }
 }
 
