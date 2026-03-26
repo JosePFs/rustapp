@@ -88,7 +88,7 @@ pub fn WorkoutLibrary() -> Element {
                         }
                         Link {
                             to: Route::WorkoutEditor { id: wid.clone() },
-                            class: "inline-block min-h-9 px-2 text-sm rounded-md border border-border mt-2 mr-2 text-primary no-underline hover:bg-gray-50 focus-ring flex items-center gap-1",
+                            class: "min-h-9 px-2 text-sm rounded-md border border-border mt-2 mr-2 text-primary no-underline hover:bg-gray-50 focus-ring flex items-center gap-1",
                             Icon { width: 14, height: 14, icon: IoEye }
                             { t!("workout_library_exercises_link") }
                         }

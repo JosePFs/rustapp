@@ -133,3 +133,8 @@ pub trait GetPatientProgramFullRead: Send + Sync {
 pub trait GetSpecialistDashboardRead: Send + Sync {
     async fn get_specialist_dashboard(&self) -> Result<SpecialistDashboard>;
 }
+
+#[common::async_trait_platform]
+pub trait ListUnassignedPatientsRead: Send + Sync {
+    async fn list_unassigned_patients(&self) -> Result<Vec<Profile>>;
+}

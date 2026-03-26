@@ -389,6 +389,9 @@ html[data-theme="light"] {
   .max-h-48 {
     max-height: calc(var(--spacing) * 48);
   }
+  .max-h-64 {
+    max-height: calc(var(--spacing) * 64);
+  }
   .min-h-0 {
     min-height: calc(var(--spacing) * 0);
   }
@@ -400,6 +403,9 @@ html[data-theme="light"] {
   }
   .min-h-screen {
     min-height: 100vh;
+  }
+  .w-1 {
+    width: calc(var(--spacing) * 1);
   }
   .w-1\/2 {
     width: calc(1/2 * 100%);
@@ -430,6 +436,9 @@ html[data-theme="light"] {
   }
   .flex-1 {
     flex: 1;
+  }
+  .flex-shrink {
+    flex-shrink: 1;
   }
   .flex-shrink-0 {
     flex-shrink: 0;

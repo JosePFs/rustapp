@@ -34,6 +34,10 @@ no_programs_asigned = Non ten programas activos asignados.
 progress = Progreso
 patients_link = Pacientes
 specialist_dashboard_instructions = Fai clic nun paciente para ver o seu progreso. Podes asignar programas desde a sección de Programas e asignación.
+specialist_dashboard_link_instructions = Selecciona os pacientes que desexas vincular á túa conta.
+error_load_unassigned_patients = Erro ao cargar os pacientes dispoñibles
+no_unassigned_patients = Non hai pacientes dispoñibles para vincular.
+link_selected_patients = Vincular seleccionados
 
 # Patient progress (specialist view)
 error_patient_progress = Erro ao cargar o progreso do paciente

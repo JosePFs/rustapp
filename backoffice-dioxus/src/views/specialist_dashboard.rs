@@ -1,13 +1,13 @@
+use std::collections::HashSet;
+
 use dioxus::prelude::*;
 
-use dioxus_free_icons::icons::io_icons::IoAdd;
-use dioxus_free_icons::Icon;
 use dioxus_i18n::t;
 use dioxus_router::Link;
 
 use crate::hooks::{
-    add_specialist_patient::use_add_specialist_patient,
-    specialist_patients::use_specialist_patients, AsyncState,
+    link_patient::use_link_patient, specialist_patients::use_specialist_patients,
+    unassigned_patients::use_unassigned_patients, AsyncState,
 };
 use crate::Route;
 
@@ -15,21 +15,17 @@ use crate::Route;
 pub fn SpecialistPatients() -> Element {
     let nav = use_navigator();
     let patients = use_specialist_patients();
-    let add_patient = use_add_specialist_patient();
-    let mut add_patient_email = use_signal(|| String::new());
-
-    use_effect(move || {
-        if add_patient.state.read().is_ready() {
-            add_patient_email.set(String::new());
-        }
-    });
+    let unassigned_patients = use_unassigned_patients();
+    let link_patient = use_link_patient();
+    let mut selected_patient_ids = use_signal(|| HashSet::<String>::new());
 
     if let Some(_) = patients.state.read().auth_error() {
         nav.push(Route::Login {});
         return rsx! {};
     }
 
-    let resource = patients.resource.clone();
+    let patients_resource = patients.resource.clone();
+    let unassigned_resource = unassigned_patients.resource.clone();
 
     rsx! {
         div {
@@ -65,35 +61,75 @@ pub fn SpecialistPatients() -> Element {
                                         }
                                     }
                                 }
-                                div { class: "flex flex-col gap-4 mt-4",
-                                    h3 { class: "text-lg font-semibold mb-0", { t!("add_patient_existing") } }
-                                    p { class: "text-sm text-text-muted mb-0", { t!("add_patient_hint") } }
-                                    div { class: "flex flex-wrap gap-2 items-center",
-                                        input {
-                                            class: "flex-1 min-w-40 min-h-11 px-4 border border-border rounded-md bg-surface focus:outline-none focus:border-primary",
-                                            placeholder: "{t!(\"add_patient_email_placeholder\")}",
-                                            value: "{add_patient_email()}",
-                                            oninput: move |ev| add_patient_email.set(ev.value().clone()),
+                            },
+                        }
+                    }
+                }
+                section { class: "bg-surface rounded-lg p-4 mb-6 shadow-sm border border-border",
+                    h3 { class: "text-lg font-semibold mb-2", { t!("add_patient_existing") } }
+                    p { class: "text-sm text-text-muted mb-4", { t!("specialist_dashboard_link_instructions") } }
+
+                    if unassigned_patients.state.read().is_not_ready() {
+                        p { class: "text-text-muted", { t!("loading") } }
+                    } else {
+                        match &*unassigned_patients.state.read() {
+                            AsyncState::Idle | AsyncState::Loading => rsx! {
+                                p { { t!("loading_unassigned_patients") } }
+                            },
+                            AsyncState::Error(_) => rsx! {
+                                p { class: "text-error", { t!("error_load_unassigned_patients") } }
+                            },
+                            AsyncState::Ready(data) => {
+                                if data.patients.is_empty() {
+                                    rsx! { p { class: "text-text-muted italic", { t!("no_unassigned_patients") } } }
+                                } else {
+                                    let patients: Vec<_> = data.patients.iter().map(|p| (p.email.clone(), p.full_name.clone(), p.email.clone())).collect();
+                                    rsx! {
+                                        div { class: "max-h-64 overflow-y-auto border border-border rounded-md p-2 mb-4",
+                                            for (email_key, full_name, email) in patients {
+                                                label { class: "flex items-center gap-2 p-2 min-h-11 cursor-pointer rounded hover:bg-gray-50",
+                                                    input { class: "w-5 h-5",
+                                                        r#type: "checkbox",
+                                                        checked: selected_patient_ids().contains(&email_key),
+                                                        onchange: move |ev| {
+                                                            let mut set = selected_patient_ids();
+                                                            if ev.checked() {
+                                                                set.insert(email_key.clone());
+                                                            } else {
+                                                                set.remove(&email_key);
+                                                            }
+                                                            selected_patient_ids.set(set);
+                                                        },
+                                                    }
+                                                    span { "{full_name} ({email})" }
+                                                }
+                                            }
                                         }
-                                        button {
-                                            class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2",
-                                            disabled: add_patient.state.read().is_loading() || add_patient_email().trim().is_empty(),
-                                            onclick: move |_| {
-                                                let email_val = add_patient_email().trim().to_string();
-                                                if email_val.is_empty() { return; }
-                                                let mut action = add_patient.action.clone();
-                                                let mut resource_clone = resource.clone();
-                                                spawn(async move {
-                                                    action.call(email_val).await;
-                                                    resource_clone.restart();
-                                                });
-                                            },
-                                            Icon { width: 18, height: 18, icon: IoAdd }
-                                            { t!("add_patient_link") }
+                                        div { class: "flex gap-2",
+                                            button {
+                                                class: "min-h-11 px-4 font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2",
+                                                disabled: link_patient.state.read().is_loading() || selected_patient_ids().is_empty(),
+                                                onclick: move |_| {
+                                                    let selected = selected_patient_ids();
+                                                    if selected.is_empty() { return; }
+                                                    let email = selected.iter().next().unwrap().clone();
+                                                    let mut action = link_patient.action.clone();
+                                                    let mut selected_ids = selected_patient_ids;
+                                                    let mut patients_resource_clone = patients_resource.clone();
+                                                    let mut unassigned_resource_clone = unassigned_resource.clone();
+                                                    spawn(async move {
+                                                        action.call(email).await;
+                                                        patients_resource_clone.restart();
+                                                        unassigned_resource_clone.restart();
+                                                        selected_ids.set(HashSet::new());
+                                                    });
+                                                },
+                                                { t!("link_selected_patients") }
+                                            }
+                                            if let Some(e) = link_patient.state.read().error() {
+                                                p { class: "text-error text-sm", "{e}" }
+                                            }
                                         }
-                                    }
-                                    if let Some(e) = add_patient.state.read().error() {
-                                        p { class: "text-error text-sm mt-2", "{e}" }
                                     }
                                 }
                             },

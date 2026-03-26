@@ -36,6 +36,9 @@ use crate::use_cases::list_exercise_library::{
 use crate::use_cases::list_program_schedule::{
     ListProgramScheduleArgs, ListProgramScheduleUseCase, ProgramScheduleData,
 };
+use crate::use_cases::list_unassigned_patients::{
+    UnassignedPatientsArgs, ListUnassignedPatientsUseCase, UnassignedPatientsResult,
+};
 use crate::use_cases::list_workout_library::{
     ListWorkoutLibraryArgs, ListWorkoutLibraryUseCase, WorkoutLibraryItem,
 };
@@ -79,6 +82,7 @@ where
     pub specialist_programs_data_uc: Arc<SpecialistProgramsDataUseCase<D>>,
     pub list_exercise_library_uc: Arc<ListExerciseLibraryUseCase<D>>,
     pub list_program_schedule_uc: Arc<ListProgramScheduleUseCase<D>>,
+    pub list_unassigned_patients_uc: Arc<ListUnassignedPatientsUseCase<D>>,
     pub list_workout_library_uc: Arc<ListWorkoutLibraryUseCase<D>>,
     pub patient_progress_uc: Arc<PatientProgressUseCase<D>>,
     pub remove_exercise_from_workout_uc: Arc<RemoveExerciseFromWorkoutUseCase<D>>,
@@ -180,6 +184,13 @@ where
         args: ListWorkoutLibraryArgs,
     ) -> Result<Vec<WorkoutLibraryItem>> {
         self.list_workout_library_uc.execute(args).await
+    }
+
+    async fn list_unassigned_patients(
+        &self,
+        args: UnassignedPatientsArgs,
+    ) -> Result<UnassignedPatientsResult> {
+        self.list_unassigned_patients_uc.execute(args).await
     }
 
     async fn patient_progress(&self, args: PatientProgressArgs) -> Result<PatientProgressResult> {

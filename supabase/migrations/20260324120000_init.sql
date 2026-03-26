@@ -1324,3 +1324,33 @@ COMMENT ON FUNCTION public.get_specialist_dashboard(uuid) IS
     'Returns specialist dashboard data: linked patients with profiles, programs, and assignments.';
 
 GRANT EXECUTE ON FUNCTION public.get_specialist_dashboard(uuid) TO authenticated;
+
+-- RPC: List patients not assigned to the current specialist
+CREATE OR REPLACE FUNCTION public.list_unassigned_patients()
+RETURNS TABLE (
+    id UUID,
+    email TEXT,
+    full_name TEXT,
+    role public.app_role,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    SELECT p.id, p.email, p.full_name, p.role, p.created_at, p.updated_at
+    FROM profiles p
+    WHERE p.role = 'patient'
+    AND p.id NOT IN (
+        SELECT patient_id FROM specialist_patients
+        WHERE specialist_id = auth.uid()
+    )
+    ORDER BY p.full_name;
+$$;
+
+COMMENT ON FUNCTION public.list_unassigned_patients() IS
+    'Returns all patients not assigned to the current specialist.';
+
+GRANT EXECUTE ON FUNCTION public.list_unassigned_patients() TO authenticated;

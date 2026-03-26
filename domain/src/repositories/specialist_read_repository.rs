@@ -4,6 +4,7 @@ pub trait SpecialistCatalogReadRepository:
     GetProfilesByIdsRead
     + GetPatientIdByEmailRead
     + ListSpecialistPatientsRead
+    + ListUnassignedPatientsRead
     + ListProgramsRead
     + GetProgramRead
     + ListWorkoutLibrary
@@ -29,6 +30,7 @@ impl<T> SpecialistCatalogReadRepository for T where
     T: GetProfilesByIdsRead
         + GetPatientIdByEmailRead
         + ListSpecialistPatientsRead
+        + ListUnassignedPatientsRead
         + ListProgramsRead
         + GetProgramRead
         + ListWorkoutLibrary

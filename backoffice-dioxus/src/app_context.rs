@@ -14,6 +14,7 @@ use application::{
     use_cases::get_specialist_patients_with_profiles::GetSpecialistPatientsWithProfilesUseCase,
     use_cases::list_exercise_library::ListExerciseLibraryUseCase,
     use_cases::list_program_schedule::ListProgramScheduleUseCase,
+    use_cases::list_unassigned_patients::ListUnassignedPatientsUseCase,
     use_cases::list_workout_library::ListWorkoutLibraryUseCase, use_cases::login::LoginUseCase,
     use_cases::patient_progress::PatientProgressUseCase,
     use_cases::remove_exercise_from_workout::RemoveExerciseFromWorkoutUseCase,
@@ -93,6 +94,8 @@ pub fn build_app_context() -> Result<AppContext> {
     let list_program_schedule_use_case = Arc::new(ListProgramScheduleUseCase::<
         SupabaseRestRepository,
     >::new(repository.clone()));
+    let list_unassigned_patients_use_case =
+        Arc::new(ListUnassignedPatientsUseCase::<SupabaseRestRepository>::new(repository.clone()));
     let list_workout_library_use_case = Arc::new(
         ListWorkoutLibraryUseCase::<SupabaseRestRepository>::new(repository.clone()),
     );
@@ -136,6 +139,7 @@ pub fn build_app_context() -> Result<AppContext> {
         specialist_programs_data_uc: specialist_programs_data_use_case,
         list_exercise_library_uc: list_exercise_library_use_case,
         list_program_schedule_uc: list_program_schedule_use_case,
+        list_unassigned_patients_uc: list_unassigned_patients_use_case,
         list_workout_library_uc: list_workout_library_use_case,
         patient_progress_uc: patient_progress_use_case,
         remove_exercise_from_workout_uc: remove_exercise_from_workout_use_case,

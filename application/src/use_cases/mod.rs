@@ -12,6 +12,7 @@ pub mod get_patient_programs;
 pub mod get_specialist_patients_with_profiles;
 pub mod list_exercise_library;
 pub mod list_program_schedule;
+pub mod list_unassigned_patients;
 pub mod list_workout_library;
 pub mod login;
 pub mod mobile_login;

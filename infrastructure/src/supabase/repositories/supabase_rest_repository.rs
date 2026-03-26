@@ -92,6 +92,18 @@ impl ListSpecialistPatientsRead for SupabaseRestRepository {
 }
 
 #[common::async_trait_platform]
+impl ListUnassignedPatientsRead for SupabaseRestRepository {
+    async fn list_unassigned_patients(&self) -> Result<Vec<Profile>> {
+        let body = self
+            .client
+            .get("/rpc/list_unassigned_patients")
+            .await?;
+        let rows: Vec<ProfileDto> = parse_json(&body)?;
+        Ok(rows.into_iter().map(Into::into).collect())
+    }
+}
+
+#[common::async_trait_platform]
 impl ListProgramsRead for SupabaseRestRepository {
     async fn list_programs(&self) -> Result<Vec<Program>> {
         let body = self

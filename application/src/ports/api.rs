@@ -14,6 +14,7 @@ use crate::use_cases::get_specialist_patients_with_profiles::{
 };
 use crate::use_cases::list_exercise_library::{ExerciseLibraryItem, ListExerciseLibraryArgs};
 use crate::use_cases::list_program_schedule::{ListProgramScheduleArgs, ProgramScheduleData};
+use crate::use_cases::list_unassigned_patients::{UnassignedPatientsArgs, UnassignedPatientsResult};
 use crate::use_cases::list_workout_library::{ListWorkoutLibraryArgs, WorkoutLibraryItem};
 use crate::use_cases::login::{LoginUseCaseArgs, LoginUseCaseResult};
 use crate::use_cases::patient_progress::{PatientProgressArgs, PatientProgressResult};
@@ -85,6 +86,11 @@ pub trait BackofficeApi {
         &self,
         args: ListWorkoutLibraryArgs,
     ) -> Result<Vec<WorkoutLibraryItem>>;
+
+    async fn list_unassigned_patients(
+        &self,
+        args: UnassignedPatientsArgs,
+    ) -> Result<UnassignedPatientsResult>;
 
     async fn patient_progress(&self, args: PatientProgressArgs) -> Result<PatientProgressResult>;
 

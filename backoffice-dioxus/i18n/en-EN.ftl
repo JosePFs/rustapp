@@ -34,6 +34,10 @@ no_programs_asigned = You have no active programs assigned.
 progress = Progress
 patients_link = Patients
 specialist_dashboard_instructions = Click on a patient to view their progress. You can assign programs from the Programs and assignment section.
+specialist_dashboard_link_instructions = Select the patients you want to link to your account.
+error_load_unassigned_patients = Error loading available patients
+no_unassigned_patients = No patients available to link.
+link_selected_patients = Link selected
 
 # Patient progress (specialist view)
 error_patient_progress = Error loading patient progress

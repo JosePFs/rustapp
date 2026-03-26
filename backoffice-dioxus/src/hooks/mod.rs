@@ -11,6 +11,7 @@ pub mod create_workout;
 pub mod delete_program_schedule_item;
 pub mod delete_workout;
 pub mod exercise_library;
+pub mod link_patient;
 pub mod list_program_schedule;
 pub mod login;
 pub mod patient_progress;
@@ -19,6 +20,7 @@ pub mod restore_exercise;
 pub mod soft_delete_exercise;
 pub mod specialist_patients;
 pub mod specialist_programs;
+pub mod unassigned_patients;
 pub mod update_exercise;
 pub mod update_workout;
 pub mod update_workout_exercise;
@@ -41,6 +43,11 @@ impl<T> AsyncState<T> {
 
     pub fn is_loading(&self) -> bool {
         matches!(self, AsyncState::Loading)
+    }
+
+    pub fn is_not_ready(&self) -> bool {
+        matches!(self, AsyncState::Idle | AsyncState::Loading)
+            && !matches!(self, AsyncState::Error(_))
     }
 
     pub fn is_error(&self) -> bool {
