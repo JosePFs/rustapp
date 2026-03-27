@@ -89,6 +89,24 @@ flutter devtools
 # Also: VS Code: Ctrl+Shift+P -> “Dart: Open DevTools”.
 ```
 
+## Running API
+
+```bash
+# Launch server
+cargo xtask api-run
+```
+
+```bash
+# To hot-reload development
+cargo install cargo-watch
+
+# Run the server with hot-reload
+cargo xtask api-watch
+
+# Run the tests with hot-reload
+cargo xtask api-watch-test
+```
+
 ## Running tests
 
 ```bash
@@ -96,7 +114,7 @@ flutter devtools
 cargo xtask smoke-test [-- --extra-test-arguments]
 
 # By default runs all the tests of a specific type, but it can be passed as a second argument
-cargo xtask [test-all|test-all-unit|test-all-integration|test-all-docker] [test-name] [-- --extra-test-arguments]
+cargo xtask [test-all|test-all-unit|test-all-integration|test-all-docker|api-unit-test|api-test] [test-name] [-- --extra-test-arguments]
 ```
 
 ## Project layout

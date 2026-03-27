@@ -6,6 +6,7 @@ fn main() {
 
     let path = Path::new("../.env");
     if !path.exists() {
+        println!("cargo:warning=.env file does not exist");
         return;
     }
 
@@ -26,11 +27,7 @@ fn main() {
                 .trim_matches('"')
                 .trim_matches('\'')
                 .to_string();
-            if key == "SUPABASE_URL"
-                || key == "SUPABASE_ANON_KEY"
-                || key == "API_HOST"
-                || key == "API_PORT"
-            {
+            if key.starts_with("API_") {
                 key_value_to_env(key, &value);
             }
         }

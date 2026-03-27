@@ -97,8 +97,42 @@ fn main() {
             );
         }
 
+        // API Commands
+        "api-check" => run_cargo_command("check", &["--package", "api"]),
+        "api-unit-test" => run_cargo_command(
+            "test",
+            &[
+                "--lib",
+                &cmd_args.join(" "),
+                "--package",
+                "api",
+                "--",
+                &binary_args.join(" "),
+            ],
+        ),
+        "api-test" => run_cargo_command(
+            "test",
+            &[
+                "--tests",
+                &cmd_args.join(" "),
+                "--package",
+                "api",
+                "--",
+                &binary_args.join(" "),
+            ],
+        ),
+        "api-build" => run_cargo_command("build", &["--release", "--package", "api"]),
+        "api-run" => run_cargo_command("run", &["--release", "--package", "api"]),
+        "api-watch" => run_bash_command("cargo watch -q -c -w api/src/ -x \"run -p api\""),
+        "api-watch-test" => {
+            run_bash_command(&format!(
+                "cargo watch -q -c -w api/tests/ -x \"test {} -- --nocapture\"",
+                cmd_args.join(" ")
+            ));
+        }
+
         // Testing Commands
-        "smoke-test" => {
+        "db-smoke-test" => {
             run_supabase_command(&["start"]);
             run_supabase_command(&["db", "reset"]);
             run_cargo_command(
@@ -199,6 +233,22 @@ fn show_help() {
                 ("dioxus-test", "Test the Dioxus app"),
                 ("dioxus-build", "Build the Dioxus app"),
             ],
+        ),
+        (
+            "API Commands",
+            vec![
+                ("api-check", "Check the API"),
+                ("api-unit-test", "Test the API unit tests"),
+                ("api-test", "Test the API integration tests"),
+                ("api-build", "Build the API"),
+                ("api-run", "Run the API"),
+                ("api-watch", "Hot-reload the API server"),
+                ("api-watch-test", "Hot-reload the API tests"),
+            ],
+        ),
+        (
+            "Database Commands",
+            vec![("db-smoke-test", "Smoke test the database")],
         ),
         (
             "General Commands",

@@ -7,7 +7,7 @@ members = [
     "application",
     "infrastructure",
     "backoffice-dioxus",
-    "mobile-bridge-frb",
+    "mobile-bridge-frb", "api",
 ]
 default-members = ["backoffice-dioxus"]
 

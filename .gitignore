@@ -28,6 +28,7 @@ dist/
 # Logs and debug
 *.log
 *.tmp
+logs/
 
 # Node
 node_modules/
