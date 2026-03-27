@@ -1,27 +1,15 @@
-use std::sync::{Arc, LazyLock};
-
+use std::sync::LazyLock;
 use serde::{Deserialize, Serialize};
 
-use application::ports::api::MobileApi;
-use application::use_cases::login::LoginUseCaseArgs;
-use application::use_cases::submit_patient_workout_feedback::SubmitPatientWorkoutFeedbackArgs;
-use application::use_cases::uncomplete_patient_workout_session::UncompletePatientWorkoutSessionArgs;
-use application::{facade::MobileFacade, use_cases::refresh_session::RefreshSessionArgs};
-use infrastructure::supabase::default_auth;
-use infrastructure::supabase::{
-    auth::SupabaseAuth,
-    repositories::{SupabaseRestRepository, SupabaseRestRepositoryBuilder},
+use infrastructure::api::{
+    axum_client::{AxumApiClient, LoginResponse as ApiLoginResponse, PatientProgramResponse as ApiPatientProgramResponse},
+    config::ApiConfig,
 };
 
-static REPOSITORY: LazyLock<Arc<SupabaseRestRepository>> =
-    LazyLock::new(|| SupabaseRestRepositoryBuilder::new().build());
-
-static FACADE: LazyLock<Arc<MobileFacade<SupabaseRestRepository, SupabaseAuth>>> =
-    LazyLock::new(|| {
-        let repo = REPOSITORY.clone();
-        let auth = default_auth();
-        MobileFacade::builder(repo, auth).build()
-    });
+static API_CLIENT: LazyLock<AxumApiClient> = LazyLock::new(|| {
+    let config = ApiConfig::from_env();
+    AxumApiClient::new(config)
+});
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LoginRequest {
@@ -97,41 +85,28 @@ pub struct PatientProgramSummary {
 }
 
 pub async fn login(request: LoginRequest) -> Result<LoginResponse, String> {
-    let result = FACADE
-        .login(LoginUseCaseArgs::from(&request.email, &request.password))
-        .await
-        .map_err(|error| error.to_string())?;
-
+    let result: ApiLoginResponse = API_CLIENT.login(&request.email, &request.password).await?;
     Ok(LoginResponse {
-        access_token: result.session.access_token().to_string(),
-        refresh_token: result.session.refresh_token().map(|t| t.to_string()),
-        user_id: result.session.user_id().to_string(),
-        user_profile_type: result.user_profile_type.to_string(),
+        access_token: result.access_token,
+        refresh_token: result.refresh_token,
+        user_id: result.user_id,
+        user_profile_type: result.user_profile_type,
     })
 }
 
 pub async fn refresh_session(refresh_token: String) -> Result<LoginResponse, String> {
-    let result = FACADE
-        .refresh_session(RefreshSessionArgs::from_refresh_token(refresh_token))
-        .await
-        .map_err(|error| error.to_string())?;
-
+    let result: ApiLoginResponse = API_CLIENT.refresh_session(&refresh_token).await?;
     Ok(LoginResponse {
-        access_token: result.session.access_token().to_string(),
-        refresh_token: result.session.refresh_token().map(|t| t.to_string()),
-        user_id: result.session.user_id().to_string(),
-        user_profile_type: result.user_profile_type.to_string(),
+        access_token: result.access_token,
+        refresh_token: result.refresh_token,
+        user_id: result.user_id,
+        user_profile_type: result.user_profile_type,
     })
 }
 
 pub async fn get_patient_programs() -> Result<Vec<PatientProgramSummary>, String> {
-    let result = FACADE
-        .get_patient_programs()
-        .await
-        .map_err(|error| error.to_string())?;
-
+    let result: Vec<ApiPatientProgramResponse> = API_CLIENT.get_programs().await?;
     Ok(result
-        .patient_programs
         .into_iter()
         .map(|program| PatientProgramSummary {
             patient_program_id: program.patient_program_id,
@@ -156,16 +131,16 @@ pub async fn get_patient_programs() -> Result<Vec<PatientProgramSummary>, String
                     exercises: day
                         .exercises
                         .into_iter()
-                        .map(|exercise| ExerciseInstructionSummary {
-                            exercise_id: exercise.exercise_id,
-                            name: exercise.name,
-                            description: exercise.description,
-                            video_url: exercise.video_url,
-                            sets: exercise.sets,
-                            reps: exercise.reps,
-                            effort: exercise.effort,
-                            pain: exercise.pain,
-                            comment: exercise.comment,
+                        .map(|e| ExerciseInstructionSummary {
+                            exercise_id: e.exercise_id,
+                            name: e.name,
+                            description: e.description,
+                            video_url: e.video_url,
+                            sets: e.sets,
+                            reps: e.reps,
+                            effort: e.effort,
+                            pain: e.pain,
+                            comment: e.comment,
                         })
                         .collect(),
                 })
@@ -175,43 +150,19 @@ pub async fn get_patient_programs() -> Result<Vec<PatientProgramSummary>, String
 }
 
 pub async fn mark_day_as_completed(request: MarkDayAsCompletedRequest) -> Result<(), String> {
-    let feedback_map = request
+    let feedback: Vec<(String, i32, i32, String)> = request
         .feedback
         .into_iter()
-        .map(|entry| {
-            (
-                entry.exercise_id,
-                (entry.effort, entry.pain, entry.comment.unwrap_or_default()),
-            )
-        })
+        .map(|f| (f.exercise_id, f.effort, f.pain, f.comment.unwrap_or_default()))
         .collect();
 
-    let MarkDayAsCompletedRequest {
-        patient_program_id,
-        day_index,
-        session_date,
-        ..
-    } = request;
-
-    FACADE
-        .submit_patient_workout_feedback(SubmitPatientWorkoutFeedbackArgs {
-            patient_program_id,
-            day_index,
-            session_date,
-            feedback_map,
-            completion_status: None,
-        })
+    API_CLIENT
+        .mark_day_as_completed(&request.patient_program_id, request.day_index, &request.session_date, feedback)
         .await
-        .map_err(|error| error.to_string())
 }
 
 pub async fn mark_day_as_uncompleted(request: MarkDayAsUncompletedRequest) -> Result<(), String> {
-    FACADE
-        .uncomplete_patient_workout_session(UncompletePatientWorkoutSessionArgs {
-            workout_session_id: request.workout_session_id,
-        })
-        .await
-        .map_err(|error| error.to_string())
+    API_CLIENT.mark_day_as_uncompleted(&request.workout_session_id).await
 }
 
 pub fn init_logger(level: String) {

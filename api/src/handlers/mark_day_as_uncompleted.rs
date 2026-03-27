@@ -1,10 +1,31 @@
 use std::sync::Arc;
 
-use axum::extract::State;
+use axum::{extract::State, Json};
+use serde::{Deserialize, Serialize};
 
-use crate::{router::api_response::APIResponse, state::AppState};
+use crate::{
+    error::{Error, Result},
+    router::api_response::APIResponse,
+    state::AppState,
+};
+use application::{ports::MobileApi as _, use_cases::uncomplete_patient_workout_session::UncompletePatientWorkoutSessionArgs};
 
-pub async fn mark_day_as_uncompleted(State(state): State<Arc<AppState>>) -> APIResponse<String> {
-    tracing::info!("Mark day as uncompleted");
-    APIResponse::ok("OK".to_string())
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MarkDayAsUncompletedRequest {
+    pub workout_session_id: String,
+}
+
+pub async fn mark_day_as_uncompleted(
+    State(state): State<Arc<AppState>>,
+    Json(request): Json<MarkDayAsUncompletedRequest>,
+) -> Result<APIResponse<()>> {
+    state
+        .facade()
+        .uncomplete_patient_workout_session(UncompletePatientWorkoutSessionArgs {
+            workout_session_id: request.workout_session_id,
+        })
+        .await
+        .map_err(Error::from)?;
+
+    Ok(APIResponse::ok(()))
 }

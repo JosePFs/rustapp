@@ -21,11 +21,11 @@ pub fn patients_routes(state: Arc<AppState>) -> Router {
         )
         .route(
             &patients_path(Some("mark-day-as-completed".to_string())),
-            get(mark_day_as_completed),
+            post(mark_day_as_completed),
         )
         .route(
             &patients_path(Some("mark-day-as-uncompleted".to_string())),
-            get(mark_day_as_uncompleted),
+            post(mark_day_as_uncompleted),
         )
         .with_state(state)
 }
