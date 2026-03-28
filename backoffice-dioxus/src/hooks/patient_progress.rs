@@ -1,8 +1,10 @@
 use dioxus::prelude::*;
-use std::collections::HashMap;
 
 use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::ports::backoffice_api::PatientProgressArgs;
+use application::ports::backoffice_api::{
+    AgendaSessionFeedback, AgendaWorkoutSession, PatientProgressArgs, PatientProgressResult as PortResult,
+    ProgramScheduleRow, WorkoutSummaryRow,
+};
 
 #[derive(Clone, Debug)]
 pub struct PatientProgressProfile {
@@ -10,15 +12,15 @@ pub struct PatientProgressProfile {
     pub email: String,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct PatientProgressProgramBlock {
     pub program_name: String,
     pub program_description: Option<String>,
     pub assignment_status: String,
-    pub sessions: Vec<()>,
-    pub program_feedback: HashMap<String, ()>,
-    pub schedule: Vec<()>,
-    pub workouts: HashMap<String, ()>,
+    pub sessions: Vec<AgendaWorkoutSession>,
+    pub program_feedback: Vec<AgendaSessionFeedback>,
+    pub schedule: Vec<ProgramScheduleRow>,
+    pub workouts: Vec<WorkoutSummaryRow>,
 }
 
 #[derive(Clone, Debug)]
@@ -62,6 +64,7 @@ pub fn use_patient_progress(patient_id: String) -> UsePatientProgress {
             let args = PatientProgressArgs { patient_id };
             match facade.patient_progress(args).await {
                 Ok(data) => {
+                    let data: PortResult = data;
                     let result = PatientProgressResult {
                         profile: PatientProgressProfile {
                             full_name: data.profile.full_name,
@@ -74,10 +77,10 @@ pub fn use_patient_progress(patient_id: String) -> UsePatientProgress {
                                 program_name: p.program_name,
                                 program_description: p.program_description,
                                 assignment_status: p.assignment_status,
-                                sessions: vec![],
-                                program_feedback: HashMap::new(),
-                                schedule: vec![],
-                                workouts: HashMap::new(),
+                                sessions: p.sessions,
+                                program_feedback: p.program_feedback,
+                                schedule: p.schedule,
+                                workouts: p.workouts,
                             })
                             .collect(),
                     };

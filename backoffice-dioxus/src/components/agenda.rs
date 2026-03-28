@@ -62,9 +62,7 @@ pub fn Agenda(
         program_feedback
             .iter()
             .fold(std::collections::HashMap::new(), |mut m, f| {
-                m.entry(f.workout_session_id.clone())
-                    .or_default()
-                    .push(f);
+                m.entry(f.workout_session_id.clone()).or_default().push(f);
                 m
             });
 
@@ -177,7 +175,6 @@ pub fn Agenda(
                 if !eff_avg.is_empty() || !pain_avg.is_empty() {
                     p { "Esfuerzo medio: {eff_avg}" }
                     p { "Dolor medio: {pain_avg}" }
-                    p { class: "text-text-muted", "Feedback por ejercicio en el detalle del día." }
                 } else {
                     p { class: "text-text-muted", "Sin feedback por ejercicio registrado." }
                 }
