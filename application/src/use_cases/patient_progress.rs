@@ -4,7 +4,7 @@ use futures::stream::{self, StreamExt};
 use futures::try_join;
 use futures::TryFutureExt;
 
-use crate::ports::error::{ApplicationError, Result};
+use crate::error::{ApplicationError, Result};
 use crate::use_cases::agenda_schedule::{
     AgendaSessionFeedback, AgendaWorkoutSession, ProgramScheduleRow, WorkoutSummaryRow,
 };

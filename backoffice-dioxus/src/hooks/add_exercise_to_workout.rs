@@ -1,8 +1,7 @@
 use dioxus::prelude::*;
 
 use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::ports::BackofficeApi;
-use application::use_cases::add_exercise_to_workout::AddExerciseToWorkoutArgs;
+use application::ports::backoffice_api::AddExerciseToWorkoutArgs;
 
 #[derive(Clone)]
 pub struct UseAddExerciseToWorkout {

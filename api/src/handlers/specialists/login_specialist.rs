@@ -8,32 +8,38 @@ use crate::{
     router::api_response::APIResponse,
     state::AppState,
 };
-use application::{ports::MobileApi as _, use_cases::refresh_session::RefreshSessionArgs};
+use application::use_cases::login::LoginUseCaseArgs;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RefreshSessionRequest {
-    pub refresh_token: String,
+pub struct LoginSpecialistRequest {
+    pub email: String,
+    pub password: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RefreshSessionResponse {
+pub struct LoginSpecialistResponse {
     pub access_token: String,
     pub refresh_token: Option<String>,
     pub user_id: String,
     pub user_profile_type: String,
 }
 
-pub async fn refresh_session(
+pub async fn login_specialist(
     State(state): State<Arc<AppState>>,
-    Json(request): Json<RefreshSessionRequest>,
-) -> Result<APIResponse<RefreshSessionResponse>> {
+    Json(request): Json<LoginSpecialistRequest>,
+) -> Result<APIResponse<LoginSpecialistResponse>> {
     let result = state
-        .facade()
-        .refresh_session(RefreshSessionArgs::from_refresh_token(&request.refresh_token))
+        .backoffice_facade()
+        .login(LoginUseCaseArgs {
+            credentials: application::ports::auth::Credentials::from(
+                &request.email,
+                &request.password,
+            ),
+        })
         .await
         .map_err(Error::from)?;
 
-    Ok(APIResponse::ok(RefreshSessionResponse {
+    Ok(APIResponse::ok(LoginSpecialistResponse {
         access_token: result.session.access_token().to_string(),
         refresh_token: result.session.refresh_token().map(|t| t.to_string()),
         user_id: result.session.user_id().to_string(),

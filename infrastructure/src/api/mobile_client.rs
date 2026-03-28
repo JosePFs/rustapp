@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::api::config::ApiConfig;
+use crate::api::{config::ApiConfig, platforms_http_client::PlatformsHttpClient};
 
 const API_BASE_PATH: &str = "/api/v1/patients";
 
@@ -87,13 +87,17 @@ pub struct PatientProgramResponse {
     pub average_pain: Option<f32>,
 }
 
-pub struct AxumApiClient {
+pub struct MobileClient {
     config: ApiConfig,
+    http_client: PlatformsHttpClient,
 }
 
-impl AxumApiClient {
-    pub fn new(config: ApiConfig) -> Self {
-        Self { config }
+impl MobileClient {
+    pub fn new(config: ApiConfig, http_client: PlatformsHttpClient) -> Self {
+        Self {
+            config,
+            http_client,
+        }
     }
 
     pub async fn login(&self, email: &str, password: &str) -> Result<LoginResponse, String> {
@@ -106,7 +110,7 @@ impl AxumApiClient {
 
         let body = serde_json::to_vec(&request).map_err(|e| e.to_string())?;
 
-        let response = rest_request_platform("POST", &url, &body).await?;
+        let response = self.http_client.post(&url, Some(&body)).await?;
 
         if response.status < 200 || response.status >= 300 {
             let body_str = String::from_utf8_lossy(&response.body);
@@ -128,7 +132,7 @@ impl AxumApiClient {
 
         let body = serde_json::to_vec(&request).map_err(|e| e.to_string())?;
 
-        let response = rest_request_platform("POST", &url, &body).await?;
+        let response = self.http_client.post(&url, Some(&body)).await?;
 
         if response.status < 200 || response.status >= 300 {
             let body_str = String::from_utf8_lossy(&response.body);
@@ -144,7 +148,7 @@ impl AxumApiClient {
     pub async fn get_programs(&self) -> Result<Vec<PatientProgramResponse>, String> {
         let url = format!("{}{}/get-programs", self.config.base_url, API_BASE_PATH);
 
-        let response = rest_request_platform("GET", &url, &[]).await?;
+        let response = self.http_client.get(&url).await?;
 
         if response.status < 200 || response.status >= 300 {
             let body_str = String::from_utf8_lossy(&response.body);
@@ -164,16 +168,25 @@ impl AxumApiClient {
         session_date: &str,
         feedback: Vec<(String, i32, i32, String)>,
     ) -> Result<(), String> {
-        let url = format!("{}{}/mark-day-as-completed", self.config.base_url, API_BASE_PATH);
+        let url = format!(
+            "{}{}/mark-day-as-completed",
+            self.config.base_url, API_BASE_PATH
+        );
 
         let feedback_requests: Vec<ExerciseFeedbackRequest> = feedback
             .into_iter()
-            .map(|(exercise_id, effort, pain, comment)| ExerciseFeedbackRequest {
-                exercise_id,
-                effort,
-                pain,
-                comment: if comment.is_empty() { None } else { Some(comment) },
-            })
+            .map(
+                |(exercise_id, effort, pain, comment)| ExerciseFeedbackRequest {
+                    exercise_id,
+                    effort,
+                    pain,
+                    comment: if comment.is_empty() {
+                        None
+                    } else {
+                        Some(comment)
+                    },
+                },
+            )
             .collect();
 
         let request = MarkDayAsCompletedRequest {
@@ -185,7 +198,7 @@ impl AxumApiClient {
 
         let body = serde_json::to_vec(&request).map_err(|e| e.to_string())?;
 
-        let response = rest_request_platform("POST", &url, &body).await?;
+        let response = self.http_client.post(&url, Some(&body)).await?;
 
         if response.status < 200 || response.status >= 300 {
             let body_str = String::from_utf8_lossy(&response.body);
@@ -196,7 +209,10 @@ impl AxumApiClient {
     }
 
     pub async fn mark_day_as_uncompleted(&self, workout_session_id: &str) -> Result<(), String> {
-        let url = format!("{}{}/mark-day-as-uncompleted", self.config.base_url, API_BASE_PATH);
+        let url = format!(
+            "{}{}/mark-day-as-uncompleted",
+            self.config.base_url, API_BASE_PATH
+        );
 
         let request = MarkDayAsUncompletedRequest {
             workout_session_id: workout_session_id.to_string(),
@@ -204,7 +220,7 @@ impl AxumApiClient {
 
         let body = serde_json::to_vec(&request).map_err(|e| e.to_string())?;
 
-        let response = rest_request_platform("POST", &url, &body).await?;
+        let response = self.http_client.post(&url, Some(&body)).await?;
 
         if response.status < 200 || response.status >= 300 {
             let body_str = String::from_utf8_lossy(&response.body);
@@ -213,76 +229,4 @@ impl AxumApiClient {
 
         Ok(())
     }
-}
-
-struct HttpResponse {
-    status: u16,
-    body: Vec<u8>,
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-async fn rest_request_platform(method: &str, url: &str, body: &[u8]) -> Result<HttpResponse, String> {
-    let client = &*crate::api::SHARED_REQWEST_CLIENT;
-
-    let mut req = match method {
-        "POST" => client.post(url),
-        "GET" => client.get(url),
-        "PATCH" => client.patch(url),
-        "DELETE" => client.delete(url),
-        _ => return Err(format!("Unsupported method: {}", method)),
-    };
-
-    req = req
-        .header("Content-Type", "application/json")
-        .header("Accept", "application/json");
-
-    let response = req
-        .body(body.to_vec())
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    let status = response.status().as_u16();
-    let body = response
-        .bytes()
-        .await
-        .map_err(|e| e.to_string())?
-        .to_vec();
-
-    Ok(HttpResponse { status, body })
-}
-
-#[cfg(target_arch = "wasm32")]
-async fn rest_request_platform(method: &str, url: &str, body: &[u8]) -> Result<HttpResponse, String> {
-    use gloo_net::http::Request;
-    use js_sys::Uint8Array;
-    use wasm_bindgen::JsValue;
-
-    let req = match method {
-        "POST" => Request::post(url),
-        "GET" => Request::get(url),
-        "PATCH" => Request::patch(url),
-        "DELETE" => Request::delete(url),
-        _ => return Err(format!("Unsupported method: {}", method)),
-    };
-
-    let js_body: JsValue = Uint8Array::from(body).into();
-
-    let response = req
-        .header("Content-Type", "application/json")
-        .header("Accept", "application/json")
-        .body(js_body)
-        .map_err(|e| e.to_string())?
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    let status = response.status();
-    let body = response
-        .binary()
-        .await
-        .map_err(|e| e.to_string())?
-        .to_vec();
-
-    Ok(HttpResponse { status, body })
 }

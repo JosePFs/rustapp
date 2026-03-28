@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::ports::error::{ApplicationError, Result};
+use crate::error::{ApplicationError, Result};
 use domain::repositories::GetSpecialistDashboardRead;
 
 #[derive(Clone, Debug, PartialEq, Eq)]

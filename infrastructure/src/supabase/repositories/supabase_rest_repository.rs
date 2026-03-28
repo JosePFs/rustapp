@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use application::ports::HttpRestClient;
 use serde::de::DeserializeOwned;
 
 use crate::api::dtos::{
@@ -94,10 +93,7 @@ impl ListSpecialistPatientsRead for SupabaseRestRepository {
 #[common::async_trait_platform]
 impl ListUnassignedPatientsRead for SupabaseRestRepository {
     async fn list_unassigned_patients(&self) -> Result<Vec<Profile>> {
-        let body = self
-            .client
-            .get("/rpc/list_unassigned_patients")
-            .await?;
+        let body = self.client.get("/rpc/list_unassigned_patients").await?;
         let rows: Vec<ProfileDto> = parse_json(&body)?;
         Ok(rows.into_iter().map(Into::into).collect())
     }

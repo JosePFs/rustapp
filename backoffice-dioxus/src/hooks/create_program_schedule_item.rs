@@ -1,8 +1,7 @@
 use dioxus::prelude::*;
 
 use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::ports::BackofficeApi;
-use application::use_cases::create_program_schedule_item::CreateProgramScheduleItemArgs;
+use application::ports::backoffice_api::CreateProgramScheduleItemArgs;
 
 #[derive(Clone)]
 pub struct UseCreateProgramScheduleItem {

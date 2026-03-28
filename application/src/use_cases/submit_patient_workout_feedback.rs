@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use futures::stream::{self, StreamExt};
 
-use crate::ports::error::{ApplicationError, Result};
+use crate::error::{ApplicationError, Result};
 use domain::repositories::PatientSessionRepository;
 use domain::vos::id::Id;
 use domain::vos::{DayIndex, EffortScore, FeedbackComment, PainScore, SessionDate};

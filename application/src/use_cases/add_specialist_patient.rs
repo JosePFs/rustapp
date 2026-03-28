@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::ports::error::{ApplicationError, Result};
+use crate::error::{ApplicationError, Result};
 use domain::entities::SpecialistPatient;
 use domain::error::DomainError;
 use domain::repositories::{AddSpecialistPatient, GetPatientIdByEmailRead};

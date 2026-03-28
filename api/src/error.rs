@@ -1,4 +1,4 @@
-use application::ports::error::ApplicationError;
+use application::error::ApplicationError;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -14,12 +14,12 @@ use crate::router::api_response::APIResponse;
 pub enum Error {
     #[error("Configuration error: {0}")]
     Configuration(String),
-    #[error("Internal server error: {0}")]
-    Internal(String),
     #[error("Wrong request path: {0}, method: {1}")]
     WrongRequestPath(String, String),
     #[error("Bad request: {0}")]
     BadRequest(String),
+    #[error("Internal server error: {0}")]
+    Internal(String),
 }
 
 impl Error {

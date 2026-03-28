@@ -3,11 +3,8 @@ use std::sync::Arc;
 use serde::Deserialize;
 
 use crate::supabase::config::SupabaseConfig;
-use application::ports::{
-    auth::AuthService,
-    error::{ApplicationError, Result},
-    HttpRestClient,
-};
+use application::error::{ApplicationError, Result};
+use application::ports::auth::AuthService;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ResponseStatus(pub u16);
@@ -37,26 +34,26 @@ pub struct SupabaseClient {
     auth_service: Arc<dyn AuthService>,
 }
 
-impl HttpRestClient for SupabaseClient {
-    async fn get(&self, path: &str) -> Result<Vec<u8>> {
+impl SupabaseClient {
+    pub async fn get(&self, path: &str) -> Result<Vec<u8>> {
         let token = self.get_valid_token().await?;
         self.rest_request_with_retry(Some(&token), "GET", path, None, None)
             .await
     }
 
-    async fn post(&self, path: &str, body: &str) -> Result<Vec<u8>> {
+    pub async fn post(&self, path: &str, body: &str) -> Result<Vec<u8>> {
         let token = self.get_valid_token().await?;
         self.rest_request_with_retry(Some(&token), "POST", path, Some(body.as_bytes()), None)
             .await
     }
 
-    async fn patch(&self, path: &str, body: &str) -> Result<Vec<u8>> {
+    pub async fn patch(&self, path: &str, body: &str) -> Result<Vec<u8>> {
         let token = self.get_valid_token().await?;
         self.rest_request_with_retry(Some(&token), "PATCH", path, Some(body.as_bytes()), None)
             .await
     }
 
-    async fn upsert(&self, path: &str, body: &str) -> Result<Vec<u8>> {
+    pub async fn upsert(&self, path: &str, body: &str) -> Result<Vec<u8>> {
         let token = self.get_valid_token().await?;
         self.rest_request_with_retry(
             Some(&token),
@@ -68,7 +65,7 @@ impl HttpRestClient for SupabaseClient {
         .await
     }
 
-    async fn delete(&self, path: &str) -> Result<Vec<u8>> {
+    pub async fn delete(&self, path: &str) -> Result<Vec<u8>> {
         self.rest_request_with_retry(None, "DELETE", path, None, None)
             .await
     }
@@ -147,8 +144,7 @@ impl SupabaseClient {
         if ResponseStatus(response.status).is_success() {
             Ok(response.body)
         } else {
-            Err(ApplicationError::api(
-                response.status,
+            Err(ApplicationError::internal(
                 String::from_utf8_lossy(&response.body).to_string(),
             ))
         }
@@ -178,8 +174,7 @@ async fn rest_request_platform(
         "PATCH" => client.patch(url),
         "DELETE" => client.delete(url),
         _ => {
-            return Err(ApplicationError::api(
-                500,
+            return Err(ApplicationError::internal(
                 "Unsupported rest request method".to_string(),
             ))
         }
@@ -195,18 +190,15 @@ async fn rest_request_platform(
     if let Some(b) = body {
         req = req.body(b.to_vec());
     }
-    let response = req.send().await.map_err(|e| {
-        ApplicationError::api(
-            e.status()
-                .map_or(ResponseStatus::DEFAULT_ERROR_STATUS, |s| s.as_u16()),
-            e.to_string(),
-        )
-    })?;
+    let response = req
+        .send()
+        .await
+        .map_err(|e| ApplicationError::internal(e.to_string()))?;
     let status = response.status().as_u16();
     let body = response
         .bytes()
         .await
-        .map_err(|e| ApplicationError::api(ResponseStatus::DEFAULT_ERROR_STATUS, e.to_string()))?
+        .map_err(|e| ApplicationError::internal(e.to_string()))?
         .to_vec();
 
     Ok(HttpResponse { status, body })
@@ -230,8 +222,7 @@ async fn rest_request_platform(
         "PATCH" => Request::patch(url),
         "DELETE" => Request::delete(url),
         _ => {
-            return Err(ApplicationError::api(
-                ResponseStatus::DEFAULT_ERROR_STATUS,
+            return Err(ApplicationError::internal(
                 "Unsupported rest request method".to_string(),
             ))
         }
@@ -247,24 +238,20 @@ async fn rest_request_platform(
     let response = if let Some(b) = body {
         let js_body: JsValue = Uint8Array::from(b).into();
         req.body(js_body)
-            .map_err(|e| {
-                ApplicationError::api(ResponseStatus::DEFAULT_ERROR_STATUS, e.to_string())
-            })?
+            .map_err(|e| ApplicationError::internal(e.to_string()))?
             .send()
             .await
-            .map_err(|e| {
-                ApplicationError::api(ResponseStatus::DEFAULT_ERROR_STATUS, e.to_string())
-            })?
+            .map_err(|e| ApplicationError::internal(e.to_string()))?
     } else {
-        req.send().await.map_err(|e| {
-            ApplicationError::api(ResponseStatus::DEFAULT_ERROR_STATUS, e.to_string())
-        })?
+        req.send()
+            .await
+            .map_err(|e| ApplicationError::internal(e.to_string()))?
     };
     let status = response.status();
     let body = response
         .binary()
         .await
-        .map_err(|e| ApplicationError::api(ResponseStatus::DEFAULT_ERROR_STATUS, e.to_string()))?;
+        .map_err(|e| ApplicationError::internal(e.to_string()))?;
     Ok(HttpResponse {
         status,
         body: body.to_vec(),

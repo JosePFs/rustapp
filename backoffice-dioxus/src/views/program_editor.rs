@@ -38,7 +38,7 @@ pub fn ProgramEditor(id: String) -> Element {
         .resource
         .read()
         .as_ref()
-        .and_then(|r| r.as_ref().ok().cloned())
+        .and_then(|r| r.as_ref().ok().map(|res| res.items.clone()))
         .unwrap_or_default();
 
     let schedule_section = {

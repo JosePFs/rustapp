@@ -8,7 +8,6 @@ use crate::{
     router::api_response::APIResponse,
     state::AppState,
 };
-use application::ports::MobileApi as _;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExerciseInstructionResponse {
@@ -51,7 +50,11 @@ pub struct PatientProgramResponse {
 pub async fn get_programs(
     State(state): State<Arc<AppState>>,
 ) -> Result<APIResponse<Vec<PatientProgramResponse>>> {
-    let result = state.facade().get_patient_programs().await.map_err(Error::from)?;
+    let result = state
+        .facade()
+        .get_patient_programs()
+        .await
+        .map_err(Error::from)?;
 
     let programs = result
         .patient_programs

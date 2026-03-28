@@ -4,3 +4,4 @@ pub mod health;
 pub mod paths;
 pub mod patients_routes;
 pub mod router;
+pub mod specialists_routes;

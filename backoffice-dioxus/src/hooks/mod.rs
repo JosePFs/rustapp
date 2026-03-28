@@ -1,4 +1,4 @@
-use application::ports::error::ApplicationError;
+use application::error::ApplicationError;
 
 pub mod add_exercise_to_workout;
 pub mod add_specialist_patient;

@@ -1,8 +1,7 @@
 use dioxus::prelude::*;
 
 use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::ports::BackofficeApi;
-use application::use_cases::remove_exercise_from_workout::RemoveExerciseFromWorkoutArgs;
+use application::ports::backoffice_api::RemoveExerciseFromWorkoutArgs;
 
 #[derive(Clone)]
 pub struct UseRemoveExerciseFromWorkout {

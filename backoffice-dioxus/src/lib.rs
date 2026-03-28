@@ -13,7 +13,7 @@ use crate::components::{
     SidebarVariant,
 };
 use app_context::build_app_context;
-use application::ports::error::ApplicationError;
+use application::error::ApplicationError;
 use views::{
     ExerciseLibrary, Login, PatientProgress, ProgramEditor, SpecialistPatients, SpecialistPrograms,
     WorkoutEditor, WorkoutLibrary,
@@ -184,7 +184,6 @@ fn ErrorView(error: ErrorContext) -> Element {
     };
 
     if is_auth_error {
-        log::info!("Redirecting to login");
         nav.push(Route::Login {});
         return rsx! {};
     }

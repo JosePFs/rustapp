@@ -8,7 +8,7 @@ use crate::{
     router::api_response::APIResponse,
     state::AppState,
 };
-use application::{ports::MobileApi as _, use_cases::uncomplete_patient_workout_session::UncompletePatientWorkoutSessionArgs};
+use application::use_cases::uncomplete_patient_workout_session::UncompletePatientWorkoutSessionArgs;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MarkDayAsUncompletedRequest {

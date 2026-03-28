@@ -1,10 +1,10 @@
 use dioxus::prelude::*;
 use dioxus_i18n::t;
 
-use crate::components::Agenda;
-use crate::hooks::{patient_progress::use_patient_progress, AsyncState};
-use application::use_cases::agenda_schedule::AgendaSessionFeedback;
-use application::use_cases::patient_progress::PatientProgressResult;
+use crate::hooks::{
+    patient_progress::{use_patient_progress, PatientProgressResult},
+    AsyncState,
+};
 
 #[component]
 pub fn PatientProgress(id: String) -> Element {
@@ -36,43 +36,7 @@ pub fn PatientProgress(id: String) -> Element {
                                         p { class: "text-sm text-text-muted mb-2", "{desc}" }
                                     }
                                     p { class: "text-xs text-text-muted mb-2", { t!("patient_program_status", status: pws.assignment_status.clone()) } }
-                                    Agenda {
-                                        sessions: pws.sessions.clone(),
-                                        program_feedback: pws.program_feedback.clone(),
-                                        schedule: pws.schedule.clone(),
-                                        workouts: pws.workouts.clone(),
-                                        title: t!("progress"),
-                                        patient_program_id: None,
-                                        write_selected_for_feedback: None,
-                                    }
-                                    if pws.sessions.is_empty() {
-                                        p { class: "text-text-muted italic py-4", { t!("patient_no_sessions") } }
-                                    } else {
-                                        div { class: "overflow-x-auto",
-                                            table { class: "border-collapse text-sm w-full whitespace-nowrap",
-                                                thead {
-                                                    tr {
-                                                        th { class: "text-left p-2 font-semibold text-text-muted border-b border-border", { t!("patient_progress_day") } }
-                                                        th { class: "text-left p-2 font-semibold text-text-muted border-b border-border", { t!("patient_progress_date") } }
-                                                        th { class: "text-left p-2 font-semibold text-text-muted border-b border-border", { t!("patient_progress_completed") } }
-                                                        th { class: "text-left p-2 font-semibold text-text-muted border-b border-border", { t!("patient_progress_effort_avg") } }
-                                                        th { class: "text-left p-2 font-semibold text-text-muted border-b border-border", { t!("patient_progress_pain_avg") } }
-                                                    }
-                                                }
-                                                tbody {
-                                                    for s in pws.sessions.iter() {
-                                                        tr { key: "{s.id}", class: "border-b border-border",
-                                                            td { class: "p-2", { t!("patient_progress_day_label", day: (s.day_index + 1).to_string()) } }
-                                                            td { class: "p-2", "{s.session_date}" }
-                                                            td { class: "p-2", { if s.completed_at.is_some() { t!("yes") } else { t!("no") } } }
-                                                            td { class: "p-2", "{session_avg_feedback(&s.id, &pws.program_feedback).0}" }
-                                                            td { class: "p-2", "{session_avg_feedback(&s.id, &pws.program_feedback).1}" }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
+                                    p { class: "text-text-muted italic py-4", { t!("patient_no_sessions") } }
                                 }
                             }
                         }
@@ -80,23 +44,5 @@ pub fn PatientProgress(id: String) -> Element {
                 }
             }
         }
-    }
-}
-
-const EMPTY: &str = "";
-
-fn session_avg_feedback(session_id: &str, feedback: &[AgendaSessionFeedback]) -> (String, String) {
-    let sess_fb: Vec<_> = feedback
-        .iter()
-        .filter(|f| f.workout_session_id == session_id)
-        .collect();
-    if sess_fb.is_empty() {
-        (EMPTY.to_string(), EMPTY.to_string())
-    } else {
-        let e: f64 =
-            sess_fb.iter().filter_map(|f| f.effort).sum::<i32>() as f64 / sess_fb.len() as f64;
-        let p: f64 =
-            sess_fb.iter().filter_map(|f| f.pain).sum::<i32>() as f64 / sess_fb.len() as f64;
-        (format!("{:.1}", e), format!("{:.1}", p))
     }
 }

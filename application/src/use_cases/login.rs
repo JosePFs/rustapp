@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
+use crate::error::{ApplicationError, Result};
 use crate::ports::auth::{AuthService, Credentials, Session};
-use crate::ports::error::{ApplicationError, Result};
 use domain::repositories::GetProfilesByIdsRead;
 use domain::vos::id::Id;
 use domain::vos::role::Role;
@@ -36,6 +36,16 @@ impl From<&Role> for UserProfileType {
         match *role {
             Role::Specialist => Self::Specialist,
             Role::Patient => Self::Patient,
+        }
+    }
+}
+
+impl From<&str> for UserProfileType {
+    fn from(user_profile_type: &str) -> Self {
+        match user_profile_type {
+            "specialist" => Self::Specialist,
+            "patient" => Self::Patient,
+            _ => Self::Patient,
         }
     }
 }

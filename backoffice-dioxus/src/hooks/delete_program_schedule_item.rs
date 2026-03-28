@@ -1,8 +1,7 @@
 use dioxus::prelude::*;
 
 use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::ports::BackofficeApi;
-use application::use_cases::delete_program_schedule_item::DeleteProgramScheduleItemArgs;
+use application::ports::backoffice_api::DeleteProgramScheduleItemArgs;
 
 #[derive(Clone)]
 pub struct UseDeleteProgramScheduleItem {

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::ports::error::{ApplicationError, Result};
+use crate::error::{ApplicationError, Result};
 use domain::entities::Exercise;
 use domain::repositories::CreateExerciseWrite;
 use domain::vos::{Description, ExerciseName, ScheduleOrderIndex, VideoUrl};

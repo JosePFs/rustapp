@@ -1,9 +1,8 @@
 use std::sync::Arc;
 
-use crate::ports::error::Result;
+use crate::error::Result;
 use domain::repositories::{PatientSessionRepository, SpecialistCatalogReadRepository};
 
-use crate::ports::api::MobileApi;
 use crate::ports::auth::AuthService;
 use crate::use_cases::get_patient_programs::{
     GetPatientProgramsUseCase, GetPatientProgramsUseCaseResult,
@@ -23,12 +22,11 @@ where
     D: SpecialistCatalogReadRepository + PatientSessionRepository + Send + Sync,
     A: AuthService + Send + Sync,
 {
-    pub(crate) login_uc: Arc<MobileLoginUseCase<D, A>>,
-    pub(crate) refresh_session_uc: Arc<RefreshSessionUseCase<D, A>>,
-    pub(crate) get_patient_programs_uc: Arc<GetPatientProgramsUseCase<D>>,
-    pub(crate) submit_patient_workout_feedback_uc: Arc<SubmitPatientWorkoutFeedbackUseCase<D>>,
-    pub(crate) uncomplete_patient_workout_session_uc:
-        Arc<UncompletePatientWorkoutSessionUseCase<D>>,
+    login_uc: MobileLoginUseCase<D, A>,
+    refresh_session_uc: RefreshSessionUseCase<D, A>,
+    get_patient_programs_uc: GetPatientProgramsUseCase<D>,
+    submit_patient_workout_feedback_uc: SubmitPatientWorkoutFeedbackUseCase<D>,
+    uncomplete_patient_workout_session_uc: UncompletePatientWorkoutSessionUseCase<D>,
 }
 
 impl<D, A> MobileFacade<D, A>
@@ -39,34 +37,27 @@ where
     pub fn builder(repository: Arc<D>, auth: Arc<A>) -> MobileFacadeBuilder<D, A> {
         MobileFacadeBuilder::new(repository, auth)
     }
-}
 
-#[common::async_trait_platform]
-impl<D, A> MobileApi for MobileFacade<D, A>
-where
-    D: SpecialistCatalogReadRepository + PatientSessionRepository + Send + Sync,
-    A: AuthService + Send + Sync,
-{
-    async fn login(&self, args: LoginUseCaseArgs) -> Result<LoginUseCaseResult> {
+    pub async fn login(&self, args: LoginUseCaseArgs) -> Result<LoginUseCaseResult> {
         self.login_uc.execute(args).await
     }
 
-    async fn refresh_session(&self, args: RefreshSessionArgs) -> Result<LoginUseCaseResult> {
+    pub async fn refresh_session(&self, args: RefreshSessionArgs) -> Result<LoginUseCaseResult> {
         self.refresh_session_uc.execute(args).await
     }
 
-    async fn get_patient_programs(&self) -> Result<GetPatientProgramsUseCaseResult> {
+    pub async fn get_patient_programs(&self) -> Result<GetPatientProgramsUseCaseResult> {
         self.get_patient_programs_uc.execute().await
     }
 
-    async fn submit_patient_workout_feedback(
+    pub async fn submit_patient_workout_feedback(
         &self,
         args: SubmitPatientWorkoutFeedbackArgs,
     ) -> Result<()> {
         self.submit_patient_workout_feedback_uc.execute(args).await
     }
 
-    async fn uncomplete_patient_workout_session(
+    pub async fn uncomplete_patient_workout_session(
         &self,
         args: UncompletePatientWorkoutSessionArgs,
     ) -> Result<()> {
@@ -102,22 +93,17 @@ where
 {
     pub fn build(self) -> Arc<MobileFacade<D, A>> {
         Arc::new(MobileFacade {
-            login_uc: Arc::new(MobileLoginUseCase::new(
+            login_uc: MobileLoginUseCase::new(self.repository.clone(), self.auth.clone()),
+            refresh_session_uc: RefreshSessionUseCase::new(
                 self.repository.clone(),
                 self.auth.clone(),
-            )),
-            refresh_session_uc: Arc::new(RefreshSessionUseCase::new(
+            ),
+            get_patient_programs_uc: GetPatientProgramsUseCase::new(self.repository.clone()),
+            submit_patient_workout_feedback_uc: SubmitPatientWorkoutFeedbackUseCase::new(
                 self.repository.clone(),
-                self.auth.clone(),
-            )),
-            get_patient_programs_uc: Arc::new(GetPatientProgramsUseCase::new(
+            ),
+            uncomplete_patient_workout_session_uc: UncompletePatientWorkoutSessionUseCase::new(
                 self.repository.clone(),
-            )),
-            submit_patient_workout_feedback_uc: Arc::new(SubmitPatientWorkoutFeedbackUseCase::new(
-                self.repository.clone(),
-            )),
-            uncomplete_patient_workout_session_uc: Arc::new(
-                UncompletePatientWorkoutSessionUseCase::new(self.repository.clone()),
             ),
         })
     }

@@ -1,8 +1,7 @@
 use dioxus::prelude::*;
 
 use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::ports::BackofficeApi;
-use application::use_cases::add_specialist_patient::AddSpecialistPatientArgs;
+use application::ports::backoffice_api::AddSpecialistPatientArgs;
 
 #[derive(Clone)]
 pub struct UseAddSpecialistPatient {

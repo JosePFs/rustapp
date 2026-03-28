@@ -58,7 +58,9 @@ pub fn SpecialistPatients() -> Element {
                                     .filter(|link| {
                                         if filter.is_empty() { return true; }
                                         if let Some(profile) = data.profiles.iter().find(|p| p.patient_id == link.patient_id) {
-                                            profile.full_name.to_lowercase().contains(&filter) || profile.email.to_lowercase().contains(&filter)
+                                            let name = profile.full_name.clone();
+                                            let email = profile.email.clone();
+                                            name.to_lowercase().contains(&filter) || email.to_lowercase().contains(&filter)
                                         } else {
                                             false
                                         }
@@ -78,7 +80,11 @@ pub fn SpecialistPatients() -> Element {
                                                             data.profiles
                                                                 .iter()
                                                                 .find(|p| p.patient_id == link.patient_id)
-                                                                .map(|p| rsx! { "{p.full_name} ({p.email})" })
+                                                                .map(|p| {
+                                                                    let name = p.full_name.clone();
+                                                                    let email = p.email.clone();
+                                                                    rsx! { "{name} ({email})" }
+                                                                })
                                                                 .unwrap_or(rsx! { "{link.patient_id}" })
                                                         }
                                                     }
@@ -110,7 +116,9 @@ pub fn SpecialistPatients() -> Element {
                                 let filtered_patients: Vec<_> = data.patients.iter()
                                     .filter(|p| {
                                         if filter.is_empty() { return true; }
-                                        p.full_name.to_lowercase().contains(&filter) || p.email.to_lowercase().contains(&filter)
+                                        let name = p.full_name.clone();
+                                        let email = p.email.clone();
+                                        name.to_lowercase().contains(&filter) || email.to_lowercase().contains(&filter)
                                     })
                                     .collect();
                                 if filtered_patients.is_empty() {

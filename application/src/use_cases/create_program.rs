@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::ports::error::{ApplicationError, Result};
+use crate::error::{ApplicationError, Result};
 use domain::entities::Program;
 use domain::repositories::CreateProgram;
 use domain::vos::{Description, ProgramName};

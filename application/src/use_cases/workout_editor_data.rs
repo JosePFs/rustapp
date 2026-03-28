@@ -3,7 +3,7 @@ use std::sync::Arc;
 use futures::try_join;
 use futures::TryFutureExt;
 
-use crate::ports::error::{ApplicationError, Result};
+use crate::error::{ApplicationError, Result};
 use domain::entities::Exercise;
 use domain::repositories::{GetWorkoutWithExercisesRead, ListExerciseLibrary};
 use domain::vos::id::Id;

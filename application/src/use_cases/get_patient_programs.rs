@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use futures::stream::{self, StreamExt};
 
-use crate::ports::error::{ApplicationError, Result};
+use crate::error::{ApplicationError, Result};
 use crate::use_cases::agenda_schedule::build_agenda_schedule;
 use domain::aggregates::PatientProgramFull;
 use domain::entities::SessionExerciseFeedback;

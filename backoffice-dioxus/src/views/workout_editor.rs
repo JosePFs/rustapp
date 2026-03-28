@@ -8,7 +8,7 @@ use crate::hooks::{
     update_workout_exercise::use_update_workout_exercise, workout_editor::use_workout_editor,
     AsyncState,
 };
-use application::use_cases::workout_editor_data::WorkoutEditorExerciseItem;
+use application::ports::backoffice_api::WorkoutEditorExerciseItem;
 
 #[component]
 pub fn WorkoutEditor(id: String) -> Element {

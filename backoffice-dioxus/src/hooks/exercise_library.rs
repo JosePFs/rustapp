@@ -1,15 +1,15 @@
 use dioxus::prelude::*;
 
 use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::ports::error::Result;
-use application::ports::BackofficeApi;
-use application::use_cases::list_exercise_library::{ExerciseLibraryItem, ListExerciseLibraryArgs};
+use application::ports::backoffice_api::{
+    ExerciseLibraryItem, ListExerciseLibraryArgs, ListExerciseLibraryResult,
+};
 
 #[derive(Clone)]
 pub struct UseExerciseLibrary {
     pub filter: Signal<String>,
     pub state: Signal<AsyncState<Vec<ExerciseLibraryItem>>>,
-    pub resource: Resource<Result<Vec<ExerciseLibraryItem>>>,
+    pub resource: Resource<Vec<ExerciseLibraryItem>>,
 }
 
 pub fn use_exercise_library() -> UseExerciseLibrary {
@@ -24,18 +24,24 @@ pub fn use_exercise_library() -> UseExerciseLibrary {
         let facade = facade.clone();
 
         async move {
-            facade
-                .list_exercise_library(ListExerciseLibraryArgs {
-                    name_filter: Some(filter_val).filter(|s| !s.is_empty()),
-                })
-                .await
+            let args = ListExerciseLibraryArgs {
+                name_filter: if filter_val.is_empty() {
+                    None
+                } else {
+                    Some(filter_val)
+                },
+            };
+            match facade.list_exercise_library(args).await {
+                Ok(result) => {
+                    state.set(AsyncState::Ready(result.items.clone()));
+                    result.items
+                }
+                Err(e) => {
+                    state.set(AsyncState::Error(e.clone()));
+                    vec![]
+                }
+            }
         }
-    });
-
-    use_effect(move || match resource.read().as_ref() {
-        None => state.set(AsyncState::Loading),
-        Some(Err(e)) => state.set(AsyncState::Error(e.clone())),
-        Some(Ok(data)) => state.set(AsyncState::Ready(data.clone())),
     });
 
     UseExerciseLibrary {

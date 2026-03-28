@@ -23,11 +23,13 @@ async fn main() -> Result<()> {
     trace::init_tracing(&state.config());
 
     tracing::info!(
-        "Starting API server on http://{}",
+        "Starting API server on http://{} with CORS allowed origins: {:?}",
         listener
             .local_addr()
-            .map_err(|e| Error::Internal(e.to_string()))?
+            .map_err(|e| Error::Internal(e.to_string()))?,
+        state.config().cors_allowed_origins()
     );
+
     axum::serve(listener, app_router.into_make_service())
         .await
         .map_err(|e| Error::Internal(e.to_string()))?;

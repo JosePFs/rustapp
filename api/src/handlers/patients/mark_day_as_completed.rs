@@ -9,10 +9,7 @@ use crate::{
     router::api_response::APIResponse,
     state::AppState,
 };
-use application::{
-    ports::MobileApi as _,
-    use_cases::submit_patient_workout_feedback::SubmitPatientWorkoutFeedbackArgs,
-};
+use application::use_cases::submit_patient_workout_feedback::SubmitPatientWorkoutFeedbackArgs;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExerciseFeedbackRequest {

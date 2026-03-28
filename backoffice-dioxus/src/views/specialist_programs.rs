@@ -207,36 +207,39 @@ pub fn SpecialistPrograms() -> Element {
                                     value: "{patient_filter()}",
                                     oninput: move |ev| patient_filter.set(ev.value().clone()),
                                 }
-                                {
-                                    let selected_prog_ids = selected_program_ids();
-                                    let filter_pat = patient_filter().to_lowercase();
-                                    let existing: HashSet<(String, String)> = assigns
-                                        .iter()
-                                        .filter(|a| selected_prog_ids.contains(&a.program_id))
-                                        .map(|a| (a.patient_id.clone(), a.program_id.clone()))
-                                        .collect();
+                                    {
+                                        let selected_prog_ids = selected_program_ids();
+                                        let filter_pat = patient_filter().to_lowercase();
+                                        let existing: HashSet<(String, String)> = assigns
+                                            .iter()
+                                            .filter_map(|a| {
+                                                let pid = a.patient_id.clone();
+                                                Some((pid, a.program_id.clone()))
+                                            })
+                                            .filter(|(_, prog_id)| selected_prog_ids.contains(prog_id))
+                                            .collect();
 
-                                    let rows: Vec<dioxus::prelude::Element> = links
-                                        .iter()
-                                        .filter_map(|link| {
-                                            let profile = profiles.iter().find(|p| p.patient_id == link.patient_id)?.clone();
-                                            let has_any = selected_prog_ids
-                                                .iter()
-                                                .any(|prog_id| existing.contains(&(link.patient_id.clone(), prog_id.clone())));
-                                            if has_any {
-                                                return None;
-                                            }
+                                        let rows: Vec<dioxus::prelude::Element> = links
+                                            .iter()
+                                            .filter_map(|link| {
+                                                let profile = profiles.iter().find(|p| p.patient_id == link.patient_id)?;
+                                                let has_any = selected_prog_ids
+                                                    .iter()
+                                                    .any(|prog_id| existing.contains(&(link.patient_id.clone(), prog_id.clone())));
+                                                if has_any {
+                                                    return None;
+                                                }
 
-                                            let label = format!("{} ({})", profile.full_name, profile.email);
-                                            if !filter_pat.is_empty()
-                                                && !profile.full_name.to_lowercase().contains(&filter_pat)
-                                                && !profile.email.to_lowercase().contains(&filter_pat)
-                                            {
-                                                return None;
-                                            }
+                                                let label = format!("{} ({})", profile.full_name, profile.email);
+                                                if !filter_pat.is_empty()
+                                                    && !profile.full_name.to_lowercase().contains(&filter_pat)
+                                                    && !profile.email.to_lowercase().contains(&filter_pat)
+                                                {
+                                                    return None;
+                                                }
 
-                                            let pid = link.patient_id.clone();
-                                            let mut sel_pat = selected_patient_ids;
+                                                let pid = link.patient_id.clone();
+                                                let mut sel_pat = selected_patient_ids;
                                             let is_checked = sel_pat().contains(&pid);
                                             Some(rsx! {
                                                 label { class: "flex items-center gap-2 p-2 min-h-11 cursor-pointer rounded hover:bg-gray-50",
@@ -270,8 +273,11 @@ pub fn SpecialistPrograms() -> Element {
                                                         let filter_pat = patient_filter().to_lowercase();
                                                         let existing: HashSet<(String, String)> = assigns
                                                             .iter()
-                                                            .filter(|a| selected_prog_ids.contains(&a.program_id))
-                                                            .map(|a| (a.patient_id.clone(), a.program_id.clone()))
+                                                            .filter_map(|a| {
+                                                                let pid = a.patient_id.clone();
+                                                                Some((pid, a.program_id.clone()))
+                                                            })
+                                                            .filter(|(_, prog_id)| selected_prog_ids.contains(prog_id))
                                                             .collect();
                                                         let ids: HashSet<String> = links
                                                             .iter()

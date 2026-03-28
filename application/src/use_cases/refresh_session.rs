@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::ports::auth::AuthService;
-use crate::ports::error::{ApplicationError, Result};
+use crate::error::{ApplicationError, Result};
 use crate::use_cases::login::{login_result_from_session, LoginUseCaseResult};
 use domain::repositories::GetProfilesByIdsRead;
 

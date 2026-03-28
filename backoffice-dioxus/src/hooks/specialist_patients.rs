@@ -1,41 +1,60 @@
 use dioxus::prelude::*;
 
 use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::ports::error::Result;
-use application::ports::BackofficeApi;
-use application::use_cases::get_specialist_patients_with_profiles::{
-    GetSpecialistPatientsWithProfilesArgs, GetSpecialistPatientsWithProfilesResult,
-};
+use application::ports::backoffice_api::{GetSpecialistPatientsWithProfilesArgs, GetSpecialistPatientsWithProfilesResult};
+
+#[derive(Clone)]
+pub struct SpecialistPatientsData {
+    pub links: Vec<application::ports::backoffice_api::SpecialistPatientLink>,
+    pub profiles: Vec<application::ports::backoffice_api::PatientProfileSummary>,
+    pub patients: Vec<GetSpecialistPatientsWithProfilesResult>,
+}
+
+impl Default for SpecialistPatientsData {
+    fn default() -> Self {
+        Self {
+            links: vec![],
+            profiles: vec![],
+            patients: vec![],
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct UseSpecialistPatients {
-    pub state: Signal<AsyncState<GetSpecialistPatientsWithProfilesResult>>,
-    pub resource: Resource<Result<GetSpecialistPatientsWithProfilesResult>>,
+    pub state: Signal<AsyncState<SpecialistPatientsData>>,
+    pub resource: Resource<SpecialistPatientsData>,
 }
 
 pub fn use_specialist_patients() -> UseSpecialistPatients {
     let app_context = use_app_context();
     let facade = app_context.backoffice_facade();
-    let mut state = use_signal(|| AsyncState::<GetSpecialistPatientsWithProfilesResult>::Loading);
+    let mut state = use_signal(|| AsyncState::<SpecialistPatientsData>::Idle);
 
     let facade = facade.clone();
     let resource = use_resource(move || {
         let facade = facade.clone();
 
         async move {
-            facade
-                .get_specialist_patients_with_profiles(GetSpecialistPatientsWithProfilesArgs {})
-                .await
-        }
-    });
+            state.set(AsyncState::Loading);
 
-    use_effect(move || match resource.read().as_ref() {
-        None => state.set(AsyncState::Loading),
-        Some(Err(e)) => state.set(AsyncState::Error(e.clone())),
-        Some(Ok(data)) => state.set(AsyncState::Ready(GetSpecialistPatientsWithProfilesResult {
-            links: data.links.clone(),
-            profiles: data.profiles.clone(),
-        })),
+            let args = GetSpecialistPatientsWithProfilesArgs {};
+            match facade.get_specialist_patients_with_profiles(args).await {
+                Ok(result) => {
+                    let data = SpecialistPatientsData {
+                        links: result.links.clone(),
+                        profiles: result.profiles.clone(),
+                        patients: vec![result],
+                    };
+                    state.set(AsyncState::Ready(data.clone()));
+                    data
+                }
+                Err(e) => {
+                    state.set(AsyncState::Error(e.clone()));
+                    SpecialistPatientsData::default()
+                }
+            }
+        }
     });
 
     UseSpecialistPatients { state, resource }

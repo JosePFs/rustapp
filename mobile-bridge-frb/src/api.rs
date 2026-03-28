@@ -1,14 +1,18 @@
-use std::sync::LazyLock;
 use serde::{Deserialize, Serialize};
+use std::sync::LazyLock;
 
 use infrastructure::api::{
-    axum_client::{AxumApiClient, LoginResponse as ApiLoginResponse, PatientProgramResponse as ApiPatientProgramResponse},
     config::ApiConfig,
+    mobile_client::{
+        LoginResponse as ApiLoginResponse, MobileClient,
+        PatientProgramResponse as ApiPatientProgramResponse,
+    },
+    platforms_http_client::PlatformsHttpClient,
 };
 
-static API_CLIENT: LazyLock<AxumApiClient> = LazyLock::new(|| {
+static API_CLIENT: LazyLock<MobileClient> = LazyLock::new(|| {
     let config = ApiConfig::from_env();
-    AxumApiClient::new(config)
+    MobileClient::new(config, PlatformsHttpClient)
 });
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -153,16 +157,30 @@ pub async fn mark_day_as_completed(request: MarkDayAsCompletedRequest) -> Result
     let feedback: Vec<(String, i32, i32, String)> = request
         .feedback
         .into_iter()
-        .map(|f| (f.exercise_id, f.effort, f.pain, f.comment.unwrap_or_default()))
+        .map(|f| {
+            (
+                f.exercise_id,
+                f.effort,
+                f.pain,
+                f.comment.unwrap_or_default(),
+            )
+        })
         .collect();
 
     API_CLIENT
-        .mark_day_as_completed(&request.patient_program_id, request.day_index, &request.session_date, feedback)
+        .mark_day_as_completed(
+            &request.patient_program_id,
+            request.day_index,
+            &request.session_date,
+            feedback,
+        )
         .await
 }
 
 pub async fn mark_day_as_uncompleted(request: MarkDayAsUncompletedRequest) -> Result<(), String> {
-    API_CLIENT.mark_day_as_uncompleted(&request.workout_session_id).await
+    API_CLIENT
+        .mark_day_as_uncompleted(&request.workout_session_id)
+        .await
 }
 
 pub fn init_logger(level: String) {

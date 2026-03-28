@@ -1,7 +1,3 @@
-pub mod api;
 pub mod auth;
-pub mod error;
-pub mod http_rest_client;
-
-pub use api::{BackofficeApi, MobileApi};
-pub use http_rest_client::HttpRestClient;
+pub mod backoffice_api;
+pub mod mobile_api;

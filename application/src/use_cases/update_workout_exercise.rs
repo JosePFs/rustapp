@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::ports::error::{ApplicationError, Result};
+use crate::error::{ApplicationError, Result};
 use domain::repositories::UpdateWorkoutExerciseWrite;
 use domain::vos::id::Id;
 use domain::vos::{Reps, ScheduleOrderIndex, Sets};

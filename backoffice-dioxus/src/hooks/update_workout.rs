@@ -1,8 +1,8 @@
 use dioxus::prelude::*;
 
 use crate::hooks::{app_context::use_app_context, AsyncState};
-use application::ports::BackofficeApi;
-use application::use_cases::update_workout::{UpdateWorkoutArgs, UpdateWorkoutInput};
+use application::ports::backoffice_api::UpdateWorkoutArgs;
+use application::use_cases::update_workout::UpdateWorkoutInput;
 
 #[derive(Clone)]
 pub struct UseUpdateWorkout {
